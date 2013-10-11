@@ -4064,3 +4064,215 @@ def hopper(self, blockid, data):
     alpha_over(img, hop_top, (0,-6), hop_top)
 
     return img
+
+
+#########################################
+#	Start mod blocks					#
+#	Taken from FTB Unleashed configs	#
+#########################################
+
+#################################
+#	 Tinker's Construct			#
+#################################
+
+# block {
+#    I:Aggregator=3221
+#    I:Barricade=1469
+#    I:"Birch Barricade"=1483
+#    I:"Casting Channel"=3249
+#    I:"Clear Glass"=3223
+#    I:"Clear Stained Glass"=3225
+#    I:"Clear Stained Glass Pane"=3229
+#    I:"Congealed Slime"=3237
+#    I:"Crafting Slab"=3243
+#    I:"Crafting Station"=3233
+#    I:"Drying Rack"=3227
+#    I:"Essence Extractor"=3234
+#    I:"Glass Pane"=3228
+#    I:"Held Item Block"=1472
+#    I:"Jungle Barricade"=1487
+#    I:Landmine=1470
+#    I:"Lava Tank"=1473
+#    I:"Light Crystal"=3222
+#    I:"Liquid Blue Slime"=3235
+#    I:"Liquid Metal Flowing"=1479
+#    I:"Liquid Metal Still"=1480
+#    I:"Meat Block"=3242
+#    I:"Metal Storage"=1478
+#    I:"Multi Brick"=1481
+#    I:"Multi Brick Fancy"=1467
+#    I:"Oak Barricade"=1469
+#    I:"Ore Berry One"=1485
+#    I:"Ore Berry Two"=1486
+#    I:"Ores Gravel"=1488
+#    I:"Ores Slag"=1475
+#    I:Punji=3232
+#    I:"Redstone Machines"=3226
+#    I:"Seared Slab"=3230
+#    I:"Seared Table"=1477
+#    I:"Slime Grass"=3238
+#    I:"Slime Grass Leaves"=3240
+#    I:"Slime Tall Grass"=3239
+#    I:"Slime Tree Sapling"=3241
+#    I:Smeltery=1474
+#    I:"Special Soil"=1476
+#    I:"Speed Block"=1489
+#    I:"Speed Slab"=3231
+#    I:"Spruce Barricade"=1482
+#    I:"Stained Glass"=3224
+#    I:"Stone Torch"=1484
+#    I:"Tool Forge"=1468
+#    I:"Wood Tool Station"=1471
+#    I:"Wool Slab 1"=3244
+#    I:"Wool Slab 2"=3245
+#}
+
+
+#################################
+#	 Thermal Expansion			#
+#################################
+#block {
+#    I:Conduit=2006
+#    I:EnergyCell=2005
+#    I:Engine=2003
+#    I:Glass=2011
+#    I:Lamp=2009
+#    I:LiquidEnder=2015
+#    I:LiquidGlowstone=2014
+#    I:LiquidRedstone=2013
+#    I:Machine=2002
+#    I:Ore=2001
+#    I:Plate=2008
+#    I:Rockwool=2012
+#    I:Storage=2010
+#    I:Tank=2004
+#    I:Tesseract=2007
+#	...
+#}
+
+
+#################################
+#	 Biomes O' Plenty			#
+#################################
+#block {
+#    I:"Acacia Stairs ID"=1952
+#    I:"Altar ID"=1979
+#    I:"Amethyst Ore ID"=1942
+#    I:"Bamboo ID"=1927
+#    I:"Bones ID"=1968
+#    I:"Cherry Stairs ID"=1953
+#    I:"Cloud ID"=1964
+#    I:"Colourized Leaves ID"=1962
+#    I:"Colourized Sapling ID"=1938
+#    I:"Coral ID"=1969
+#    I:"Crystal ID"=1963
+#    I:"Dark Stairs ID"=1954
+#    I:"Fir Stairs ID"=1955
+#    I:"Flower ID"=1921
+#    I:"Foliage ID"=1925
+#    I:"Fruit Leaf Block ID"=1926
+#    I:"Glass ID"=1978
+#    I:"Grave ID"=1981
+#    I:"Hell Bark Stairs ID"=1976
+#    I:"Holy Stairs ID"=1956
+#    I:"Ivy ID"=1943
+#    I:"Jacaranda ID"=1977
+#    I:"Leaf Block ID 1"=1923
+#    I:"Leaf Block ID 2"=1924
+#    I:"Log Block ID 1"=1933
+#    I:"Log Block ID 2"=1934
+#    I:"Log Block ID 3"=1935
+#    I:"Log Block ID 4"=1974
+#    I:"Magic Stairs ID"=1957
+#    I:"Mangrove Stairs ID"=1958
+#    I:"Moss ID"=4095
+#    I:"Mud Brick Stairs ID"=1929
+#    I:"Mud Bricks ID"=1928
+#    I:"Mushroom ID"=1967
+#    I:"Palm Stairs ID"=1959
+#    I:"Petal ID"=1936
+#    I:"Pine Stairs ID"=1975
+#    I:"Planks ID"=1947
+#    I:"Plant ID"=1920
+#    I:"Promised Land Portal ID"=1941
+#    I:"Puddle ID"=1980
+#    I:"Red Brick Stairs ID"=1940
+#    I:"Red Cobble Stairs ID"=1939
+#    I:"Redwood Stairs ID"=1960
+#    I:"Sapling ID"=1937
+#    I:"Skystone Brick Stairs ID"=1966
+#    I:"Skystone Cobble Stairs ID"=1965
+#    I:"Stone Double Slab ID"=1930
+#    I:"Stone Single Slab ID"=1931
+#    I:"Tree Moss ID"=1932
+#    I:"Willow ID"=1922
+#    I:"Willow Stairs ID"=1961
+#    I:"Wooden Double Slab 1 ID"=1948
+#    I:"Wooden Double Slab 2 ID"=1950
+#    I:"Wooden Single Slab 1 ID"=1949
+#    I:"Wooden Single Slab 2 ID"=1951
+#}
+
+#"terrain block ids - must be below 255" {
+#    I:"Ash Block ID"=163
+#    I:"Ash Stone ID"=164
+#    I:"Crag Rock ID"=172
+#    I:"Dried Dirt ID"=161
+#    I:"Hard Dirt ID"=168
+#    I:"Hard Ice ID"=165
+#    I:"Hard Sand ID"=167
+#    I:"Holy Dirt ID"=254
+#    I:"Holy Grass ID"=255
+#    I:"Long Grass ID"=173
+#    I:"Mud ID"=160
+#    I:"Origin Grass ID"=166
+#    I:"Red Rock ID"=162
+#    I:"Skystone ID"=171
+#}
+
+#"liquid ids" {
+#    I:"Liquid Poison Still ID (ID before this must be free!)"=1973
+#    I:"Spring Water Still ID (ID before this must be free!)"=1971
+#}
+
+# BoP: Ash Block
+block(blockid=163, top_image="textures/blocks/bop/ashblock.png")
+
+# BoP: Ash Stone
+block(blockid=164, top_image="textures/blocks/bop/ashstone.png")
+
+# BoP: Crag Rock
+block(blockid=172, top_image="textures/blocks/bop/cragrock.png")
+
+# BoP: Dried Dirt
+block(blockid=161, top_image="textures/blocks/bop/drieddirt.png")
+
+# BoP: Hard Dirt
+block(blockid=168, top_image="textures/blocks/bop/harddirt.png")
+
+# BoP: Hard Ice
+block(blockid=165, top_image="textures/blocks/bop/hardice.png")
+
+# BoP: Hard Sand
+block(blockid=167, top_image="textures/blocks/bop/hardsand.png")
+
+# BoP: Holy Dirt
+block(blockid=254, top_image="textures/blocks/bop/holydirt.png")
+
+# BoP: Holy Grass TODO
+block(blockid=255, top_image="textures/blocks/bop/holygrass_top.png")
+
+# BoP: Long Grass FIXME
+block(blockid=173, top_image="textures/blocks/bop/longgrass1.png")
+
+# BoP: Mud
+block(blockid=160, top_image="textures/blocks/bop/mud.png")
+
+# BoP: Origin Grass FIXME
+block(blockid=166, top_image="textures/blocks/bop/origingrass1.png")
+
+# BoP: Red Rock
+block(blockid=162, top_image="textures/blocks/bop/redrock.png")
+
+# BoP: Skystone FIXME? is this holystone?
+block(blockid=171, top_image="textures/blocks/bop/holystone.png")
