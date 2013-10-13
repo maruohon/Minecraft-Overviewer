@@ -4206,6 +4206,24 @@ def hopper(self, blockid, data):
 #    I:"Wool Slab 2"=3245
 #}
 
+# Tinker's Construct: Gravel Ores (I:"Ores Gravel"=1488)
+@material(blockid=1488, data=range(5), solid=True)
+def tic_gravel_ore(self, blockid, data):
+    # choose textures
+    if data == 0: # Iron Gravel Ore
+        t = self.load_image_texture("textures/blocks/tic/ore_iron_gravel.png")
+    elif data == 1: # Gold Gravel Ore
+        t = self.load_image_texture("textures/blocks/tic/ore_gold_gravel.png")
+    elif data == 2: # Copper Gravel Ore
+        t = self.load_image_texture("textures/blocks/tic/ore_copper_gravel.png")
+    elif data == 3: # Tin Gravel Ore
+        t = self.load_image_texture("textures/blocks/tic/ore_tin_gravel.png")
+    elif data == 4: # Aluminum Gravel Ore
+        t = self.load_image_texture("textures/blocks/tic/ore_aluminum_gravel.png")
+    else: # TODO are there any others?
+        t = self.load_image_texture("textures/blocks/web.png")
+    return self.build_block(t, t)
+
 # Tinker's Construct: Congealed Slime Blocks (I:"Congealed Slime"=3237)
 @material(blockid=3237, data=range(2), solid=True)
 def tic_congealed_slime(self, blockid, data):
@@ -4214,18 +4232,18 @@ def tic_congealed_slime(self, blockid, data):
         t = self.load_image_texture("textures/blocks/tic/slimeblock_blue.png")
     elif data == 1: # Congealed Green Slime
         t = self.load_image_texture("textures/blocks/tic/slimeblock_green.png")
-    else: # TODO
+    else: # TODO are there any others?
         t = self.load_image_texture("textures/blocks/web.png")
     return self.build_block(t, t)
 
 # Tinker's Construct: Slimy Leaves (I:"Slime Grass Leaves"=3240)
-block(blockid=3240, top_image="textures/blocks/tic/slimeleaves_blue_fancy.png")
-#@material(blockid=3237, data=range(2), solid=True)
-#def thaumcraft_leaves(self, blockid, data):
+block(blockid=3240, top_image="textures/blocks/tic/slimeleaves_blue_fancy.png", solid=True, transparent=True)
+#@material(blockid=3240, data=range(1), solid=True, transparent=True)
+#def tic_slimy_leaves(self, blockid, data):
 #    # choose textures
-#    if data == 0: # Congealed Blue Slime
+#    if data == 0: #
 #        t = self.load_image_texture("textures/blocks/tic/slimeblock_blue.png")
-#    elif data == 1: # Congealed Green Slime
+#    elif data == 1: #
 #        t = self.load_image_texture("textures/blocks/tic/slimeblock_green.png")
 #    else # TODO
 #        t = self.load_image_texture("textures/blocks/web.png")
@@ -4237,24 +4255,113 @@ def tic_slimedirt(self, blockid, data):
     # choose textures
     if data == 5: # Blue Slimedirt
         t = self.load_image_texture("textures/blocks/tic/slimedirt_blue.png")
-    else: # TODO
+    else: # TODO what other types are there?
         t = self.load_image_texture("textures/blocks/web.png")
     return self.build_block(t, t)
 
 # Tinker's Construct: Slimy Grass (I:"Slime Grass"=3238)
-#@material(blockid=3238, data=range(1), solid=True)
 @material(blockid=3238, nodata=True, solid=True)
-def tic_slimedirt(self, blockid, data):
-    # choose textures
-#    if data == 0: # Blue Slimedirt
-#        side = self.load_image_texture("textures/blocks/tic/slimegrass_green_blue_side.png")
-#        top = self.load_image_texture("textures/blocks/tic/slimegrass_green_top.png")
-#    else: # TODO
-#        side = self.load_image_texture("textures/blocks/web.png")
-#        top = self.load_image_texture("textures/blocks/web.png")
+def tic_slimy_grass(self, blockid, data):
     side = self.load_image_texture("textures/blocks/tic/slimegrass_green_blue_side.png")
     top = self.load_image_texture("textures/blocks/tic/slimegrass_green_top.png")
     return self.build_block(top, side)
+
+# Tinker's Construct: Slimy Grass (tall grass) (I:"Slime Tall Grass"=3239)
+@material(blockid=3239, nodata=True, transparent=True)
+def tic_slimy_tall_grass(self, blockid, data):
+    t = self.load_image_texture("textures/blocks/tic/slimegrass_blue_tall.png")
+    return self.build_billboard(t)
+
+#################################
+#	 Minefactory Reloaded		#
+#################################
+# MFR: Rubberwood Logs
+@material(blockid=3122, data=range(16), solid=True)
+def mfr_rubberwood(self, blockid, data):
+    wood_type = data & 3
+    wood_orientation = data & 12
+    if self.rotation == 1:
+        if wood_orientation == 4: wood_orientation = 8
+        elif wood_orientation == 8: wood_orientation = 4
+    elif self.rotation == 3:
+        if wood_orientation == 4: wood_orientation = 8
+        elif wood_orientation == 8: wood_orientation = 4
+    # choose textures
+    if wood_type == 1: # Rubberwood logs
+        side = self.load_image_texture("textures/blocks/mfr/tile.mfr.rubberwood.log.side.png")
+        top = self.load_image_texture("textures/blocks/mfr/tile.mfr.rubberwood.log.top.png")
+    else: # TODO any others?
+        side = self.load_image_texture("textures/blocks/web.png")
+        top = self.load_image_texture("textures/blocks/web.png")
+    # choose orientation and paste textures
+    if wood_orientation == 0:
+        return self.build_block(top, side)
+    elif wood_orientation == 4: # east-west orientation
+        return self.build_full_block(side.rotate(90), None, None, top, side.rotate(90))
+    elif wood_orientation == 8: # north-south orientation
+        return self.build_full_block(side, None, None, side.rotate(270), top)
+    return self.build_block(top, side)
+
+# MFR: Rubberwood Leaves
+@material(blockid=3123, data=range(16), solid=True, transparent=True)
+def mfr_leaves(self, blockid, data):
+    if data & 7 == 0: # Rubberwood Leaves
+        t = self.load_image_texture("textures/blocks/mfr/tile.mfr.rubberwood.leaves.transparent.png")
+    else: # TODO any others?
+        t = self.load_image_texture("textures/blocks/web.png")
+    return self.build_block(t, t)
+
+#################################
+#	 Industrial Craft 2			#
+#################################
+# IC2: Rubberwood Logs
+@material(blockid=243, data=range(16), solid=True)
+def ic2_rubberwood(self, blockid, data):
+    wood_type = data & 3
+    wood_orientation = data & 12
+    if self.rotation == 1:
+        if wood_orientation == 4: wood_orientation = 8
+        elif wood_orientation == 8: wood_orientation = 4
+    elif self.rotation == 3:
+        if wood_orientation == 4: wood_orientation = 8
+        elif wood_orientation == 8: wood_orientation = 4
+    # choose textures
+    side = self.load_image_texture("textures/blocks/ic2/blockRubWood.png")
+    top = self.load_image_texture("textures/blocks/ic2/blockRubWood.png")
+    # FIXME the data indicates if there is resin and which way it is facing
+#    if wood_type == 1: # Rubberwood logs
+#        # FIXME the texture needs to be split
+#        side = self.load_image_texture("textures/blocks/ic2/blockRubWood.png")
+#        top = self.load_image_texture("textures/blocks/ic2/blockRubWood.png")
+#    else: # TODO any others?
+#        side = self.load_image_texture("textures/blocks/web.png")
+#        top = self.load_image_texture("textures/blocks/web.png")
+    # choose orientation and paste textures
+    if wood_orientation == 0:
+        return self.build_block(top, side)
+    elif wood_orientation == 4: # east-west orientation
+        return self.build_full_block(side.rotate(90), None, None, top, side.rotate(90))
+    elif wood_orientation == 8: # north-south orientation
+        return self.build_full_block(side, None, None, side.rotate(270), top)
+    return self.build_block(top, side)
+
+# IC2: Rubberwood Leaves
+@material(blockid=242, data=range(16), solid=True, transparent=True)
+def ic2_leaves(self, blockid, data):
+    if data & 7 == 0: # Rubberwood Leaves
+        t = self.load_image_texture("textures/blocks/ic2/blockRubLeaves.png")
+    else: # TODO any others?
+        t = self.load_image_texture("textures/blocks/web.png")
+    return self.build_block(t, t)
+
+# IC2: Ores
+@material(blockid=247, data=range(16), solid=True)
+def ic2_leaves(self, blockid, data):
+    if data == 0: # Uranium Ore
+        t = self.load_image_texture("textures/blocks/ic2/blockOreUran.png")
+    else: # TODO any others?
+        t = self.load_image_texture("textures/blocks/web.png")
+    return self.build_block(t, t)
 
 #################################
 #	 Thermal Expansion			#
@@ -4277,6 +4384,11 @@ def tic_slimedirt(self, blockid, data):
 #    I:Tesseract=2007
 #	...
 #}
+# Copper: 2001:0
+# Tin: 2001:1
+# Silver: 2001:2
+# Lead: 2001:3
+# Ferrous: 2001:4
 
 #################################
 #	 	Thaumcraft				#
@@ -4308,6 +4420,42 @@ def tic_slimedirt(self, blockid, data):
 #    I:BlockWoodenDevice=2417
 #}
 
+# Thaumcraft: Ores (I:BlockCustomOre=2402)
+@material(blockid=2402, data=range(8), solid=True)
+def thaumcraft_ore(self, blockid, data):
+    # choose textures
+    if data == 0: # Cinnabar Ore
+        t = self.load_image_texture("textures/blocks/thaumcraft/cinnibar.png")
+        # FIXME how could we render the correct colors on the animated parts?
+    elif data == 1: # Air Infused Stone
+        t = self.load_image_texture("textures/blocks/thaumcraft/infusedorestone.png")
+    elif data == 2: # Fire Infused Stone
+        t = self.load_image_texture("textures/blocks/thaumcraft/infusedorestone.png")
+    elif data == 3: # Water Infused Stone
+        t = self.load_image_texture("textures/blocks/thaumcraft/infusedorestone.png")
+    elif data == 4: # Earth Infused Stone
+        t = self.load_image_texture("textures/blocks/thaumcraft/infusedorestone.png")
+    elif data == 5: # Vis Infused Stone
+        t = self.load_image_texture("textures/blocks/thaumcraft/infusedorestone.png")
+    elif data == 6: # Dull Infused Stone
+        t = self.load_image_texture("textures/blocks/thaumcraft/infusedorestone.png")
+    elif data == 7: # Amber Bearing Stone
+        t = self.load_image_texture("textures/blocks/thaumcraft/amberore.png")
+    else: # TODO any others?
+        t = self.load_image_texture("textures/blocks/web.png")
+    return self.build_block(t, t)
+
+# Thaumcraft: Cinderpearl, Simmerleaf (I:BlockCustomPlant=2403)
+@material(blockid=2403, data=range(16), transparent=True)
+def thaumcraft_plant(self, blockid, data):
+    if data == 2: # Simmerleaf
+        t = self.load_image_texture("textures/blocks/thaumcraft/shimmerleaf.png")
+    elif data == 3: # Cinderpearl
+        t = self.load_image_texture("textures/blocks/thaumcraft/cinderpearl.png")
+    else:
+        t = self.load_image_texture("textures/blocks/web.png")
+    return self.build_sprite(t)
+
 # Thaumcraft: Greatwood, Silverwood logs (I:BlockMagicalLog=2404)
 @material(blockid=2404, data=range(16), solid=True)
 def thaumcraft_log(self, blockid, data):
@@ -4327,10 +4475,7 @@ def thaumcraft_log(self, blockid, data):
     elif wood_type == 1: # Silverwood Log
         side = self.load_image_texture("textures/blocks/thaumcraft/silverwoodside.png")
         top = self.load_image_texture("textures/blocks/thaumcraft/silverwoodtop.png")
-    elif wood_type == 2: # TODO
-        side = self.load_image_texture("textures/blocks/web.png")
-        top = self.load_image_texture("textures/blocks/web.png")
-    elif wood_type == 3: # TODO
+    else: # TODO any others?
         side = self.load_image_texture("textures/blocks/web.png")
         top = self.load_image_texture("textures/blocks/web.png")
     # choose orientation and paste textures
@@ -4341,20 +4486,20 @@ def thaumcraft_log(self, blockid, data):
     elif wood_orientation == 8: # north-south orientation
         return self.build_full_block(side, None, None, side.rotate(270), top)
 
-# Thaumcraft: Greatwood & silverwood leaves (I:BlockMagicalLeaves=2405)
-@material(blockid=2405, data=range(16), solid=True)
+# Thaumcraft: Greatwood & Silverwood leaves (I:BlockMagicalLeaves=2405)
+@material(blockid=2405, data=range(16), solid=True, transparent=True)
 def thaumcraft_leaves(self, blockid, data):
     # choose textures
-    if data == 0: # Greatwood Leaves
+    if data & 7 == 0: # Greatwood Leaves
         t = self.load_image_texture("textures/blocks/thaumcraft/greatwoodleaves.png")
-    elif data == 9: # Silverwood Leaves
+    elif data & 7 == 1: # Silverwood Leaves
         t = self.load_image_texture("textures/blocks/thaumcraft/silverwoodleaves.png")
-    else: # TODO
+    else: # TODO any others?
         t = self.load_image_texture("textures/blocks/web.png")
     return self.build_block(t, t)
 
 # Thaumcraft: Obsidian totem (I:BlockCosmeticSolid=2422)
-# FIXME: This is not adequate, nor right, just a quick hack to get some totems showing
+# FIXME: This is not adequate, nor right, just a quick hack to get "some totems" showing
 block(blockid=2422, top_image="textures/blocks/thaumcraft/obsidiantotem3.png")
 
 #################################
@@ -4378,31 +4523,24 @@ block(blockid=2422, top_image="textures/blocks/thaumcraft/obsidiantotem3.png")
 #*    I:"Skystone ID"=171
 #}
 
-# BoP: Ash Block
+# BoP: Ash Block (I:"Ash Block ID"=163)
 block(blockid=163, top_image="textures/blocks/bop/ashblock.png")
-
-# BoP: Ash Stone
+# BoP: Ash Stone (I:"Ash Stone ID"=164)
 block(blockid=164, top_image="textures/blocks/bop/ashstone.png")
-
-# BoP: Crag Rock
+# BoP: Crag Rock (I:"Crag Rock ID"=172)
 block(blockid=172, top_image="textures/blocks/bop/cragrock.png")
-
-# BoP: Dried Dirt
+# BoP: Dried Dirt (I:"Dried Dirt ID"=161)
 block(blockid=161, top_image="textures/blocks/bop/drieddirt.png")
-
-# BoP: Hard Dirt
+# BoP: Hard Dirt (I:"Hard Dirt ID"=168)
 block(blockid=168, top_image="textures/blocks/bop/harddirt.png")
-
-# BoP: Hard Ice
+# BoP: Hard Ice (I:"Hard Ice ID"=165)
 block(blockid=165, top_image="textures/blocks/bop/hardice.png")
-
-# BoP: Hard Sand
+# BoP: Hard Sand (I:"Hard Sand ID"=167)
 block(blockid=167, top_image="textures/blocks/bop/hardsand.png")
-
-# BoP: Holy Dirt
+# BoP: Holy Dirt (I:"Holy Dirt ID"=254)
 block(blockid=254, top_image="textures/blocks/bop/holydirt.png")
 
-# BoP: Holy Grass
+# BoP: Holy Grass (I:"Holy Grass ID"=255)
 @material(blockid=255, nodata=True, solid=True)
 def bop_holygrass(self, blockid, data):
     top_img = self.load_image_texture("textures/blocks/bop/holygrass_top.png")
@@ -4410,7 +4548,7 @@ def bop_holygrass(self, blockid, data):
     img = self.build_block(top_img, side_img)
     return img
 
-# BoP: Long Grass
+# BoP: Long Grass (I:"Long Grass ID"=173)
 @material(blockid=173, nodata=True, solid=True)
 def bop_longgrass(self, blockid, data):
     top_img = self.load_image_texture("textures/blocks/bop/longgrass1.png")
@@ -4418,10 +4556,10 @@ def bop_longgrass(self, blockid, data):
     img = self.build_block(top_img, side_img)
     return img
 
-# BoP: Mud
+# BoP: Mud (I:"Mud ID"=160)
 block(blockid=160, top_image="textures/blocks/bop/mud.png")
 
-# BoP: Origin Grass
+# BoP: Origin Grass (I:"Origin Grass ID"=166)
 @material(blockid=166, nodata=True, solid=True)
 def bop_origingrass(self, blockid, data):
     top_img = self.load_image_texture("textures/blocks/bop/origingrass1.png")
@@ -4429,10 +4567,10 @@ def bop_origingrass(self, blockid, data):
     img = self.build_block(top_img, side_img)
     return img
 
-# BoP: Red Rock
+# BoP: Red Rock (I:"Red Rock ID"=162) 
 block(blockid=162, top_image="textures/blocks/bop/redrock.png")
 
-# BoP: Skystone FIXME? is this holystone?
+# BoP: Skystone FIXME? is this holystone? (I:"Skystone ID"=171)
 block(blockid=171, top_image="textures/blocks/bop/holystone.png")
 
 #block {
@@ -4495,50 +4633,69 @@ block(blockid=171, top_image="textures/blocks/bop/holystone.png")
 #}
 
 
-#    I:"Acacia Stairs ID"=1952
-#    I:"Altar ID"=1979
-
-# BoP: Amethyst Ore (I:"Amethyst Ore ID"=1942)
-block(blockid=1942, top_image="textures/blocks/bop/amethystore.png")
-
-# BoP: Bamboo (I:"Bamboo ID"=1927)
-sprite(blockid=1927, imagename="textures/blocks/bop/bamboo.png")
-
-#    I:"Bones ID"=1968
-#    I:"Cherry Stairs ID"=1953
-
-# BoP: Cloud (I:"Cloud ID"=1964)
-block(blockid=1964, top_image="textures/blocks/bop/cloud.png", transparent=True)
-
-# BoP: Leaves (I:"Colourized Leaves ID"=1962)
-@material(blockid=1962, data=range(6), transparent=True, solid=True)
-def bop_leaves2(self, blockid, data):
-    if data == 0: # Acacia Leaves
-        t = self.load_image_texture("textures/blocks/bop/leaves_acacia_fancy.png")
-    elif data == 1: # TODO
-        t = self.load_image_texture("textures/blocks/web.png")
-    elif data == 2: # TODO
-        t = self.load_image_texture("textures/blocks/web.png")
-    elif data == 3: # TODO
-        t = self.load_image_texture("textures/blocks/web.png")
-    elif data == 4: # TODO
-        t = self.load_image_texture("textures/blocks/web.png")
-    elif data == 5: # Pine Leaves
-        t = self.load_image_texture("textures/blocks/bop/leaves_pine_fancy.png")
-    else: # TODO
-        t = self.load_image_texture("textures/blocks/web.png")
-    return self.build_block(t, t)
-
+#    I:"Willow ID"=1922
+#    I:"Mud Bricks ID"=1928
+#    I:"Mud Brick Stairs ID"=1929
+#    I:"Stone Double Slab ID"=1930
+#    I:"Stone Single Slab ID"=1931
+#    I:"Tree Moss ID"=1932
+#    I:"Sapling ID"=1937
 #    I:"Colourized Sapling ID"=1938
-#    I:"Coral ID"=1969
-#    I:"Crystal ID"=1963
+#    I:"Red Cobble Stairs ID"=1939
+#    I:"Red Brick Stairs ID"=1940
+#    I:"Promised Land Portal ID"=1941
+#    I:"Ivy ID"=1943
+#    I:"Planks ID"=1947
+#    I:"Wooden Double Slab 1 ID"=1948
+#    I:"Wooden Single Slab 1 ID"=1949
+#    I:"Wooden Double Slab 2 ID"=1950
+#    I:"Wooden Single Slab 2 ID"=1951
+#    I:"Acacia Stairs ID"=1952
+#    I:"Cherry Stairs ID"=1953
 #    I:"Dark Stairs ID"=1954
 #    I:"Fir Stairs ID"=1955
+#    I:"Holy Stairs ID"=1956
+#    I:"Magic Stairs ID"=1957
+#    I:"Mangrove Stairs ID"=1958
+#    I:"Palm Stairs ID"=1959
+#    I:"Redwood Stairs ID"=1960
+#    I:"Willow Stairs ID"=1961
+#    I:"Crystal ID"=1963
+#    I:"Skystone Cobble Stairs ID"=1965
+#    I:"Skystone Brick Stairs ID"=1966
+#    I:"Bones ID"=1968
+#    I:"Coral ID"=1969
+#    I:"Pine Stairs ID"=1975
+#    I:"Hell Bark Stairs ID"=1976
+#    I:"Jacaranda ID"=1977
+#    I:"Glass ID"=1978
+#    I:"Altar ID"=1979
+#    I:"Puddle ID"=1980
+#    I:"Grave ID"=1981
+
+#    I:"Moss ID"=4095
+
+
+
+# BoP: Plants (I:"Plant ID"=1920)
+@material(blockid=1920, data=range(16), transparent=True)
+def bop_plants(self, blockid, data):
+    if data == 0: # Dead Grass
+        t = self.load_image_texture("textures/blocks/bop/deadgrass.png")
+    elif data == 1: # Desert Grass
+        t = self.load_image_texture("textures/blocks/bop/desertgrass.png")
+    elif data == 3: # Dune Grass
+        t = self.load_image_texture("textures/blocks/bop/dunegrass.png")
+    elif data == 5: # Thorns
+        t = self.load_image_texture("textures/blocks/bop/thorn.png")
+    else: # TODO
+        t = self.load_image_texture("textures/blocks/web.png")
+    return self.build_billboard(t)
 
 # BoP: Flowers (I:"Flower ID"=1921)
 @material(blockid=1921, data=range(16), transparent=True)
 def bop_flower(self, blockid, data):
-    if data == 0: # Clover FIXME
+    if data == 0: # Clover FIXME?
         t = self.load_image_texture("textures/blocks/bop/clover.png")
         img = Image.new("RGBA", (24,24), self.bgcolor)
         tmp = self.transform_image_top(t)
@@ -4572,20 +4729,59 @@ def bop_flower(self, blockid, data):
         t = self.load_image_texture("textures/blocks/bop/sunflowerbottom.png")
     elif data == 14: # Sunflower (top)
         t = self.load_image_texture("textures/blocks/bop/sunflowertop.png")
-    elif data == 15: # TODO
-        t = self.load_image_texture("textures/blocks/web.png")
-
+    elif data == 15: # Dandelion
+        t = self.load_image_texture("textures/blocks/bop/dandelion.png")
     return self.build_sprite(t)
+
+# BoP: Leaves (I:"Leaf Block ID 1"=1923)
+@material(blockid=1923, data=range(16), transparent=True, solid=True)
+def bop_leaves1(self, blockid, data):
+    if data & 7 == 0: # Yellow Autumn Leaves
+        t = self.load_image_texture("textures/blocks/bop/leaves_yellowautumn_fancy.png")
+    elif data & 7 == 1: # Bamboo Leaves
+        t = self.load_image_texture("textures/blocks/bop/leaves_bamboo_fancy.png")
+    elif data & 7 == 2: # Magic Leaves
+        t = self.load_image_texture("textures/blocks/bop/leaves_magic_fancy.png")
+    elif data & 7 == 3: # TODO
+        t = self.load_image_texture("textures/blocks/web.png")
+    elif data & 7 == 4: # Dying Leaves
+        t = self.load_image_texture("textures/blocks/bop/leaves_dead_fancy.png")
+    elif data & 7 == 5: # Fir Leaves
+        t = self.load_image_texture("textures/blocks/bop/leaves_fir_fancy.png")
+    elif data & 7 == 6: # TODO
+        t = self.load_image_texture("textures/blocks/web.png")
+    elif data & 7 == 7: # Orange Autumn Leaves
+        t = self.load_image_texture("textures/blocks/bop/leaves_orangeautumn_fancy.png")
+#    else: # TODO there shouldn't be others, right? The 4th bit is used for non-decay or something?
+#        t = self.load_image_texture("textures/blocks/web.png")
+    return self.build_block(t, t)
+
+# BoP: Leaves (I:"Leaf Block ID 2"=1924)
+@material(blockid=1924, data=range(4), transparent=True, solid=True)
+def bop_leaves2(self, blockid, data):
+    if data & 7 == 0: # TODO
+        t = self.load_image_texture("textures/blocks/web.png")
+    elif data & 7 == 1: # Pink Cherry leaves
+        t = self.load_image_texture("textures/blocks/bop/leaves_pinkcherry_fancy.png")
+    elif data & 7 == 2: # Maple Leaves
+        t = self.load_image_texture("textures/blocks/bop/leaves_maple_fancy.png")
+    elif data & 7 == 3: # White Cherry Leaves
+        t = self.load_image_texture("textures/blocks/bop/leaves_whitecherry_fancy.png")
+    return self.build_block(t, t)
 
 # BoP: Tall grass-like stuff (I:"Foliage ID"=1925)
 @material(blockid=1925, data=range(16), transparent=True)
 def bop_foliage(self, blockid, data):
-    if data == 0: # TODO
-        t = self.load_image_texture("textures/blocks/web.png")
-    elif data == 1: # TODO
-        t = self.load_image_texture("textures/blocks/web.png")
-    elif data == 2: # TODO
-        t = self.load_image_texture("textures/blocks/web.png")
+    if data == 0: # Algae
+        t = self.load_image_texture("textures/blocks/bop/algae.png")
+        img = Image.new("RGBA", (24,24), self.bgcolor)
+        tmp = self.transform_image_top(t)
+        alpha_over(img, tmp, (0,12), tmp)
+        return img
+    elif data == 1: # Short Grass
+        t = self.load_image_texture("textures/blocks/bop/shortgrass.png")
+    elif data == 2: # Mediumgrass
+        t = self.load_image_texture("textures/blocks/bop/mediumgrass.png")
     elif data == 3: # High Grass (bottom)
         t = self.load_image_texture("textures/blocks/bop/highgrassbottom.png")
     elif data == 4: # Bush
@@ -4612,7 +4808,6 @@ def bop_foliage(self, blockid, data):
         t = self.load_image_texture("textures/blocks/web.png")
     elif data == 15: # TODO
         t = self.load_image_texture("textures/blocks/web.png")
-
     return self.build_billboard(t)
 
 # BoP: Apple Leaves & ?? (I:"Fruit Leaf Block ID"=1926)
@@ -4650,50 +4845,10 @@ def bop_fruit_leaves(self, blockid, data):
         t = self.load_image_texture("textures/blocks/web.png")
     elif data == 15: # TODO
         t = self.load_image_texture("textures/blocks/web.png")
-
     return self.build_block(t, t)
 
-#    I:"Glass ID"=1978
-#    I:"Grave ID"=1981
-#    I:"Hell Bark Stairs ID"=1976
-#    I:"Holy Stairs ID"=1956
-#    I:"Ivy ID"=1943
-#    I:"Jacaranda ID"=1977
-
-# BoP: Leaves (I:"Leaf Block ID 1"=1923)
-@material(blockid=1923, data=range(8), transparent=True, solid=True)
-def bop_leaves1(self, blockid, data):
-    if data == 0: # Yellow Autumn Leaves
-        t = self.load_image_texture("textures/blocks/bop/leaves_yellowautumn_fancy.png")
-    elif data == 1: # Bamboo Leaves
-        t = self.load_image_texture("textures/blocks/bop/leaves_bamboo_fancy.png")
-    elif data == 2: # Magic Leaves
-        t = self.load_image_texture("textures/blocks/bop/leaves_magic_fancy.png")
-    elif data == 3: # TODO
-        t = self.load_image_texture("textures/blocks/web.png")
-    elif data == 4: # TODO
-        t = self.load_image_texture("textures/blocks/web.png")
-    elif data == 5: # Fir Leaves
-        t = self.load_image_texture("textures/blocks/bop/leaves_fir_fancy.png")
-    elif data == 6: # TODO
-        t = self.load_image_texture("textures/blocks/web.png")
-    elif data == 7: # Orange Autumn Leaves
-        t = self.load_image_texture("textures/blocks/bop/leaves_orangeautumn_fancy.png")
-
-    return self.build_block(t, t)
-
-# BoP: Leaves (I:"Leaf Block ID 2"=1924)
-@material(blockid=1924, data=range(4), transparent=True, solid=True)
-def bop_leaves2(self, blockid, data):
-    if data == 0: # TODO
-        t = self.load_image_texture("textures/blocks/web.png")
-    elif data == 1: # Pink Cherry leaves
-        t = self.load_image_texture("textures/blocks/bop/leaves_pinkcherry_fancy.png")
-    elif data == 2: # Maple Leaves
-        t = self.load_image_texture("textures/blocks/bop/leaves_maple_fancy.png")
-    elif data == 3: # White Cherry Leaves
-        t = self.load_image_texture("textures/blocks/bop/leaves_whitecherry_fancy.png")
-    return self.build_block(t, t)
+# BoP: Bamboo (I:"Bamboo ID"=1927)
+sprite(blockid=1927, imagename="textures/blocks/bop/bamboo.png")
 
 # BoP: Logs 1 (I:"Log Block ID 1"=1933)
 @material(blockid=1933, data=range(16), solid=True)
@@ -4794,6 +4949,47 @@ def bop_log2(self, blockid, data):
     elif wood_orientation == 8: # north-south orientation
         return self.build_full_block(side, None, None, side.rotate(270), top)
 
+# BoP: Giant Flowers (I:"Petal ID"=1936)
+@material(blockid=1936, data=range(2), solid=True)
+def bop_petal(self, blockid, data):
+    if data == 0: # Giant Red Flower
+        t = self.load_image_texture("textures/blocks/bop/bigflowerred.png")
+    elif data == 1: # Giant Yellow Flower
+        t = self.load_image_texture("textures/blocks/bop/bigfloweryellow.png")
+    return self.build_block(t, t)
+
+# BoP: Amethyst Ore (I:"Amethyst Ore ID"=1942)
+block(blockid=1942, top_image="textures/blocks/bop/amethystore.png")
+
+# BoP: Leaves (I:"Colourized Leaves ID"=1962)
+@material(blockid=1962, data=range(16), transparent=True, solid=True)
+def bop_leaves2(self, blockid, data):
+    if data & 7 == 0: # Acacia Leaves
+        t = self.load_image_texture("textures/blocks/bop/leaves_acacia_fancy.png")
+    elif data & 7 == 5: # Pine Leaves
+        t = self.load_image_texture("textures/blocks/bop/leaves_pine_fancy.png")
+    else: # TODO
+        t = self.load_image_texture("textures/blocks/web.png")
+    return self.build_block(t, t)
+
+# BoP: Cloud (I:"Cloud ID"=1964)
+block(blockid=1964, top_image="textures/blocks/bop/cloud.png", transparent=True)
+
+# BoP: Mushrooms (I:"Mushroom ID"=1967)
+@material(blockid=1967, data=range(16), transparent=True)
+def bop_mushrooms(self, blockid, data):
+    if data == 0: # Toadstool
+        t = self.load_image_texture("textures/blocks/bop/toadstool.png")
+    elif data == 1: # Portobello
+        t = self.load_image_texture("textures/blocks/bop/portobello.png")
+    elif data == 2: # Blue Milk Cap
+        t = self.load_image_texture("textures/blocks/bop/bluemilk.png")
+    elif data == 3: # Glowshroom
+        t = self.load_image_texture("textures/blocks/bop/glowshroom.png")
+    else: # TODO
+        t = self.load_image_texture("textures/blocks/web.png")
+    return self.build_billboard(t)
+
 # BoP: Logs 4 (I:"Log Block ID 4"=1974)
 @material(blockid=1974, data=range(16), solid=True)
 def bop_log2(self, blockid, data):
@@ -4827,44 +5023,3 @@ def bop_log2(self, blockid, data):
     elif wood_orientation == 8: # north-south orientation
         return self.build_full_block(side, None, None, side.rotate(270), top)
 
-
-#    I:"Magic Stairs ID"=1957
-#    I:"Mangrove Stairs ID"=1958
-#    I:"Moss ID"=4095
-#    I:"Mud Brick Stairs ID"=1929
-#    I:"Mud Bricks ID"=1928
-#    I:"Mushroom ID"=1967
-#    I:"Palm Stairs ID"=1959
-
-# BoP: Giant Flowers (I:"Petal ID"=1936)
-@material(blockid=1936, data=range(2), solid=True)
-def bop_petal(self, blockid, data):
-    if data == 0: # Giant Red Flower
-        t = self.load_image_texture("textures/blocks/bop/bigflowerred.png")
-    elif data == 1: # Giant Yellow Flower
-        t = self.load_image_texture("textures/blocks/bop/bigfloweryellow.png")
-    return self.build_block(t, t)
-
-#    I:"Pine Stairs ID"=1975
-#    I:"Planks ID"=1947
-
-#    I:"Plant ID"=1920
-
-
-#    I:"Promised Land Portal ID"=1941
-#    I:"Puddle ID"=1980
-#    I:"Red Brick Stairs ID"=1940
-#    I:"Red Cobble Stairs ID"=1939
-#    I:"Redwood Stairs ID"=1960
-#    I:"Sapling ID"=1937
-#    I:"Skystone Brick Stairs ID"=1966
-#    I:"Skystone Cobble Stairs ID"=1965
-#    I:"Stone Double Slab ID"=1930
-#    I:"Stone Single Slab ID"=1931
-#    I:"Tree Moss ID"=1932
-#    I:"Willow ID"=1922
-#    I:"Willow Stairs ID"=1961
-#    I:"Wooden Double Slab 1 ID"=1948
-#    I:"Wooden Double Slab 2 ID"=1950
-#    I:"Wooden Single Slab 1 ID"=1949
-#    I:"Wooden Single Slab 2 ID"=1951

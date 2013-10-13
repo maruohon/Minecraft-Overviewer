@@ -102,7 +102,16 @@ base_draw(void *data, RenderState *state, PyObject *src, PyObject *mask, PyObjec
         /* vines */
         state->block == 106 ||
         /* lily pads */
-        state->block == 111)
+        state->block == 111 ||
+        /* BoP: Tall grass-like stuff (I:"Foliage ID"=1925) */
+        state->block == 1925 ||
+        /* BoP: Leaves (I:"Colourized Leaves ID"=1962) */
+        state->block == 1962 ||
+        /* Thaumcraft: Greatwood Leaves (I:BlockMagicalLeaves=2405) */
+        (state->block == 2405 && (state->block_data & 7) == 0) ||
+        /* IC2: Rubber Tree Leaves (242:0) */
+        state->block == 242
+        )
     {
         /* do the biome stuff! */
         PyObject *facemask = mask;
@@ -135,6 +144,16 @@ base_draw(void *data, RenderState *state, PyObject *src, PyObject *mask, PyObjec
                 flip_xy = 1;
             }
             break;
+        /* BoP: Leaves (I:"Colourized Leaves ID"=1962) */
+        case 1962:
+        /* Thaumcraft: Greatwood Leaves (I:BlockMagicalLeaves=2405) */
+        case 2405:
+        /* IC2: Rubber Tree Leaves (242:0) */
+        case 242:
+            color_table = self->foliagecolor;
+            break;
+        /* BoP: Tall grass-like stuff (I:"Foliage ID"=1925) */
+        case 1925:
         case 31:
             /* tall grass */
             color_table = self->grasscolor;
