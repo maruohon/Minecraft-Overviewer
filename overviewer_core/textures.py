@@ -4556,8 +4556,16 @@ def bop_longgrass(self, blockid, data):
     img = self.build_block(top_img, side_img)
     return img
 
-# BoP: Mud (I:"Mud ID"=160)
-block(blockid=160, top_image="textures/blocks/bop/mud.png")
+# BoP: Mud, Quicksand, ... (I:"Mud ID"=160)
+@material(blockid=160, data=range(16), solid=True)
+def bop_mud(self, blockid, data):
+    if data == 0: # Mud
+        t = self.load_image_texture("textures/blocks/bop/mud.png")
+    elif data == 1: # Quicksand
+        t = self.load_image_texture("textures/blocks/bop/quicksand.png")
+    else: # TODO Any others?
+        t = self.load_image_texture("textures/blocks/web.png")
+    return self.build_block(t, t)
 
 # BoP: Origin Grass (I:"Origin Grass ID"=166)
 @material(blockid=166, nodata=True, solid=True)
@@ -4684,10 +4692,14 @@ def bop_plants(self, blockid, data):
         t = self.load_image_texture("textures/blocks/bop/deadgrass.png")
     elif data == 1: # Desert Grass
         t = self.load_image_texture("textures/blocks/bop/desertgrass.png")
+    elif data == 2: # Desert Sprouts
+        t = self.load_image_texture("textures/blocks/bop/desertsprouts.png")
     elif data == 3: # Dune Grass
         t = self.load_image_texture("textures/blocks/bop/dunegrass.png")
     elif data == 5: # Thorns
         t = self.load_image_texture("textures/blocks/bop/thorn.png")
+    elif data == 12: # Tiny Cactus
+        t = self.load_image_texture("textures/blocks/bop/cactus.png")
     else: # TODO
         t = self.load_image_texture("textures/blocks/web.png")
     return self.build_billboard(t)
@@ -4918,7 +4930,7 @@ def bop_log2(self, blockid, data):
 
 # BoP: Logs 3 (I:"Log Block ID 3"=1935)
 @material(blockid=1935, data=range(16), solid=True)
-def bop_log2(self, blockid, data):
+def bop_log3(self, blockid, data):
     # extract orientation and wood type frorm data bits
     wood_type = data & 3
     wood_orientation = data & 12
@@ -4963,7 +4975,7 @@ block(blockid=1942, top_image="textures/blocks/bop/amethystore.png")
 
 # BoP: Leaves (I:"Colourized Leaves ID"=1962)
 @material(blockid=1962, data=range(16), transparent=True, solid=True)
-def bop_leaves2(self, blockid, data):
+def bop_colourized_leaves(self, blockid, data):
     if data & 7 == 0: # Acacia Leaves
         t = self.load_image_texture("textures/blocks/bop/leaves_acacia_fancy.png")
     elif data & 7 == 5: # Pine Leaves
@@ -4992,7 +5004,7 @@ def bop_mushrooms(self, blockid, data):
 
 # BoP: Logs 4 (I:"Log Block ID 4"=1974)
 @material(blockid=1974, data=range(16), solid=True)
-def bop_log2(self, blockid, data):
+def bop_log4(self, blockid, data):
     # extract orientation and wood type frorm data bits
     wood_type = data & 3
     wood_orientation = data & 12
