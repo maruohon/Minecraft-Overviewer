@@ -4384,11 +4384,100 @@ def ic2_leaves(self, blockid, data):
 #    I:Tesseract=2007
 #	...
 #}
-# Copper: 2001:0
-# Tin: 2001:1
-# Silver: 2001:2
-# Lead: 2001:3
-# Ferrous: 2001:4
+
+# Thermal Expansion: Ores (I:Ore=2001)
+@material(blockid=2001, data=range(5), solid=True)
+def te_ores(self, blockid, data):
+    if data == 0: # Copper Ore
+        t = self.load_image_texture("textures/blocks/te/Ore_Copper.png")
+    elif data == 1: # Tin Ore
+        t = self.load_image_texture("textures/blocks/te/Ore_Tin.png")
+    elif data == 2: # Silver Ore
+        t = self.load_image_texture("textures/blocks/te/Ore_Silver.png")
+    elif data == 3: # Lead Ore
+        t = self.load_image_texture("textures/blocks/te/Ore_Lead.png")
+    elif data == 4: # Ferrous Ore
+        t = self.load_image_texture("textures/blocks/te/Ore_Ferrous.png")
+    else: # TODO any others?
+        t = self.load_image_texture("textures/blocks/web.png")
+    return self.build_block(t, t)
+
+# Thermal Expansion: Machines (I:Machine=2002)
+@material(blockid=2002, data=range(11), solid=True)
+def te_machines(self, blockid, data):
+    top = self.load_image_texture("textures/blocks/te/Machine_Top.png")
+    if data == 0: # Powered Furnace
+        side = self.load_image_texture("textures/blocks/te/Machine_Face_Furnace.png")
+    elif data == 1: # Pulverizer
+        side = self.load_image_texture("textures/blocks/te/Machine_Face_Pulverizer.png")
+    elif data == 2: # Sawmill
+        side = self.load_image_texture("textures/blocks/te/Machine_Face_Sawmill.png")
+    elif data == 3: # Induction Smelter
+        side = self.load_image_texture("textures/blocks/te/Machine_Face_Smelter.png")
+    elif data == 4: # Magma Crucible
+        side = self.load_image_texture("textures/blocks/te/Machine_Face_Crucible.png")
+    elif data == 5: # Liquid Transposer
+        side = self.load_image_texture("textures/blocks/te/Machine_Face_Transposer.png")
+    elif data == 6: # Glacial Precipitator
+        side = self.load_image_texture("textures/blocks/te/Machine_Face_IceGen.png")
+    elif data == 7: # Igneous Extruder
+        side = self.load_image_texture("textures/blocks/te/Machine_Face_RockGen.png")
+    elif data == 8: # Aqueous Accumulator
+        side = self.load_image_texture("textures/blocks/te/Machine_Face_WaterGen.png")
+    elif data == 9: # Cyclic Assembler
+        side = self.load_image_texture("textures/blocks/te/Machine_Face_Assembler.png")
+    elif data == 10: # Energetic Infuser
+        side = self.load_image_texture("textures/blocks/te/Machine_Face_Charger.png")
+    else: # TODO any others?
+        side = self.load_image_texture("textures/blocks/web.png")
+    return self.build_block(top, side)
+
+# Thermal Expansion: Redstone Energy Cell (I:EnergyCell=2005) FIXME the inner part is not rendered...
+block(blockid=2005, top_image="textures/blocks/te/EnergyCell.png")
+
+# Thermal Expansion: Tesseracts (I:Tesseract=2007) FIXME the inner part is not rendered...
+@material(blockid=2007, data=range(3), solid=True)
+def te_tesseract(self, blockid, data):
+    if data == 0: # Energy Tessearct
+        side = self.load_image_texture("textures/blocks/te/Tesseract_Energy.png")
+    elif data == 1: # Liquid Tessearct
+        side = self.load_image_texture("textures/blocks/te/Tesseract_Liquid.png")
+    elif data == 2: # Item Tesseract
+        side = self.load_image_texture("textures/blocks/te/Tesseract_Item.png")
+    return self.build_block(side, side)
+
+# Thermal Expansion: Glowstone Illuminator (I:Lamp=2009)
+block(blockid=2009, top_image="textures/blocks/te/Lamp_Basic.png")
+
+# Thermal Expansion: Storage Blocks (I:Storage=2010)
+@material(blockid=2010, data=range(8), solid=True)
+def te_storageblocks(self, blockid, data):
+    if data == 0: # Copper Block
+        side = self.load_image_texture("textures/blocks/te/Block_Copper.png")
+    elif data == 1: # Tin Block
+        side = self.load_image_texture("textures/blocks/te/Block_Tin.png")
+    elif data == 2: # Silver Block
+        side = self.load_image_texture("textures/blocks/te/Block_Silver.png")
+    elif data == 3: # Lead Block
+        side = self.load_image_texture("textures/blocks/te/Block_Lead.png")
+    elif data == 4: # Ferrous Block
+        side = self.load_image_texture("textures/blocks/te/Block_Nickel.png")
+    elif data == 5: # Shiny Block
+        side = self.load_image_texture("textures/blocks/te/Block_Platinum.png")
+    elif data == 6: # Electrum Block
+        side = self.load_image_texture("textures/blocks/te/Block_Electrum.png")
+    elif data == 7: # Invar Block
+        side = self.load_image_texture("textures/blocks/te/Block_Invar.png")
+    return self.build_block(side, side)
+
+# Thermal Expansion: Hardened Glass (I:Glass=2011)
+block(blockid=2011, top_image="textures/blocks/te/Glass_Hardened.png")
+
+# Thermal Expansion: Rockwool (I:Rockwool=2012)
+@material(blockid=2012, data=range(16), solid=True)
+def te_rockwool(self, blockid, data):
+    t = self.load_image_texture("textures/blocks/cloth_%d.png" % data)
+    return self.build_block(t, t)
 
 #################################
 #	 	Thaumcraft				#
