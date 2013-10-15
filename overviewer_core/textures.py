@@ -4769,16 +4769,20 @@ def bop_leaves1(self, blockid, data):
     return self.build_block(t, t)
 
 # BoP: Leaves (I:"Leaf Block ID 2"=1924)
-@material(blockid=1924, data=range(4), transparent=True, solid=True)
+@material(blockid=1924, data=range(16), transparent=True, solid=True)
 def bop_leaves2(self, blockid, data):
     if data & 7 == 0: # TODO
         t = self.load_image_texture("textures/blocks/web.png")
+        return self.build_sprite(t)
     elif data & 7 == 1: # Pink Cherry leaves
         t = self.load_image_texture("textures/blocks/bop/leaves_pinkcherry_fancy.png")
     elif data & 7 == 2: # Maple Leaves
         t = self.load_image_texture("textures/blocks/bop/leaves_maple_fancy.png")
     elif data & 7 == 3: # White Cherry Leaves
         t = self.load_image_texture("textures/blocks/bop/leaves_whitecherry_fancy.png")
+    else: # TODO any others?
+        t = self.load_image_texture("textures/blocks/web.png")
+        return self.build_sprite(t)
     return self.build_block(t, t)
 
 # BoP: Tall grass-like stuff (I:"Foliage ID"=1925)
@@ -4806,57 +4810,24 @@ def bop_foliage(self, blockid, data):
         t = self.load_image_texture("textures/blocks/web.png")
     elif data == 8: # Berry Bush
         t = self.load_image_texture("textures/blocks/bop/berrybush.png")
-    elif data == 9: # TODO
-        t = self.load_image_texture("textures/blocks/web.png")
-    elif data == 10: # TODO
-        t = self.load_image_texture("textures/blocks/web.png")
-    elif data == 11: # TODO
-        t = self.load_image_texture("textures/blocks/web.png")
-    elif data == 12: # TODO
-        t = self.load_image_texture("textures/blocks/web.png")
-    elif data == 13: # TODO
-        t = self.load_image_texture("textures/blocks/web.png")
-    elif data == 14: # TODO
-        t = self.load_image_texture("textures/blocks/web.png")
-    elif data == 15: # TODO
+    else: # TODO any others?
         t = self.load_image_texture("textures/blocks/web.png")
     return self.build_billboard(t)
 
 # BoP: Apple Leaves & ?? (I:"Fruit Leaf Block ID"=1926)
 @material(blockid=1926, data=range(16), transparent=True, solid=True)
 def bop_fruit_leaves(self, blockid, data):
-    if data == 0: # Apple leaves, empty
+    if data & 7 == 0: # Apple leaves, empty
         t = self.load_image_texture("textures/blocks/bop/leaves_apple0_fancy.png")
-    elif data == 1: # TODO
-        t = self.load_image_texture("textures/blocks/web.png")
-    elif data == 2: # Apple leaves, raw fruit
-        t = self.load_image_texture("textures/blocks/bop/leaves_apple2_fancy.png")
-    elif data == 3: # TODO
-        t = self.load_image_texture("textures/blocks/web.png")
-    elif data == 4: # TODO
-        t = self.load_image_texture("textures/blocks/web.png")
-    elif data == 5: # TODO
-        t = self.load_image_texture("textures/blocks/web.png")
-    elif data == 6: # TODO
-        t = self.load_image_texture("textures/blocks/web.png")
-    elif data == 7: # TODO
-        t = self.load_image_texture("textures/blocks/web.png")
-    elif data == 8: # TODO
-        t = self.load_image_texture("textures/blocks/web.png")
-    elif data == 9: # Apple leaves, flower
+    elif data & 7 == 1: # Apple leaves, flower
         t = self.load_image_texture("textures/blocks/bop/leaves_apple1_fancy.png")
-    elif data == 10: # TODO
-        t = self.load_image_texture("textures/blocks/web.png")
-    elif data == 11: # Apple leaves, mature fruit
+    elif data & 7 == 2: # Apple leaves, raw fruit
+        t = self.load_image_texture("textures/blocks/bop/leaves_apple2_fancy.png")
+    elif data & 7 == 3: # Apple leaves, mature fruit
         t = self.load_image_texture("textures/blocks/bop/leaves_apple3_fancy.png")
-    elif data == 12: # TODO
+    else: # TODO any others?
         t = self.load_image_texture("textures/blocks/web.png")
-    elif data == 13: # TODO
-        t = self.load_image_texture("textures/blocks/web.png")
-    elif data == 14: # TODO
-        t = self.load_image_texture("textures/blocks/web.png")
-    elif data == 15: # TODO
-        t = self.load_image_texture("textures/blocks/web.png")
+        return self.build_sprite(t)
     return self.build_block(t, t)
 
 # BoP: Bamboo (I:"Bamboo ID"=1927)
