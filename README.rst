@@ -10,20 +10,20 @@ is in the FTB Unleashed mod pack, so that people can have nice overviews of thei
 
 To be more specific, this version aims to add support for rendering most of the
 "regular shaped/vanilla-like" blocks in the following mods:
-- Applied Energistics
-- Biomes O' Plenty
-- Buildcraft (mostly just Oil)
-- Dartcraft (?)
-- Forestry
-- IC2
-- Magic Bees
-- Minefactory Reloaded
-- Mystcraft (mostly just crystals)
-- Natura
-- Railcraft
-- Thaumcraft
-- Thermal Expansion
-- Tinker's Construct
+ - Applied Energistics
+ - Biomes O' Plenty
+ - Buildcraft (mostly just Oil)
+ - Dartcraft (?)
+ - Forestry
+ - IC2
+ - Magic Bees
+ - Minefactory Reloaded
+ - Mystcraft (mostly just crystals)
+ - Natura
+ - Railcraft
+ - Thaumcraft
+ - Thermal Expansion
+ - Tinker's Construct
 
 The block ids are according to the FTB Unleashed mod pack (v1.1.4). If your mod pack uses a different
 set of ids, then they must be manually adjusted (see textures.py and base.c).
@@ -39,25 +39,25 @@ in the world data, then those will be rendered as cobwebs. Blocks with unknown b
 Installation
 ------------
 Clone this repository, change to the ftb-152 branch, and then build overviewer:
-git clone git@github.com:maruohon/Minecraft-Overviewer.git Minecraft-Overviewer.git
-cd Minecraft-Overviewer.git
-git checkout origin/ftb-152
-python setup.py build
+ - git clone git@github.com:maruohon/Minecraft-Overviewer.git Minecraft-Overviewer.git
+ - cd Minecraft-Overviewer.git
+ - git checkout origin/ftb-152
+ - python setup.py build
 
 You will need to create and modify the render config file as usual.
 
 You will also need to create the texture pack and point the config file to that.
 To create the texture pack/file, you need to create a zip file, that contains the following:
-- textures directory from the 1.5.2 version of minecraft.jar
-- next, you need to copy the blocks directory from each of the mods' supported by this version of overviewer, texture directory, into the textures/blocks/ directory, renamed to the following names: ae, bc, bop, forestry, ic2, magicbees, mfr, mystcraft, natura, railcraft, te, thaumcraft, tic
-- inside the zip file, you would then have a directory structure such as the following:
+ - textures directory from the 1.5.2 version of minecraft.jar
+ - next, you need to copy the blocks directory from each of the mods' supported by this version of overviewer, texture directory, into the textures/blocks/ directory, renamed to the following names: ae, bc, bop, forestry, ic2, magicbees, mfr, mystcraft, natura, railcraft, te, thaumcraft, tic
+ - inside the zip file, you would then have a directory structure such as the following:
   - textures/blocks/gravel.png (vanilla)
   - textures/blocks/bop/aloe.png (Biomes O' Plenty)
   - textures/blocks/te/Ore_Copper.png (Thermal Expansion)
   - etc.
 
 After this, you should be able to render the world as per usual:
-python overviewer.py --config=yourconfigfile.py
+ - python overviewer.py --config=yourconfigfile.py
 
 
 ====================
