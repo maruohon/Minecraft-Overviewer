@@ -4317,54 +4317,65 @@ def mfr_leaves(self, blockid, data):
 # IC2: Rubberwood Logs
 @material(blockid=243, data=range(16), solid=True)
 def ic2_rubberwood(self, blockid, data):
-    wood_type = data & 3
-    wood_orientation = data & 12
-    if self.rotation == 1:
-        if wood_orientation == 4: wood_orientation = 8
-        elif wood_orientation == 8: wood_orientation = 4
-    elif self.rotation == 3:
-        if wood_orientation == 4: wood_orientation = 8
-        elif wood_orientation == 8: wood_orientation = 4
+    img_wet = self.load_image("textures/blocks/ic2/blockRubWood.wet.png")
+    img_dry = self.load_image("textures/blocks/ic2/blockRubWood.dry.png")
+    side_empty = img_dry.crop((32, 0, 48, 16))
+    side_dry = img_dry.crop((48, 0, 64, 16))
+    side_wet = img_wet.crop((48, 0, 64, 16))
+    top = img_dry.crop((0, 0, 16, 16))
 
-#    filename = "textures/blocks/ic2/blockRubWood.png"
-#    if filename in self.texture_cache:
-#        img = self.texture_cache[filename]
-#    else:
-#        img = self.load_image(filename)
-#        self.texture_cache[filename] = img
+    side_east = side_empty
+    side_west = side_empty
+    side_north = side_empty
+    side_south = side_empty
 
-    img = self.load_image("textures/blocks/ic2/blockRubWood.png")
-    side = img.crop((32, 0, 48, 16)).copy()
-    top = img.crop((0, 0, 16, 16)).copy()
+    # build_full_block(top, side1, side2, side3, side4, bottom=None):
+    #    side1 is in the -y face of the cube     (top left, east)
+    #    side2 is in the +x                      (top right, south)
+    #    side3 is in the -x                      (bottom left, north)
+    #    side4 is in the +y                      (bottom right, west)
 
-#    w,h = img.size
-#    if w != h:
-#        img = img.crop((0,0,w,w))
-#    if w != 16:
-#        img = img.resize((16, 16), Image.ANTIALIAS)
+    # data == 0: player placed empty log, always pointing up
+    # data == 1: World gen empty log
+    if data == 2: # Resin pointing North
+        side_north = side_wet
+    elif data == 3: # Resin pointing South
+        side_south = side_wet
+    elif data == 4: # Resin pointing West
+        side_west = side_wet
+    elif data == 5: # Resin pointing East
+        side_east = side_wet
+    elif data == 8: # Dry resin hole pointing North
+        side_north = side_dry
+    elif data == 9: # Dry resin hole pointing South
+        side_south = side_dry
+    elif data == 10: # Dry resin hole pointing West
+        side_west = side_dry
+    elif data == 11: # Dry resin hole pointing East
+        side_east = side_dry
 
-    # choose textures
-#    side = self.load_image_texture()
-#    side = side.crop((32,0,16,16))
-#    top = self.load_image_texture("textures/blocks/ic2/blockRubWood.png")
-#    top = side.crop((0,0,16,16))
+    if self.rotation == 0: # north upper-left
+        side1 = side_north
+        side2 = side_east
+        side3 = side_west
+        side4 = side_south
+    elif self.rotation == 1: # north upper-right
+        side1 = side_west
+        side2 = side_north
+        side3 = side_south
+        side4 = side_east
+    elif self.rotation == 2: # north lower-right
+        side1 = side_south
+        side2 = side_west
+        side3 = side_east
+        side4 = side_north
+    elif self.rotation == 3: # north lower-left
+        side1 = side_east
+        side2 = side_south
+        side3 = side_north
+        side4 = side_west
 
-    # FIXME the data indicates if there is resin and which way it is facing
-#    if wood_type == 1: # Rubberwood logs
-#        # FIXME the texture needs to be split
-#        side = self.load_image_texture("textures/blocks/ic2/blockRubWood.png")
-#        top = self.load_image_texture("textures/blocks/ic2/blockRubWood.png")
-#    else: # TODO any others?
-#        side = self.load_image_texture("textures/blocks/web.png")
-#        top = self.load_image_texture("textures/blocks/web.png")
-    # choose orientation and paste textures
-    if wood_orientation == 0:
-        return self.build_block(top, side)
-    elif wood_orientation == 4: # east-west orientation
-        return self.build_full_block(side.rotate(90), None, None, top, side.rotate(90))
-    elif wood_orientation == 8: # north-south orientation
-        return self.build_full_block(side, None, None, side.rotate(270), top)
-    return self.build_block(top, side)
+    return self.build_full_block(top, side1, side2, side3, side4)
 
 # IC2: Rubberwood Leaves
 @material(blockid=242, data=range(16), solid=True, transparent=True)
