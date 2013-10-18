@@ -417,7 +417,14 @@ generate_pseudo_data(RenderState *state, unsigned char ancilData) {
         rotation = 3 & (pr >> 16);
         return rotation;
     }
-
+    /* Forestry: Fences */
+    else if (state->block == 1394 || state->block == 1418) {
+		/* Check for Forestry fences AND vanilla fence gates */
+		/* Shift by 4 bits, because forestry fences have the wood type in the 4-bit data */
+		return (check_adjacent_blocks(state, x, y, z, 1394) |
+				check_adjacent_blocks(state, x, y, z, 1418) |
+				check_adjacent_blocks(state, x, y, z, 107)) << 4;
+    }
 
     return 0;
 
