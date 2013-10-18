@@ -4406,6 +4406,84 @@ def bc_oil(self, blockid, data):
     return self.build_block(t, t)
 
 
+#################################
+#	 	Magic Bees				#
+#################################
+
+# Magic Bees: Hives (I:hives=1754)
+@material(blockid=1754, data=range(6), solid=True)
+def magicbees_hives(self, blockid, data):
+    if data == 0: # Curious Hive
+        side = self.load_image_texture("textures/blocks/magicbees/beehive.0.side.png")
+        top = self.load_image_texture("textures/blocks/magicbees/beehive.0.top.png")
+    elif data == 1: # Unusual Hive
+        side = self.load_image_texture("textures/blocks/magicbees/beehive.1.side.png")
+        top = self.load_image_texture("textures/blocks/magicbees/beehive.1.top.png")
+    elif data == 2: # Resonating Hive
+        side = self.load_image_texture("textures/blocks/magicbees/beehive.2.side.png")
+        top = self.load_image_texture("textures/blocks/magicbees/beehive.2.top.png")
+    elif data == 3: # TODO ?? Hive
+        side = self.load_image_texture("textures/blocks/magicbees/beehive.3.side.png")
+        top = self.load_image_texture("textures/blocks/magicbees/beehive.3.top.png")
+    elif data == 4: # Infernal Hive
+        side = self.load_image_texture("textures/blocks/magicbees/beehive.4.side.png")
+        top = self.load_image_texture("textures/blocks/magicbees/beehive.4.top.png")
+    elif data == 5: # Oblivion Hive
+        side = self.load_image_texture("textures/blocks/magicbees/beehive.5.side.png")
+        top = self.load_image_texture("textures/blocks/magicbees/beehive.5.top.png")
+    else: # FIXME Unknown block
+        t = self.load_image_texture("textures/blocks/web.png")
+        return self.build_sprite(t)
+    return self.build_block(top, side)
+
+# Magic Bees: Planks & Double slabs (I:planksTC=1750 & I:slabFull=1751)
+@material(blockid=[1750, 1751], data=range(2), solid=True)
+def magicbees_planks(self, blockid, data):
+    if data == 0: # Greatwood planks & Greatwood Double Slab
+        side = self.load_image_texture("textures/blocks/magicbees/greatwood.png")
+    elif data == 1: # Silverwood planks & Silverwood Double Slab
+        side = self.load_image_texture("textures/blocks/magicbees/silverwood.png")
+    return self.build_block(side, side)
+
+# Magic Bees: Slabs (I:slabHalf=1752)
+@material(blockid=1752, data=range(16), solid=True)
+def magicbees_slabs(self, blockid, data):
+    if data & 7 == 0: # Greatwood Slab
+        top = side = self.load_image_texture("textures/blocks/magicbees/greatwood.png")
+    elif data & 7 == 1: # Silverwood Slab
+        top = side = self.load_image_texture("textures/blocks/magicbees/silverwood.png")
+    else: # FIXME Unknown block
+        t = self.load_image_texture("textures/blocks/web.png")
+        return self.build_sprite(t)
+
+    # cut the side texture in half
+    mask = side.crop((0,8,16,16))
+    side = Image.new(side.mode, side.size, self.bgcolor)
+    alpha_over(side, mask, (0,0,16,8), mask)
+
+    # plain slab
+    top = self.transform_image_top(top)
+    side = self.transform_image_side(side)
+    otherside = side.transpose(Image.FLIP_LEFT_RIGHT)
+
+    sidealpha = side.split()[3]
+    side = ImageEnhance.Brightness(side).enhance(0.9)
+    side.putalpha(sidealpha)
+    othersidealpha = otherside.split()[3]
+    otherside = ImageEnhance.Brightness(otherside).enhance(0.8)
+    otherside.putalpha(othersidealpha)
+
+    # upside down slab
+    delta = 0
+    if data & 8 == 8:
+        delta = 6
+
+    img = Image.new("RGBA", (24,24), self.bgcolor)
+    alpha_over(img, side, (0,12 - delta), side)
+    alpha_over(img, otherside, (12,12 - delta), otherside)
+    alpha_over(img, top, (0,6 - delta), top)
+
+    return img
 
 #################################
 #	 	Forestry				#
