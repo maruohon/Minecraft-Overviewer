@@ -5424,6 +5424,309 @@ def forestry_stainedglass(self, blockid, data):
     t = self.load_image_texture("textures/blocks/forestry/stained/%d.png" % data)
     return self.build_block(t, t)
 
+
+#################################
+#	 		Railcraft			#
+#################################
+
+# Railcraft: Machines (I:block.machine.alpha=451)
+@material(blockid=451, data=range(16), solid=True)
+def rc_machine1(self, blockid, data):
+    if data == 0: # World Anchor
+        img = self.load_image("textures/blocks/railcraft/anchor.world.png")
+        side = img.crop((16, 0, 32, 16))
+        side.load()
+        top = img.crop((0, 0, 16, 16))
+        top.load()
+    elif data == 1: # Steam Turbine Housing FIXME we use the same texture for everything
+        img = self.load_image("textures/blocks/railcraft/turbine.png")
+        side = img.crop((0, 32, 16, 48))
+        side.load()
+        top = img.crop((32, 0, 48, 16))
+        top.load()
+    elif data == 2: # Personal Anchor
+        img = self.load_image("textures/blocks/railcraft/anchor.personal.png")
+        side = img.crop((16, 0, 32, 16))
+        side.load()
+        top = img.crop((0, 0, 16, 16))
+        top.load()
+    elif data == 3: # Steam Oven FIXME we use the same texture for everything
+        img = self.load_image("textures/blocks/railcraft/steam.oven.png")
+        side = img.crop((32, 16, 48, 32))
+        side.load()
+        top = img.crop((32, 0, 48, 16))
+        top.load()
+    elif data == 4: # Admin Anchor
+        img = self.load_image("textures/blocks/railcraft/anchor.admin.png")
+        side = img.crop((16, 0, 32, 16))
+        side.load()
+        top = img.crop((0, 0, 16, 16))
+        top.load()
+    elif data == 5: # Smoker
+        img = self.load_image("textures/blocks/railcraft/smoker.png")
+        side = img.crop((32, 0, 48, 16))
+        side.load()
+        top = img.crop((16, 0, 32, 16))
+        top.load()
+    elif data == 6: # ?? TODO
+        t = self.load_image_texture("textures/blocks/web.png")
+        return self.build_sprite(t)
+    elif data == 7: # Coke Oven Brick FIXME we use the same texture for everything
+        img = self.load_image("textures/blocks/railcraft/coke.oven.png")
+        side = img.crop((0, 0, 16, 16))
+        side.load()
+        return self.build_block(side, side)
+    elif data == 8: # Rolling Machine
+        img = self.load_image("textures/blocks/railcraft/rolling.machine.png")
+        side = img.crop((32, 0, 48, 16))
+        side.load()
+        top = img.crop((16, 0, 32, 16))
+        top.load()
+    elif data == 9: # Manual Steam Trap
+        img = self.load_image("textures/blocks/railcraft/steam.trap.png")
+        side = img.crop((16, 0, 32, 16))
+        side.load()
+        top = img.crop((32, 0, 48, 16))
+        top.load()
+    elif data == 10: # Automated Steam Trap
+        img = self.load_image("textures/blocks/railcraft/steam.trap.auto.png")
+        side = img.crop((16, 0, 32, 16))
+        side.load()
+        top = img.crop((32, 0, 48, 16))
+        top.load()
+    elif data == 11: # Feed Station
+        img = self.load_image("textures/blocks/railcraft/feed.station.png")
+        side = img.crop((16, 0, 32, 16))
+        side.load()
+        top = img.crop((0, 0, 16, 16))
+        top.load()
+    elif data == 12: # Blast Furnace Brick FIXME we use the same texture for everything
+        img = self.load_image("textures/blocks/railcraft/blast.furnace.png")
+        side = img.crop((0, 0, 16, 16))
+        side.load()
+        return self.build_block(side, side)
+    elif data == 13: # ?? TODO
+        t = self.load_image_texture("textures/blocks/web.png")
+        return self.build_sprite(t)
+    elif data == 14: # Water Tank Siding
+        img = self.load_image("textures/blocks/railcraft/tank.water.png")
+        side = img.crop((16, 0, 32, 16))
+        side.load()
+        top = img.crop((0, 0, 16, 16))
+        top.load()
+    elif data == 15: # Rock Crusher FIXME we use the same texture for everything
+        img = self.load_image("textures/blocks/railcraft/rock.crusher.png")
+        side = img.crop((48, 16, 64, 32))
+        side.load()
+        top = img.crop((48, 32, 64, 48))
+        top.load()
+    else: # FIXME Unknow Block
+        t = self.load_image_texture("textures/blocks/web.png")
+        return self.build_sprite(t)
+    return self.build_block(top, side)
+
+# Railcraft: Machines (I:block.machine.beta=452)
+@material(blockid=452, data=range(16), solid=True)
+def rc_machine2(self, blockid, data):
+    if data == 0: # Iron Tank Wall
+        img = self.load_image("textures/blocks/railcraft/tank.iron.wall.png")
+        side = img.crop((0, 0, 16, 16))
+    elif data == 1: # Iron Tank Gauge
+        img = self.load_image("textures/blocks/railcraft/tank.iron.gauge.png")
+        side = img.crop((0, 0, 16, 16))
+    elif data == 2: # Iron Tank Valve
+        img = self.load_image("textures/blocks/railcraft/tank.iron.valve.png")
+        side = img.crop((0, 0, 16, 16))
+    elif data == 3: # Low Pressure Boiler Tank
+        img = self.load_image("textures/blocks/railcraft/boiler.tank.pressure.low.png")
+        side = img.crop((0, 0, 16, 16))
+    elif data == 4: # High Pressure Boiler Tank
+        img = self.load_image("textures/blocks/railcraft/boiler.tank.pressure.high.png")
+        side = img.crop((0, 0, 16, 16))
+    elif data == 5: # Solid Fueled Firebox
+        img = self.load_image("textures/blocks/railcraft/boiler.firebox.solid.png")
+        side = img.crop((16, 0, 32, 16))
+        side.load()
+        top = img.crop((0, 0, 16, 16))
+        top.load()
+        return self.build_block(top, side)
+    elif data == 6: # Liquid Fueled Firebox
+        img = self.load_image("textures/blocks/railcraft/boiler.firebox.liquid.png")
+        side = img.crop((16, 0, 32, 16))
+        side.load()
+        top = img.crop((0, 0, 16, 16))
+        top.load()
+        return self.build_block(top, side)
+    elif data == 7: # Hobbyist's Steam Engine FIXME totally lazy placeholder
+        side = self.load_image_texture("textures/blocks/railcraft/engine.steam.hobby.png")
+    elif data == 8: # Commercial Steam Engine FIXME totally lazy placeholder
+        side = self.load_image_texture("textures/blocks/railcraft/engine.steam.low.png")
+    elif data == 9: # Industrial Steam Engine FIXME totally lazy placeholder
+        side = self.load_image_texture("textures/blocks/railcraft/engine.steam.high.png")
+    elif data == 10: # Anchor Sentinel FIXME totally lazy placeholder
+        img = self.load_image("textures/blocks/railcraft/anchor.sentinel.png")
+        side = img.crop((0, 0, 16, 16))
+    elif data == 11: # Void Chest FIXME not correct
+        side = self.load_image_texture("textures/blocks/railcraft/chest.void.png")
+    elif data == 12: # ?? TODO
+        t = self.load_image_texture("textures/blocks/web.png")
+        return self.build_sprite(t)
+    elif data == 13: # Steel Tank Wall
+        img = self.load_image("textures/blocks/railcraft/tank.steel.wall.png")
+        side = img.crop((0, 0, 16, 16))
+    elif data == 14: # Steel Tank Gauge
+        img = self.load_image("textures/blocks/railcraft/tank.steel.gauge.png")
+        side = img.crop((0, 0, 16, 16))
+    elif data == 15: # Steel Tank Valve
+        img = self.load_image("textures/blocks/railcraft/tank.iron.valve.png")
+        side = img.crop((0, 0, 16, 16))
+    else: # FIXME Unknow Block
+        t = self.load_image_texture("textures/blocks/web.png")
+        return self.build_sprite(t)
+    side.load()
+    return self.build_block(side, side)
+
+# Railcraft: Blocks (I:block.cube=457)
+@material(blockid=457, data=range(8), solid=True)
+def rc_blocks(self, blockid, data):
+    if data == 0: # Block of Coal Coke
+        side = self.load_image_texture("textures/blocks/railcraft/cube.coke.png")
+    elif data == 1: # Block of Concrete
+        side = self.load_image_texture("textures/blocks/railcraft/concrete.png")
+    elif data == 2: # Block of Steel
+        side = self.load_image_texture("textures/blocks/railcraft/cube.steel.png")
+    elif data == 3: # ?? 
+        side = self.load_image_texture("textures/blocks/web.png")
+    elif data == 4: # Crushed Obsidian
+        side = self.load_image_texture("textures/blocks/railcraft/cube.crushed.obsidian.png")
+    elif data == 5: # ??
+        side = self.load_image_texture("textures/blocks/web.png")
+    elif data == 6: # Abyssal Stone
+        side = self.load_image_texture("textures/blocks/railcraft/cube.stone.abyssal.png")
+    elif data == 7: # Quarried Stone
+        side = self.load_image_texture("textures/blocks/railcraft/cube.stone.quarried.png")
+    return self.build_block(side, side)
+
+
+# Railcraft: Abyssal Bricks (I:block.brick.abyssal=466)
+@material(blockid=466, data=range(5), solid=True)
+def rc_brick_abyssal(self, blockid, data):
+    texture = self.load_image("textures/blocks/railcraft/brick.abyssal.png")
+    if data == 0: # Abyssal Brick
+        side = texture.crop((0, 0, 16, 16))
+    elif data == 1: # Fitted Abyssal Stone
+        side = texture.crop((16, 0, 32, 16))
+    elif data == 2: # Abyssal Block
+        side = texture.crop((32, 0, 48, 16))
+    elif data == 3: # Ornate Abyssal Stone
+        side = texture.crop((48, 0, 64, 16))
+    elif data == 4: # Etched Abyssal Stone
+        side = texture.crop((64, 0, 80, 16))
+    side.load()
+    return self.build_block(side, side)
+
+# Railcraft: Infernal Bricks (I:block.brick.infernal=467)
+@material(blockid=467, data=range(5), solid=True)
+def rc_brick_infernal(self, blockid, data):
+    texture = self.load_image("textures/blocks/railcraft/brick.infernal.png")
+    if data == 0: # Infernal Brick
+        side = texture.crop((0, 0, 16, 16))
+    elif data == 1: # Fitted Infernal Stone
+        side = texture.crop((16, 0, 32, 16))
+    elif data == 2: # Infernal Block
+        side = texture.crop((32, 0, 48, 16))
+    elif data == 3: # Ornate Infernal Stone
+        side = texture.crop((48, 0, 64, 16))
+    elif data == 4: # Etched Infernal Stone
+        side = texture.crop((64, 0, 80, 16))
+    side.load()
+    return self.build_block(side, side)
+
+# Railcraft: Blood Stained Bricks (I:block.brick.bloodstained=468)
+@material(blockid=468, data=range(5), solid=True)
+def rc_brick_bloodstained(self, blockid, data):
+    texture = self.load_image("textures/blocks/railcraft/brick.bloodstained.png")
+    if data == 0: # Blood Stained Brick
+        side = texture.crop((0, 0, 16, 16))
+    elif data == 1: # Fitted Blood Stained Stone
+        side = texture.crop((16, 0, 32, 16))
+    elif data == 2: # Blood Stained Block
+        side = texture.crop((32, 0, 48, 16))
+    elif data == 3: # Ornate Blood Stained Stone
+        side = texture.crop((48, 0, 64, 16))
+    elif data == 4: # Etched Blood Stained Stone
+        side = texture.crop((64, 0, 80, 16))
+    side.load()
+    return self.build_block(side, side)
+
+# Railcraft: Sandy Bricks (I:block.brick.sandy=469)
+@material(blockid=469, data=range(5), solid=True)
+def rc_brick_sandy(self, blockid, data):
+    texture = self.load_image("textures/blocks/railcraft/brick.sandy.png")
+    if data == 0: # Sandy Brick
+        side = texture.crop((0, 0, 16, 16))
+    elif data == 1: # Fitted Sandy Stone
+        side = texture.crop((16, 0, 32, 16))
+    elif data == 2: # Sandy Block
+        side = texture.crop((32, 0, 48, 16))
+    elif data == 3: # Ornate Sandy Stone
+        side = texture.crop((48, 0, 64, 16))
+    elif data == 4: # Etched Sandy Stone
+        side = texture.crop((64, 0, 80, 16))
+    side.load()
+    return self.build_block(side, side)
+
+# Railcraft: Bleached Bone Bricks (I:block.brick.bleachedbone=470)
+@material(blockid=470, data=range(5), solid=True)
+def rc_brick_bleachedbone(self, blockid, data):
+    texture = self.load_image("textures/blocks/railcraft/brick.bleachedbone.png")
+    if data == 0: # Bleached Bone Brick
+        side = texture.crop((0, 0, 16, 16))
+    elif data == 1: # Fitted Bleached Bone Stone
+        side = texture.crop((16, 0, 32, 16))
+    elif data == 2: # Bleached Bone Block
+        side = texture.crop((32, 0, 48, 16))
+    elif data == 3: # Ornate Bleached Bone Stone
+        side = texture.crop((48, 0, 64, 16))
+    elif data == 4: # Etched Bleached Bone Stone
+        side = texture.crop((64, 0, 80, 16))
+    side.load()
+    return self.build_block(side, side)
+
+# Railcraft: Quarried Bricks (I:block.brick.quarried=471)
+@material(blockid=471, data=range(5), solid=True)
+def rc_brick_quarried(self, blockid, data):
+    texture = self.load_image("textures/blocks/railcraft/brick.quarried.png")
+    if data == 0: # Quarried Brick
+        side = texture.crop((0, 0, 16, 16))
+    elif data == 1: # Fitted Quarried Stone
+        side = texture.crop((16, 0, 32, 16))
+    elif data == 2: # Quarried Block
+        side = texture.crop((32, 0, 48, 16))
+    elif data == 3: # Ornate Quarried Stone
+        side = texture.crop((48, 0, 64, 16))
+    elif data == 4: # Etched Quarried Stone
+        side = texture.crop((64, 0, 80, 16))
+    side.load()
+    return self.build_block(side, side)
+
+# Railcraft: Frost Bound Bricks (I:block.brick.frostbound=472)
+@material(blockid=472, data=range(5), solid=True)
+def rc_brick_frostbound(self, blockid, data):
+    texture = self.load_image("textures/blocks/railcraft/brick.frostbound.png")
+    if data == 0: # Frost Bound Brick
+        side = texture.crop((0, 0, 16, 16))
+    elif data == 1: # Fitted Frost Bound Stone
+        side = texture.crop((16, 0, 32, 16))
+    elif data == 2: # Frost Bound Block
+        side = texture.crop((32, 0, 48, 16))
+    elif data == 3: # Ornate Frost Bound Stone
+        side = texture.crop((48, 0, 64, 16))
+    elif data == 4: # Etched Frost Bound Stone
+        side = texture.crop((64, 0, 80, 16))
+    side.load()
+    return self.build_block(side, side)
+
 #################################
 #	 Thermal Expansion			#
 #################################
