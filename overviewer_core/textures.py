@@ -5406,7 +5406,7 @@ def forestry_planks2(self, blockid, data):
         side = self.load_image_texture("textures/blocks/forestry/wood/planks.citrus.png")
     return self.build_block(side, side)
 
-# Forestry: Lepidopterist's Chest(I:lepidopterology=1419)
+# Forestry: Lepidopterist's Chest (I:lepidopterology=1419)
 @material(blockid=1419, data=range(1), solid=True)
 def forestry_lepidopterology(self, blockid, data):
     if data == 0: # Lepidopterist's Chest
@@ -5417,6 +5417,12 @@ def forestry_lepidopterology(self, blockid, data):
         side = self.load_image_texture("textures/blocks/web.png")
         return self.build_sprite(side)
     return self.build_block(top, side)
+
+# Forestry: Stained Glass (I:stained=1420)
+@material(blockid=1420, data=range(16), solid=True, transparent=True, nospawn=True)
+def forestry_stainedglass(self, blockid, data):
+    t = self.load_image_texture("textures/blocks/forestry/stained/%d.png" % data)
+    return self.build_block(t, t)
 
 #################################
 #	 Thermal Expansion			#
