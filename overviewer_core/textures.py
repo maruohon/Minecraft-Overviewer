@@ -4071,140 +4071,204 @@ def hopper(self, blockid, data):
 #	Taken from FTB Unleashed configs	#
 #########################################
 
-#"liquid ids" {
-#    I:"Liquid Poison Still ID (ID before this must be free!)"=1973
-#    I:"Spring Water Still ID (ID before this must be free!)"=1971
-#}
+#################################
+#	 	Binnie Mods				#
+#################################
 
-#@material(blockid=2, data=range(11)+[0x10,], solid=True)
-#def grass(self, blockid, data):
-#    # 0x10 bit means SNOW
-#    side_img = self.load_image_texture("textures/blocks/grass_side.png")
-#    if data & 0x10:
-#        side_img = self.load_image_texture("textures/blocks/snow_side.png")
-#    img = self.build_block(self.load_image_texture("textures/blocks/grass_top.png"), side_img)
-#    if not data & 0x10:
-#        alpha_over(img, self.biome_grass_texture, (0, 0), self.biome_grass_texture)
-#    return img
+# Binnie Mods (Extra Trees) Planks (I:planks=3700)
+# FIXME We use the same texture for all the planks, since the wood type is stored in the tile entity data
+block(blockid=3700, top_image="textures/blocks/extratrees/planks/Fir.png")
 
-# crafting table
-# needs two different sides
-#@material(blockid=58, solid=True, nodata=True)
-#def crafting_table(self, blockid, data):
-#    top = self.load_image_texture("textures/blocks/workbench_top.png")
-#    side3 = self.load_image_texture("textures/blocks/workbench_side.png")
-#    side4 = self.load_image_texture("textures/blocks/workbench_front.png")
-#    img = self.build_full_block(top, None, None, side3, side4, None)
-#    return img
+# Binnie Mods (Extra Trees) Stairs (I:stairs=3702)
+@material(blockid=3702, data=range(16), transparent=True, solid=True, nospawn=True)
+def binnie_stairs(self, blockid, data):
+    # first, rotations
+    # preserve the upside-down bit
+    upside_down = data & 0x4
+    data = data & 0x3
+    if self.rotation == 1:
+        if data == 0: data = 2
+        elif data == 1: data = 3
+        elif data == 2: data = 1
+        elif data == 3: data = 0
+    elif self.rotation == 2:
+        if data == 0: data = 1
+        elif data == 1: data = 0
+        elif data == 2: data = 3
+        elif data == 3: data = 2
+    elif self.rotation == 3:
+        if data == 0: data = 3
+        elif data == 1: data = 2
+        elif data == 2: data = 0
+        elif data == 3: data = 1
+    data = data | upside_down
 
-#@material(blockid=31, data=range(3), transparent=True)
-#def tall_grass(self, blockid, data):
-#    if data == 0: # dead shrub
-#        texture = self.load_image_texture("textures/blocks/deadbush.png")
-#    elif data == 1: # tall grass
-#        texture = self.load_image_texture("textures/blocks/tallgrass.png")
-#    elif data == 2: # fern
-#        texture = self.load_image_texture("textures/blocks/fern.png")
-#    return self.build_billboard(texture)
+    # FIXME/NOTE: The wood type is stored in tile entity data, we render them all as Fir stairs
+    texture = self.load_image_texture("textures/blocks/extratrees/planks/Fir.png")
 
-#@material(blockid=17, data=range(12), solid=True)
-#def wood(self, blockid, data):
-#    # extract orientation and wood type frorm data bits
-#    wood_type = data & 3
-#    wood_orientation = data & 12
-#    if self.rotation == 1:
-#        if wood_orientation == 4: wood_orientation = 8
-#        elif wood_orientation == 8: wood_orientation = 4
-#    elif self.rotation == 3:
-#        if wood_orientation == 4: wood_orientation = 8
-#        elif wood_orientation == 8: wood_orientation = 4
-#    # choose textures
-#    top = self.load_image_texture("textures/blocks/tree_top.png")
-#    if wood_type == 0: # normal
-#        side = self.load_image_texture("textures/blocks/tree_side.png")
-#    if wood_type == 1: # spruce
-#        side = self.load_image_texture("textures/blocks/tree_spruce.png")
-#    if wood_type == 2: # birch
-#        side = self.load_image_texture("textures/blocks/tree_birch.png")
-#    if wood_type == 3: # jungle wood
-#        side = self.load_image_texture("textures/blocks/tree_jungle.png")
-#    # choose orientation and paste textures
-#    if wood_orientation == 0:
-#        return self.build_block(top, side)
-#    elif wood_orientation == 4: # east-west orientation
-#        return self.build_full_block(side.rotate(90), None, None, top, side.rotate(90))
-#    elif wood_orientation == 8: # north-south orientation
-#        return self.build_full_block(side, None, None, side.rotate(270), top)
+    side = texture.copy()
+    half_block_u = texture.copy() # up, down, left, right
+    half_block_d = texture.copy()
+    half_block_l = texture.copy()
+    half_block_r = texture.copy()
 
-#@material(blockid=18, data=range(16), transparent=True, solid=True)
-#def leaves(self, blockid, data):
-#    # mask out the bits 4 and 8
-#    # they are used for player placed and check-for-decay blocks
-#    data = data & 0x3
-#    t = self.load_image_texture("textures/blocks/leaves.png")
-#    if data == 1:
-#        # pine!
-#        t = self.load_image_texture("textures/blocks/leaves_spruce.png")
-#    elif data == 3:
-#        # jungle tree
-#        t = self.load_image_texture("textures/blocks/leaves_jungle.png")
-#    return self.build_block(t, t)
+    # generate needed geometries
+    ImageDraw.Draw(side).rectangle((0,0,7,6),outline=(0,0,0,0),fill=(0,0,0,0))
+    ImageDraw.Draw(half_block_u).rectangle((0,8,15,15),outline=(0,0,0,0),fill=(0,0,0,0))
+    ImageDraw.Draw(half_block_d).rectangle((0,0,15,6),outline=(0,0,0,0),fill=(0,0,0,0))
+    ImageDraw.Draw(half_block_l).rectangle((8,0,15,15),outline=(0,0,0,0),fill=(0,0,0,0))
+    ImageDraw.Draw(half_block_r).rectangle((0,0,7,15),outline=(0,0,0,0),fill=(0,0,0,0))
+
+    if data & 0x4 == 0x4: # upside down stair
+        side = side.transpose(Image.FLIP_TOP_BOTTOM)
+        if data & 0x3 == 0: # ascending east
+            img = Image.new("RGBA", (24,24), self.bgcolor) # first paste the texture in the back
+            tmp = self.transform_image_side(half_block_d)
+            alpha_over(img, tmp, (6,3))
+            alpha_over(img, self.build_full_block(texture, None, None, half_block_u, side.transpose(Image.FLIP_LEFT_RIGHT)))
+
+        elif data & 0x3 == 0x1: # ascending west
+            img = self.build_full_block(texture, None, None, texture, side)
+
+        elif data & 0x3 == 0x2: # ascending south
+            img = self.build_full_block(texture, None, None, side, texture)
+
+        elif data & 0x3 == 0x3: # ascending north
+            img = Image.new("RGBA", (24,24), self.bgcolor) # first paste the texture in the back
+            tmp = self.transform_image_side(half_block_d).transpose(Image.FLIP_LEFT_RIGHT)
+            alpha_over(img, tmp, (6,3))
+            alpha_over(img, self.build_full_block(texture, None, None, side.transpose(Image.FLIP_LEFT_RIGHT), half_block_u))
+
+    else: # normal stair
+        if data == 0: # ascending east
+            img = self.build_full_block(half_block_r, None, None, half_block_d, side.transpose(Image.FLIP_LEFT_RIGHT))
+            tmp1 = self.transform_image_side(half_block_u)
+
+            # Darken the vertical part of the second step
+            sidealpha = tmp1.split()[3]
+            # darken it a bit more than usual, looks better
+            tmp1 = ImageEnhance.Brightness(tmp1).enhance(0.8)
+            tmp1.putalpha(sidealpha)
+
+            alpha_over(img, tmp1, (6,4)) #workaround, fixes a hole
+            alpha_over(img, tmp1, (6,3))
+            tmp2 = self.transform_image_top(half_block_l)
+            alpha_over(img, tmp2, (0,6))
+
+        elif data == 1: # ascending west
+            img = Image.new("RGBA", (24,24), self.bgcolor) # first paste the texture in the back
+            tmp1 = self.transform_image_top(half_block_r)
+            alpha_over(img, tmp1, (0,6))
+            tmp2 = self.build_full_block(half_block_l, None, None, texture, side)
+            alpha_over(img, tmp2)
+
+        elif data == 2: # ascending south
+            img = Image.new("RGBA", (24,24), self.bgcolor) # first paste the texture in the back
+            tmp1 = self.transform_image_top(half_block_u)
+            alpha_over(img, tmp1, (0,6))
+            tmp2 = self.build_full_block(half_block_d, None, None, side, texture)
+            alpha_over(img, tmp2)
+
+        elif data == 3: # ascending north
+            img = self.build_full_block(half_block_u, None, None, side.transpose(Image.FLIP_LEFT_RIGHT), half_block_d)
+            tmp1 = self.transform_image_side(half_block_u).transpose(Image.FLIP_LEFT_RIGHT)
+
+            # Darken the vertical part of the second step
+            sidealpha = tmp1.split()[3]
+            # darken it a bit more than usual, looks better
+            tmp1 = ImageEnhance.Brightness(tmp1).enhance(0.7)
+            tmp1.putalpha(sidealpha)
+
+            alpha_over(img, tmp1, (6,4)) # workaround, fixes a hole
+            alpha_over(img, tmp1, (6,3))
+            tmp2 = self.transform_image_top(half_block_d)
+            alpha_over(img, tmp2, (0,6))
+
+        # touch up a (horrible) pixel
+        img.putpixel((18,3),(0,0,0,0))
+
+    return img
+
+# Binnie Mods (Extra Trees) Logs (I:log=3704)
+@material(blockid=3704, data=range(16), solid=True)
+def binnie_logs(self, blockid, data):
+    wood_orientation = data & 12
+    if self.rotation == 1:
+        if wood_orientation == 4: wood_orientation = 8
+        elif wood_orientation == 8: wood_orientation = 4
+    elif self.rotation == 3:
+        if wood_orientation == 4: wood_orientation = 8
+        elif wood_orientation == 8: wood_orientation = 4
+    # FIXME We use the same texture for all the logs, since the wood type is stored in the tile entity data
+    side = self.load_image_texture("textures/blocks/extratrees/logs/firBark.png")
+    top = self.load_image_texture("textures/blocks/extratrees/logs/firTrunk.png")
+    # choose orientation and paste textures
+    if wood_orientation == 0:
+        return self.build_block(top, side)
+    elif wood_orientation == 4: # east-west orientation
+        return self.build_full_block(side.rotate(90), None, None, top, side.rotate(90))
+    elif wood_orientation == 8: # north-south orientation
+        return self.build_full_block(side, None, None, side.rotate(270), top)
+    return self.build_block(top, side)
+
+# Binnie Mods (Extra Trees) Slabs (I:slab=3707)
+@material(blockid=3707, data=range(16), solid=True)
+def binnie_slabs(self, blockid, data):
+    # FIXME We use the same texture for all the slabs, since the wood type is stored in the tile entity data
+    top = side = self.load_image_texture("textures/blocks/extratrees/planks/Fir.png")
+    # cut the side texture in half
+    mask = side.crop((0,8,16,16))
+    side = Image.new(side.mode, side.size, self.bgcolor)
+    alpha_over(side, mask, (0,0,16,8), mask)
+
+    # plain slab
+    top = self.transform_image_top(top)
+    side = self.transform_image_side(side)
+    otherside = side.transpose(Image.FLIP_LEFT_RIGHT)
+
+    sidealpha = side.split()[3]
+    side = ImageEnhance.Brightness(side).enhance(0.9)
+    side.putalpha(sidealpha)
+    othersidealpha = otherside.split()[3]
+    otherside = ImageEnhance.Brightness(otherside).enhance(0.8)
+    otherside.putalpha(othersidealpha)
+
+    # upside down slab
+    delta = 0
+    if data & 8 == 8:
+        delta = 6
+
+    img = Image.new("RGBA", (24,24), self.bgcolor)
+    alpha_over(img, side, (0,12 - delta), side)
+    alpha_over(img, otherside, (12,12 - delta), otherside)
+    alpha_over(img, top, (0,6 - delta), top)
+
+    return img
+
+# Binnie Mods (Extra Trees) Double Slabs (I:doubleSlab=3708)
+# FIXME We use the same texture for all the blocks, since the wood type is stored in the tile entity data
+block(blockid=3708, top_image="textures/blocks/extratrees/planks/Fir.png")
+
+# Binnie Mods (Extra Bees) Hives (I:hive=4000)
+@material(blockid=4000, data=range(4), solid=True)
+def binnie_hive(self, blockid, data):
+    if data == 0: # Water Hive
+        side = self.load_image_texture("textures/blocks/extrabees/hive/water.0.png")
+        top = self.load_image_texture("textures/blocks/extrabees/hive/water.1.png")
+    elif data == 1: # Rock Hive
+        side = self.load_image_texture("textures/blocks/extrabees/hive/rock.0.png")
+        top = self.load_image_texture("textures/blocks/extrabees/hive/rock.1.png")
+    elif data == 2: # Nether Hive
+        side = self.load_image_texture("textures/blocks/extrabees/hive/rock.0.png")
+        top = self.load_image_texture("textures/blocks/extrabees/hive/rock.1.png")
+    elif data == 3: # Marble Hive
+        side = self.load_image_texture("textures/blocks/extrabees/hive/rock.0.png")
+        top = self.load_image_texture("textures/blocks/extrabees/hive/rock.1.png")
+    return self.build_block(top, side)
 
 #################################
 #	 Tinker's Construct			#
 #################################
-
-# block {
-#    I:Aggregator=3221
-#    I:Barricade=1469
-#    I:"Birch Barricade"=1483
-#    I:"Casting Channel"=3249
-#    I:"Clear Glass"=3223
-#    I:"Clear Stained Glass"=3225
-#    I:"Clear Stained Glass Pane"=3229
-#    I:"Congealed Slime"=3237
-#    I:"Crafting Slab"=3243
-#    I:"Crafting Station"=3233
-#    I:"Drying Rack"=3227
-#    I:"Essence Extractor"=3234
-#    I:"Glass Pane"=3228
-#    I:"Held Item Block"=1472
-#    I:"Jungle Barricade"=1487
-#    I:Landmine=1470
-#    I:"Lava Tank"=1473
-#    I:"Light Crystal"=3222
-#    I:"Liquid Blue Slime"=3235
-#    I:"Liquid Metal Flowing"=1479
-#    I:"Liquid Metal Still"=1480
-#    I:"Meat Block"=3242
-#    I:"Metal Storage"=1478
-#    I:"Multi Brick"=1481
-#    I:"Multi Brick Fancy"=1467
-#    I:"Oak Barricade"=1469
-#    I:"Ore Berry One"=1485
-#    I:"Ore Berry Two"=1486
-#    I:"Ores Gravel"=1488
-#    I:"Ores Slag"=1475
-#    I:Punji=3232
-#    I:"Redstone Machines"=3226
-#    I:"Seared Slab"=3230
-#    I:"Seared Table"=1477
-#    I:"Slime Grass"=3238
-#    I:"Slime Grass Leaves"=3240
-#    I:"Slime Tall Grass"=3239
-#    I:"Slime Tree Sapling"=3241
-#    I:Smeltery=1474
-#    I:"Special Soil"=1476
-#    I:"Speed Block"=1489
-#    I:"Speed Slab"=3231
-#    I:"Spruce Barricade"=1482
-#    I:"Stained Glass"=3224
-#    I:"Stone Torch"=1484
-#    I:"Tool Forge"=1468
-#    I:"Wood Tool Station"=1471
-#    I:"Wool Slab 1"=3244
-#    I:"Wool Slab 2"=3245
-#}
 
 # Tinker's Construct: Fancy Bricks (I:"Multi Brick Fancy"=1467)
 @material(blockid=1467, data=range(16), solid=True)
