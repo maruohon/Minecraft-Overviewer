@@ -4072,6 +4072,143 @@ def hopper(self, blockid, data):
 #########################################
 
 #################################
+#	 Extra Utilities			#
+#################################
+
+# Extra Utilities: Angel Block (I:angelBlock=2500)
+block(blockid=2500, top_image="textures/blocks/extrautilities/angelBlock.png")
+
+# Extra Utilities: Block Update Detector (I:BUDBlockId=2501)
+# NOTE: we don't care about the metadata, the block is usually ON for so short
+# times that we render it always in the OFF state
+block(blockid=2501, top_image="textures/blocks/extrautilities/budoff.png")
+
+# Extra Utilities: Colored Bricks (I:colorBlockBrickId=2504)
+@material(blockid=2504, data=range(16), solid=True)
+def extrautilities_coloredbricks(self, blockid, data):
+    texture = self.load_image_texture("textures/blocks/extrautilities/colorStoneBrick.png")
+
+    # FIXME: The colors may not be entirely accurate, they are estimates from a screenshot...
+    if data == 0: # White: Do nothing
+        return self.build_block(texture, texture)
+    elif data == 1: # Orange
+        side = self.tint_texture(texture, (0xc8, 0x84, 0x35))
+    elif data == 2: # Magenta
+        side = self.tint_texture(texture, (0xcc, 0x57, 0xdd))
+    elif data == 3: # Light Blue
+        side = self.tint_texture(texture, (0x6e, 0xa5, 0xd1))
+    elif data == 4: # Yellow
+        side = self.tint_texture(texture, (0xdd, 0xdd, 0x3a))
+    elif data == 5: # Lime
+        side = self.tint_texture(texture, (0x8a, 0xd1, 0x1c))
+    elif data == 6: # Pink
+        side = self.tint_texture(texture, (0xdd, 0x92, 0xbe))
+    elif data == 7: # Gray
+        side = self.tint_texture(texture, (0x57, 0x57, 0x57))
+    elif data == 8: # Light Gray
+        side = self.tint_texture(texture, (0x9e, 0x9e, 0x9e))
+    elif data == 9: # Cyan
+        side = self.tint_texture(texture, (0x57, 0x92, 0xaf))
+    elif data == 10: # Purple
+        side = self.tint_texture(texture, (0x84, 0x42, 0xb9))
+    elif data == 11: # Blue
+        side = self.tint_texture(texture, (0x3a, 0x57, 0xcc))
+    elif data == 12: # Brown
+        side = self.tint_texture(texture, (0x6a, 0x4f, 0x35))
+    elif data == 13: # Green
+        side = self.tint_texture(texture, (0x75, 0x92, 0x3a))
+    elif data == 14: # Red
+        side = self.tint_texture(texture, (0x9e, 0x35, 0x35))
+    elif data == 15: # Black
+        side = self.tint_texture(texture, (0x18, 0x18, 0x18))
+
+    return self.build_block(side, side)
+
+# Extra Utilities: Compressed Cobblestone (I:cobblestoneComprId=2506)
+@material(blockid=2506, data=range(8), solid=True)
+def extrautilities_compressedcobble(self, blockid, data):
+    side = self.load_image_texture("textures/blocks/extrautilities/cobblestone_compressed_%d.png" % (data + 1))
+    return self.build_block(side, side)
+
+# Extra Utilities: Sound Muffler & Rain Muffler (I:soundMufflerId=2510)
+@material(blockid=2510, data=range(2), solid=True)
+def extrautilities_muffler(self, blockid, data):
+    if data == 0: # Sound Muffler
+        side = self.load_image_texture("textures/blocks/extrautilities/sound_muffler.png")
+    elif data == 1: # Rain Muffler
+        side = self.load_image_texture("textures/blocks/extrautilities/rain_muffler.png")
+
+    return self.build_block(side, side)
+
+# Extra Utilities: Trading Post (I:tradingPost=2511)
+@material(blockid=2511, nodata=True, solid=True)
+def extrautilities_muffler(self, blockid, data):
+    side = self.load_image_texture("textures/blocks/extrautilities/trading_post_side.png")
+    top = self.load_image_texture("textures/blocks/extrautilities/trading_post_top.png")
+    return self.build_block(top, side)
+
+# Extra Utilities: Cursed Earth (I:cursedEarth=2515)
+@material(blockid=2515, nodata=True, solid=True)
+def extrautilities_muffler(self, blockid, data):
+    side = self.load_image_texture("textures/blocks/extrautilities/cursedearthside.png")
+    top = self.load_image_texture("textures/blocks/extrautilities/cursedearthtop.png")
+    return self.build_block(top, side)
+
+# Extra Utilities: Ethereal Glass (I:etherealBlockId=2518)
+block(blockid=2518, top_image="textures/blocks/extrautilities/etherealglass.png", transparent=True, nospawn=True)
+
+# Extra Utilities: Colored Planks (I:coloredWoodId=2519)
+@material(blockid=2519, data=range(16), solid=True)
+def extrautilities_coloredplanks(self, blockid, data):
+    texture = self.load_image_texture("textures/blocks/extrautilities/colorWoodPlanks.png")
+
+    # FIXME: The colors may not be entirely accurate, they are estimates from a screenshot...
+    if data == 0: # White: Do nothing
+        return self.build_block(texture, texture)
+    elif data == 1: # Orange
+        side = self.tint_texture(texture, (0xff, 0x9c, 0x32))
+    elif data == 2: # Magenta
+        side = self.tint_texture(texture, (0xd8, 0x54, 0x9e))
+    elif data == 3: # Light Blue
+        side = self.tint_texture(texture, (0x86, 0xb4, 0xb4))
+    elif data == 4: # Yellow
+        side = self.tint_texture(texture, (0xea, 0xd5, 0x2a))
+    elif data == 5: # Lime
+        side = self.tint_texture(texture, (0x9a, 0xd5, 0x15))
+    elif data == 6: # Pink
+        side = self.tint_texture(texture, (0xff, 0x96, 0x9a))
+    elif data == 7: # Gray
+        side = self.tint_texture(texture, (0x65, 0x5a, 0x47))
+    elif data == 8: # Light Gray
+        side = self.tint_texture(texture, (0xca, 0xbc, 0x96))
+    elif data == 9: # Cyan
+        side = self.tint_texture(texture, (0x5d, 0x8c, 0x7d))
+    elif data == 10: # Purple
+        side = self.tint_texture(texture, (0x9a, 0x46, 0x92))
+    elif data == 11: # Blue
+        side = self.tint_texture(texture, (0x43, 0x5e, 0xaf))
+    elif data == 12: # Brown
+        side = self.tint_texture(texture, (0x86, 0x5e, 0x32))
+    elif data == 13: # Green
+        side = self.tint_texture(texture, (0x86, 0x96, 0x30))
+    elif data == 14: # Red
+        side = self.tint_texture(texture, (0xca, 0x3f, 0x32))
+    elif data == 15: # Black
+        side = self.tint_texture(texture, (0x1f, 0x1c, 0x15))
+
+    return self.build_block(side, side)
+
+# Extra Utilities: Ender-Thermic Pump (I:enderThermicPumpId=2520)
+@material(blockid=2520, nodata=True, solid=True)
+def extrautilities_enderthermicpump(self, blockid, data):
+    side = self.load_image_texture("textures/blocks/extrautilities/enderThermicPump_side.png")
+    top = self.load_image_texture("textures/blocks/extrautilities/enderThermicPump_top.png")
+    return self.build_block(top, side)
+
+# Extra Utilities: Redstone Clock (I:timerBlockId=2521)
+block(blockid=2521, top_image="textures/blocks/extrautilities/timer.png")
+
+#################################
 #	 	Binnie Mods				#
 #################################
 
