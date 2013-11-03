@@ -4743,8 +4743,8 @@ def tic_stainedglass(self, blockid, data):
     return self.build_block(side, side)
 
 # Tinker's Construct: Seared slabs (I:"Seared Slab"=3230)
-@material(blockid=3230, data=range(7), solid=True)
-def tic_woolslab(self, blockid, data):
+@material(blockid=3230, data=range(16), solid=True)
+def tic_searedslab(self, blockid, data):
     bdata = data & 7
     if bdata == 0: # Seared Brick Slab
         top = side = self.load_image_texture("textures/blocks/tic/searedbrick.png")
@@ -4760,6 +4760,9 @@ def tic_woolslab(self, blockid, data):
         top = side = self.load_image_texture("textures/blocks/tic/searedbrickfancy.png")
     elif bdata == 6: # Chiseled Seared Slab
         top = side = self.load_image_texture("textures/blocks/tic/searedbricksquare.png")
+    else: # TODO Unknown block
+        t = self.load_image_texture("textures/blocks/web.png")
+        return self.build_sprite(t)
 
     # cut the side texture in half
     mask = side.crop((0,8,16,16))
@@ -4791,7 +4794,7 @@ def tic_woolslab(self, blockid, data):
     return img
 
 # Tinker's Construct: Brownstone slabs (I:"Speed Slab"=3231)
-@material(blockid=3231, data=range(7), solid=True)
+@material(blockid=3231, data=range(16), solid=True)
 def tic_woolslab(self, blockid, data):
     bdata = data & 7
     if bdata == 0: # Rough Brownstone Slab
@@ -4809,6 +4812,9 @@ def tic_woolslab(self, blockid, data):
         top = side = self.load_image_texture("textures/blocks/tic/brownstone_smooth_fancy.png")
     elif bdata == 6: # Chiseled Brownstone Slab
         top = side = self.load_image_texture("textures/blocks/tic/brownstone_smooth_chiseled.png")
+    else: # TODO Unknown block
+        t = self.load_image_texture("textures/blocks/web.png")
+        return self.build_sprite(t)
 
     # cut the side texture in half
     mask = side.crop((0,8,16,16))
