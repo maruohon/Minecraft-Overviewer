@@ -4072,6 +4072,202 @@ def hopper(self, blockid, data):
 #########################################
 
 #################################
+#	 	Dartcraft				#
+#################################
+
+# Dartcraft: Power Ore (I:"Power Ore"=1900)
+@material(blockid=1900, data=range(2), solid=True)
+def dartcraft_ore(self, blockid, data):
+    if data == 0: # Power Ore
+        side = self.load_image_texture("textures/blocks/dartcraft/oreTop.png")
+    elif data == 1: # Nether Ore
+        side = self.load_image_texture("textures/blocks/dartcraft/nether.png")
+    return self.build_block(side, side)
+
+# Dartcraft: Force Stairs (I:"Force Stairs"=1901)
+@material(blockid=1901, data=range(16), transparent=True, solid=True, nospawn=True)
+def dartcraft_stairs(self, blockid, data):
+    # first, rotations
+    # preserve the upside-down bit
+    upside_down = data & 0x4
+    data = data & 0x3
+    if self.rotation == 1:
+        if data == 0: data = 2
+        elif data == 1: data = 3
+        elif data == 2: data = 1
+        elif data == 3: data = 0
+    elif self.rotation == 2:
+        if data == 0: data = 1
+        elif data == 1: data = 0
+        elif data == 2: data = 3
+        elif data == 3: data = 2
+    elif self.rotation == 3:
+        if data == 0: data = 3
+        elif data == 1: data = 2
+        elif data == 2: data = 0
+        elif data == 3: data = 1
+    data = data | upside_down
+
+    # FIXME/NOTE: The stair type is stored in tile entity data, we render them all as Black Force Stairs
+    texture = self.load_image_texture("textures/blocks/dartcraft/brick0.png")
+
+    side = texture.copy()
+    half_block_u = texture.copy() # up, down, left, right
+    half_block_d = texture.copy()
+    half_block_l = texture.copy()
+    half_block_r = texture.copy()
+
+    # generate needed geometries
+    ImageDraw.Draw(side).rectangle((0,0,7,6),outline=(0,0,0,0),fill=(0,0,0,0))
+    ImageDraw.Draw(half_block_u).rectangle((0,8,15,15),outline=(0,0,0,0),fill=(0,0,0,0))
+    ImageDraw.Draw(half_block_d).rectangle((0,0,15,6),outline=(0,0,0,0),fill=(0,0,0,0))
+    ImageDraw.Draw(half_block_l).rectangle((8,0,15,15),outline=(0,0,0,0),fill=(0,0,0,0))
+    ImageDraw.Draw(half_block_r).rectangle((0,0,7,15),outline=(0,0,0,0),fill=(0,0,0,0))
+
+    if data & 0x4 == 0x4: # upside down stair
+        side = side.transpose(Image.FLIP_TOP_BOTTOM)
+        if data & 0x3 == 0: # ascending east
+            img = Image.new("RGBA", (24,24), self.bgcolor) # first paste the texture in the back
+            tmp = self.transform_image_side(half_block_d)
+            alpha_over(img, tmp, (6,3))
+            alpha_over(img, self.build_full_block(texture, None, None, half_block_u, side.transpose(Image.FLIP_LEFT_RIGHT)))
+
+        elif data & 0x3 == 0x1: # ascending west
+            img = self.build_full_block(texture, None, None, texture, side)
+
+        elif data & 0x3 == 0x2: # ascending south
+            img = self.build_full_block(texture, None, None, side, texture)
+
+        elif data & 0x3 == 0x3: # ascending north
+            img = Image.new("RGBA", (24,24), self.bgcolor) # first paste the texture in the back
+            tmp = self.transform_image_side(half_block_d).transpose(Image.FLIP_LEFT_RIGHT)
+            alpha_over(img, tmp, (6,3))
+            alpha_over(img, self.build_full_block(texture, None, None, side.transpose(Image.FLIP_LEFT_RIGHT), half_block_u))
+
+    else: # normal stair
+        if data == 0: # ascending east
+            img = self.build_full_block(half_block_r, None, None, half_block_d, side.transpose(Image.FLIP_LEFT_RIGHT))
+            tmp1 = self.transform_image_side(half_block_u)
+
+            # Darken the vertical part of the second step
+            sidealpha = tmp1.split()[3]
+            # darken it a bit more than usual, looks better
+            tmp1 = ImageEnhance.Brightness(tmp1).enhance(0.8)
+            tmp1.putalpha(sidealpha)
+
+            alpha_over(img, tmp1, (6,4)) #workaround, fixes a hole
+            alpha_over(img, tmp1, (6,3))
+            tmp2 = self.transform_image_top(half_block_l)
+            alpha_over(img, tmp2, (0,6))
+
+        elif data == 1: # ascending west
+            img = Image.new("RGBA", (24,24), self.bgcolor) # first paste the texture in the back
+            tmp1 = self.transform_image_top(half_block_r)
+            alpha_over(img, tmp1, (0,6))
+            tmp2 = self.build_full_block(half_block_l, None, None, texture, side)
+            alpha_over(img, tmp2)
+
+        elif data == 2: # ascending south
+            img = Image.new("RGBA", (24,24), self.bgcolor) # first paste the texture in the back
+            tmp1 = self.transform_image_top(half_block_u)
+            alpha_over(img, tmp1, (0,6))
+            tmp2 = self.build_full_block(half_block_d, None, None, side, texture)
+            alpha_over(img, tmp2)
+
+        elif data == 3: # ascending north
+            img = self.build_full_block(half_block_u, None, None, side.transpose(Image.FLIP_LEFT_RIGHT), half_block_d)
+            tmp1 = self.transform_image_side(half_block_u).transpose(Image.FLIP_LEFT_RIGHT)
+
+            # Darken the vertical part of the second step
+            sidealpha = tmp1.split()[3]
+            # darken it a bit more than usual, looks better
+            tmp1 = ImageEnhance.Brightness(tmp1).enhance(0.7)
+            tmp1.putalpha(sidealpha)
+
+            alpha_over(img, tmp1, (6,4)) # workaround, fixes a hole
+            alpha_over(img, tmp1, (6,3))
+            tmp2 = self.transform_image_top(half_block_d)
+            alpha_over(img, tmp2, (0,6))
+
+        # touch up a (horrible) pixel
+        img.putpixel((18,3),(0,0,0,0))
+
+    return img
+
+# Dartcraft: Force Bricks (I:"Force Brick"=1903)
+@material(blockid=1903, data=range(16), solid=True)
+def dartcraft_forcebricks(self, blockid, data):
+    side = self.load_image_texture("textures/blocks/dartcraft/brick%d.png" % data)
+    return self.build_block(side, side)
+
+# Dartcraft: Force Log & Planks (I:"Force Wood"=1904)
+@material(blockid=1904, data=range(16), solid=True)
+def dartcraft_forcewood(self, blockid, data):
+    if data == 1: # Force Planks
+        side = self.load_image_texture("textures/blocks/dartcraft/logSide.png")
+        return self.build_block(side, side)
+
+    wood_orientation = data & 12
+    if self.rotation == 1:
+        if wood_orientation == 4: wood_orientation = 8
+        elif wood_orientation == 8: wood_orientation = 4
+    elif self.rotation == 3:
+        if wood_orientation == 4: wood_orientation = 8
+        elif wood_orientation == 8: wood_orientation = 4
+
+    side = self.load_image_texture("textures/blocks/dartcraft/logSide.png")
+    top = self.load_image_texture("textures/blocks/dartcraft/logTop.png")
+
+    # choose orientation and paste textures
+    if wood_orientation == 0:
+        return self.build_block(top, side)
+    elif wood_orientation == 4: # east-west orientation
+        return self.build_full_block(side.rotate(90), None, None, top, side.rotate(90))
+    elif wood_orientation == 8: # north-south orientation
+        return self.build_full_block(side, None, None, side.rotate(270), top)
+    return self.build_block(top, side)
+
+# Dartcraft: Force Leaves (I:"Force Leaves"=1905)
+block(blockid=1905, top_image="textures/blocks/dartcraft/leaves.png", transparent=True, solid=True)
+
+# Dartcraft: Force Sapling (I:Plants=1906)
+sprite(blockid=1906, imagename="textures/blocks/dartcraft/sapling.png")
+
+# Dartcraft: Force Slabs (I:"Force Slab"=1908)
+@material(blockid=1908, data=range(16), solid=True)
+def dartcraft_forceslabs(self, blockid, data):
+    # FIXME We use the same texture for all the slabs, since the slab type is stored in the tile entity data
+    top = side = self.load_image_texture("textures/blocks/dartcraft/brick0.png")
+    # cut the side texture in half
+    mask = side.crop((0,8,16,16))
+    side = Image.new(side.mode, side.size, self.bgcolor)
+    alpha_over(side, mask, (0,0,16,8), mask)
+
+    # plain slab
+    top = self.transform_image_top(top)
+    side = self.transform_image_side(side)
+    otherside = side.transpose(Image.FLIP_LEFT_RIGHT)
+
+    sidealpha = side.split()[3]
+    side = ImageEnhance.Brightness(side).enhance(0.9)
+    side.putalpha(sidealpha)
+    othersidealpha = otherside.split()[3]
+    otherside = ImageEnhance.Brightness(otherside).enhance(0.8)
+    otherside.putalpha(othersidealpha)
+
+    # upside down slab
+    delta = 0
+    if data & 8 == 8:
+        delta = 6
+
+    img = Image.new("RGBA", (24,24), self.bgcolor)
+    alpha_over(img, side, (0,12 - delta), side)
+    alpha_over(img, otherside, (12,12 - delta), otherside)
+    alpha_over(img, top, (0,6 - delta), top)
+
+    return img
+
+#################################
 #	 Extra Utilities			#
 #################################
 
