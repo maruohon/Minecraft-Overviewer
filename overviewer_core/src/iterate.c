@@ -425,6 +425,61 @@ generate_pseudo_data(RenderState *state, unsigned char ancilData) {
 				check_adjacent_blocks(state, x, y, z, 1418) |
 				check_adjacent_blocks(state, x, y, z, 107)) << 4;
     }
+    /* Natura: Fences */
+    else if (state->block == 3285) {
+		/* Check for Natura fences, Natura Fence Gates AND vanilla fence gates */
+		/* Shift by 4 bits, because Natura fences have the wood type in the 4-bit data */
+		return (check_adjacent_blocks(state, x, y, z, state->block) | /* Natura Fences */
+				check_adjacent_blocks(state, x, y, z, 3343) | /* Natura Fence gates */
+				check_adjacent_blocks(state, x, y, z, 3344) |
+				check_adjacent_blocks(state, x, y, z, 3345) |
+				check_adjacent_blocks(state, x, y, z, 3346) |
+				check_adjacent_blocks(state, x, y, z, 3347) |
+				check_adjacent_blocks(state, x, y, z, 3348) |
+				check_adjacent_blocks(state, x, y, z, 3349) |
+				check_adjacent_blocks(state, x, y, z, 3350) |
+				check_adjacent_blocks(state, x, y, z, 3351) |
+				check_adjacent_blocks(state, x, y, z, 3352) |
+				check_adjacent_blocks(state, x, y, z, 3353) |
+				check_adjacent_blocks(state, x, y, z, 3354) |
+				check_adjacent_blocks(state, x, y, z, 3355) |
+				check_adjacent_blocks(state, x, y, z, 107)) /* Vanilla Fence Gates */
+				<< 4;
+    }
+    /* Natura: Doors */
+    else if(state->block == 3252 ||
+            state->block == 3264 ||
+            state->block == 3265 ||
+            state->block == 3266 ||
+            state->block == 3267 ||
+            state->block == 3268 ||
+            state->block == 3269)
+    {
+        /* use bottom block data format plus one bit for top/down
+         * block (0x8) and one bit for hinge position (0x10)
+         */
+        unsigned char data = 0;
+        if ((ancilData & 0x8) == 0x8) {
+            /* top door block */
+            unsigned char b_data = get_data(state, DATA, x, y-1, z);
+            if ((ancilData & 0x1) == 0x1) {
+                /* hinge on the left */
+                data = b_data | 0x8 | 0x10;
+            } else {
+                data = b_data | 0x8;
+            }
+        } else {
+            /* bottom door block */
+            unsigned char t_data = get_data(state, DATA, x, y+1, z);
+            if ((t_data & 0x1) == 0x1) {
+                /* hinge on the left */
+                data = ancilData | 0x10;
+            } else {
+                data = ancilData;
+            }
+        }
+        return data;
+    }
 
     return 0;
 
