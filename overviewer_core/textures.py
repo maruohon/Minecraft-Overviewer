@@ -8534,7 +8534,6 @@ def bop_purifiedgrass(self, blockid, data):
 
 
 # TODO:
-#    I:"Tree Moss ID"=1932
 #    I:"Promised Land Portal ID"=1941
 #    I:"Bones ID"=1968
 #    I:"Coral ID"=1969
@@ -8542,7 +8541,6 @@ def bop_purifiedgrass(self, blockid, data):
 #    I:"Altar ID"=1979
 #    I:"Puddle ID"=1980
 #    I:"Grave ID"=1981
-#    I:"Moss ID"=4095
 
 
 # BoP: Plants (I:"Plant ID"=1920)
@@ -8550,16 +8548,22 @@ def bop_purifiedgrass(self, blockid, data):
 def bop_plants(self, blockid, data):
     if data == 0: # Dead Grass
         t = self.load_image_texture("textures/blocks/bop/deadgrass.png")
+        return self.build_billboard(t)
     elif data == 1: # Desert Grass
         t = self.load_image_texture("textures/blocks/bop/desertgrass.png")
+        return self.build_billboard(t)
     elif data == 2: # Desert Sprouts
         t = self.load_image_texture("textures/blocks/bop/desertsprouts.png")
+        return self.build_billboard(t)
     elif data == 3: # Dune Grass
         t = self.load_image_texture("textures/blocks/bop/dunegrass.png")
+        return self.build_billboard(t)
     elif data == 4: # Purified Tall Grass
         t = self.load_image_texture("textures/blocks/bop/holytallgrass.png")
+        return self.build_billboard(t)
     elif data == 5: # Thorns
         t = self.load_image_texture("textures/blocks/bop/thorn.png")
+        return self.build_sprite(t)
     elif data == 6: # Barley
         t = self.load_image_texture("textures/blocks/bop/barley.png")
     elif data == 7: # Cattail
@@ -8572,9 +8576,21 @@ def bop_plants(self, blockid, data):
         t = self.load_image_texture("textures/blocks/bop/cattailbottom.png")
     elif data == 12: # Tiny Cactus
         t = self.load_image_texture("textures/blocks/bop/cactus.png")
+        return self.build_sprite(t)
     else: # TODO any others?
         t = self.load_image_texture("textures/blocks/web.png")
-    return self.build_billboard(t)
+        return self.build_sprite(t)
+
+    # Barley, Reed and Cattail rendering is the same as vanilla crops
+    t1 = self.transform_image_top(t)
+    t2 = self.transform_image_side(t)
+    t3 = t2.transpose(Image.FLIP_LEFT_RIGHT)
+
+    img = Image.new("RGBA", (24,24), self.bgcolor)
+    alpha_over(img, t1, (0,12), t1)
+    alpha_over(img, t2, (6,3), t2)
+    alpha_over(img, t3, (6,3), t3)
+    return img
 
 # BoP: Flowers (I:"Flower ID"=1921)
 @material(blockid=1921, data=range(16), transparent=True)
@@ -8774,6 +8790,47 @@ def bop_singleslabs(self, blockid, data):
     alpha_over(img, side, (0,12 - delta), side)
     alpha_over(img, otherside, (12,12 - delta), otherside)
     alpha_over(img, top, (0,6 - delta), top)
+
+    return img
+
+# BoP: Tree Moss (I:"Tree Moss ID"=1932)
+@material(blockid=1932, data=range(16), transparent=True)
+def bop_treemoss(self, blockid, data):
+    # rotation
+    # vines data is bit coded. decode it first.
+    # NOTE: the directions used in this function are the new ones used
+    # in minecraft 1.0.0, no the ones used by overviewer
+    # (i.e. north is top-left by defalut)
+
+    # rotate the data by bitwise shift
+    shifts = 0
+    if self.rotation == 1:
+        shifts = 1
+    elif self.rotation == 2:
+        shifts = 2
+    elif self.rotation == 3:
+        shifts = 3
+
+    for i in range(shifts):
+        data = data * 2
+        if data & 16:
+            data = (data - 16) | 1
+
+    # decode data and prepare textures
+    raw_texture = self.load_image_texture("textures/blocks/bop/treemoss.png")
+    s = w = n = e = None
+
+    if data & 1: # south
+        s = raw_texture
+    if data & 2: # west
+        w = raw_texture
+    if data & 4: # north
+        n = raw_texture
+    if data & 8: # east
+        e = raw_texture
+
+    # texture generation
+    img = self.build_full_block(None, n, e, w, s)
 
     return img
 
@@ -9416,5 +9473,46 @@ def bop_stairs(self, blockid, data):
 
         # touch up a (horrible) pixel
         img.putpixel((18,3),(0,0,0,0))
+
+    return img
+
+# BoP: Moss (I:"Moss ID"=4095)
+@material(blockid=4095, data=range(16), transparent=True)
+def bop_moss(self, blockid, data):
+    # rotation
+    # vines data is bit coded. decode it first.
+    # NOTE: the directions used in this function are the new ones used
+    # in minecraft 1.0.0, no the ones used by overviewer
+    # (i.e. north is top-left by defalut)
+
+    # rotate the data by bitwise shift
+    shifts = 0
+    if self.rotation == 1:
+        shifts = 1
+    elif self.rotation == 2:
+        shifts = 2
+    elif self.rotation == 3:
+        shifts = 3
+
+    for i in range(shifts):
+        data = data * 2
+        if data & 16:
+            data = (data - 16) | 1
+
+    # decode data and prepare textures
+    raw_texture = self.load_image_texture("textures/blocks/bop/moss.png")
+    s = w = n = e = None
+
+    if data & 1: # south
+        s = raw_texture
+    if data & 2: # west
+        w = raw_texture
+    if data & 4: # north
+        n = raw_texture
+    if data & 8: # east
+        e = raw_texture
+
+    # texture generation
+    img = self.build_full_block(None, n, e, w, s)
 
     return img
