@@ -4072,6 +4072,137 @@ def hopper(self, blockid, data):
 #########################################
 
 #################################
+#	 	Applied Energistics		#
+#################################
+
+# Applied Energistics: Machinery and cables (I:appeng.blockMulti=900)
+@material(blockid=900, data=range(16), solid=True, transparent=True)
+def ae_multi1(self, blockid, data):
+    # FIXME All of the blocks are rendered either with no face, or the face on every side,
+    # because the orientation and other spesific information is stored in the tile entity data
+    if data == 0: # ME Cable - Blue FIXME totally wrong, maybe we shouldn't render anything?
+        side = self.load_image_texture("textures/blocks/ae/MECable_Blue.png")
+        return self.build_block(side, side)
+    elif data == 1: # ME Pattern Provider
+        side = self.load_image_texture("textures/blocks/ae/BlockAssembler.png")
+        top = self.load_image_texture("textures/blocks/ae/block_top.png")
+    elif data == 2: # ME Controller
+        side = self.load_image_texture("textures/blocks/ae/ControllerPanel.png")
+        top = self.load_image_texture("textures/blocks/ae/block_top.png")
+    elif data == 3: # ME Drive
+        side = self.load_image_texture("textures/blocks/ae/BlockDriveFace.png")
+        top = self.load_image_texture("textures/blocks/ae/block_top.png")
+    elif data == 4: # ME Pattern Encoder
+        side = self.load_image_texture("textures/blocks/ae/BlockPatternEncoderSide.png")
+        top = self.load_image_texture("textures/blocks/ae/BlockPatternEncoder.png")
+    elif data == 5: # ME Wireless Access Point
+        side = self.load_image_texture("textures/blocks/ae/BlockWireless.png")
+        return self.build_block(side, side)
+    elif data == 6: # ME Access Terminal
+        side = self.load_image_texture("textures/blocks/ae/METerm_Blue.png")
+        top = self.load_image_texture("textures/blocks/ae/block_top.png")
+    elif data == 7: # ME Chest
+        side = self.load_image_texture("textures/blocks/ae/BlockChestSide.png")
+        top = self.load_image_texture("textures/blocks/ae/BlockChestTopGreen.png")
+    elif data == 8: # ME Interface
+        side = self.load_image_texture("textures/blocks/ae/BlockInterface.png")
+        top = self.load_image_texture("textures/blocks/ae/BlockInterface.png")
+    elif data == 9: # ME Partition Editor
+        side = self.load_image_texture("textures/blocks/ae/BlockPreformatterSide.png")
+        top = self.load_image_texture("textures/blocks/ae/BlockPreformatter.png")
+
+    # FIXME the cables are totally wrong, maybe we shouldn't render anything?
+    elif data == 10: # ME Cable - Black
+        side = self.load_image_texture("textures/blocks/ae/MECable_Black.png")
+        return self.build_block(side, side)
+    elif data == 11: # ME Cable - White
+        side = self.load_image_texture("textures/blocks/ae/MECable_White.png")
+        return self.build_block(side, side)
+    elif data == 12: # ME Cable - Brown
+        side = self.load_image_texture("textures/blocks/ae/MECable_Brown.png")
+        return self.build_block(side, side)
+    elif data == 13: # ME Cable - Red
+        side = self.load_image_texture("textures/blocks/ae/MECable_Red.png")
+        return self.build_block(side, side)
+    elif data == 14: # ME Cable - Yellow
+        side = self.load_image_texture("textures/blocks/ae/MECable_Yellow.png")
+        return self.build_block(side, side)
+    elif data == 15: # ME Cable - Green
+        side = self.load_image_texture("textures/blocks/ae/MECable_Green.png")
+        return self.build_block(side, side)
+
+    return self.build_block(top, side)
+
+# Applied Energistics: More machines etc. (I:appeng.blockMulti2=901)
+@material(blockid=901, data=range(16), solid=True, transparent=True)
+def ae_multi1(self, blockid, data):
+    # FIXME All of the blocks are rendered either with no face, or the face on every side,
+    # because the orientation and other spesific information is stored in the tile entity data
+    if data == 3: # ME Crafting Terminal
+        side = self.load_image_texture("textures/blocks/ae/MECTerm_Blue.png")
+        top = self.load_image_texture("textures/blocks/ae/block_top.png")
+    elif data == 5: # ME Crafting CPU
+        side = self.load_image_texture("textures/blocks/ae/BlockCraftingCpu.png")
+        return self.build_block(side, side)
+    elif data == 6: # ME Heat Vent
+        side = self.load_image_texture("textures/blocks/ae/BlockHeatVent.png")
+        return self.build_block(side, side)
+    elif data == 7: # ME Assembler Containment Wall
+        side = self.load_image_texture("textures/blocks/ae/BlockContainmentWall.png")
+        return self.build_block(side, side)
+    elif data == 10: # ME IO Port
+        side = self.load_image_texture("textures/blocks/ae/BlockIOPortSide.png")
+        top = self.load_image_texture("textures/blocks/ae/BlockIOPortTop.png")
+    elif data == 11: # ME Crafting Monitor
+        side = self.load_image_texture("textures/blocks/ae/MECraftingMon_Blue.png")
+        top = self.load_image_texture("textures/blocks/ae/block_top.png")
+    elif data == 12: # ME Storage Monitor
+        side = self.load_image_texture("textures/blocks/ae/MEStorageMonitor_Blue.png")
+        top = self.load_image_texture("textures/blocks/ae/block_top.png")
+    else: # Cables, import/export/storage buses etc. that we don't support atm
+        return None
+
+    return self.build_block(top, side)
+
+# Applied Energistics: Ore, Glass, etc. (I:appeng.blockWorld=902)
+@material(blockid=902, data=range(5), solid=True, transparent=True)
+def ae_world(self, blockid, data):
+    if data == 0: # Certus Quartz Ore
+        side = self.load_image_texture("textures/blocks/ae/BlockQuartz.png")
+    elif data == 1: # Grind Stone NOTE: we render every side the same (no front face, orientation is in te data)
+        side = self.load_image_texture("textures/blocks/ae/BlockGrinderSide.png")
+        top = self.load_image_texture("textures/blocks/ae/BlockGrinderTop.png")
+        return self.build_block(top, side)
+    elif data == 2: # Certus Quartz Block
+        side = self.load_image_texture("textures/blocks/ae/BlockQuartzBlk.png")
+    elif data == 3: # Quartz Glass (NOTE: We don't do connected textures...)
+        side = self.load_image_texture("textures/blocks/ae/BlockQuartzGlass.png")
+    elif data == 4: # Vibrant Quartz Glass (NOTE: We don't do connected textures...)
+        side = self.load_image_texture("textures/blocks/ae/BlockQuartzGlass.png")
+    return self.build_block(side, side)
+
+# Applied Energistics: More machines etc. (I:appeng.blockMulti3=903)
+@material(blockid=903, data=range(16), solid=True, transparent=True)
+def ae_multi1(self, blockid, data):
+    # FIXME All of the blocks are rendered either with no face, or the face on every side,
+    # because the orientation and other spesific information is stored in the tile entity data
+    if data == 4: # ME Transition Plane
+        side = self.load_image_texture("textures/blocks/ae/block_side.png")
+        top = self.load_image_texture("textures/blocks/ae/block_top.png")
+        return self.build_block(top, side)
+    elif data == 5: # Energy Cell
+        side = self.load_image_texture("textures/blocks/ae/BlockEnergyCell.png")
+    elif data == 6: # ME Power Relay
+        side = self.load_image_texture("textures/blocks/ae/BlockPowerRelay.png")
+    elif data == 7: # ME Condenser
+        side = self.load_image_texture("textures/blocks/ae/BlockCondendser.png")
+    else: # Other stuff that we don't support atm
+        return None
+
+    return self.build_block(side, side)
+
+
+#################################
 #	 	Dartcraft				#
 #################################
 
