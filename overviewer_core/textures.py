@@ -4787,41 +4787,39 @@ def natura_sakuraleaves(self, blockid, data):
 def natura_floraleaves(self, blockid, data):
     # The highest bit indicates non-decaying leaves(?)
     data = data & 7
-    if data == 0: # Redwood Leaves
+    if data == 0: # Redwood Leaves NOTE: needs biome coloring
         t = self.load_image_texture("textures/blocks/natura/redwood_leaves_fancy.png")
-    elif data == 1: # Eucalyptus Leaves
+    elif data == 1: # Eucalyptus Leaves NOTE: needs biome coloring
         t = self.load_image_texture("textures/blocks/natura/eucalyptus_leaves_fancy.png")
-    elif data == 2: # Hopseed Leaves
+    elif data == 2: # Hopseed Leaves TODO does this need biome coloring?
         t = self.load_image_texture("textures/blocks/natura/hopseed_leaves_fancy.png")
     else: # TODO Unknown Block
         t = self.load_image_texture("textures/blocks/web.png")
         return self.build_sprite(t)
     return self.build_block(t, t)
 
-# Natura: Barley and Cotton (I:Crops=3260)
+# Natura: Crops (Barley and Cotton) (I:Crops=3260)
 @material(blockid=3260, data=range(16), transparent=True)
-def natura_cotton(self, blockid, data):
-    if data == 0: # Barley, stage 1
-        t = self.load_image_texture("textures/blocks/natura/barley_1.png")
-    elif data == 1: # Barley, stage 2
-        t = self.load_image_texture("textures/blocks/natura/barley_2.png")
-    elif data == 2: # Barley, stage 3
-        t = self.load_image_texture("textures/blocks/natura/barley_3.png")
-    elif data == 3: # Barley, mature
-        t = self.load_image_texture("textures/blocks/natura/barley_4.png")
-    elif data == 4: # Cotton (small, just planted)
-        t = self.load_image_texture("textures/blocks/natura/cotton_1.png")
-    elif data == 5: # Cotton (half sized)
-        t = self.load_image_texture("textures/blocks/natura/cotton_2.png")
-    elif data == 6: # Cotton (full sized, empty)
-        t = self.load_image_texture("textures/blocks/natura/cotton_3.png")
-    elif data == 7: # Cotton (full sized, pink)
-        t = self.load_image_texture("textures/blocks/natura/cotton_4.png")
-    elif data == 8: # Cotton (full sized, ready for harvest)
-        t = self.load_image_texture("textures/blocks/natura/cotton_5.png")
+def natura_crops(self, blockid, data):
+    if data <= 3: # 0..3 Barley, 4 different growth stages
+        raw_crop = self.load_image_texture("textures/blocks/natura/barley_%d.png" % (data + 1))
+    elif data <= 8: # 4..8 Cotton, 3 different growth stages and 2 different maturity stages
+        t = self.load_image_texture("textures/blocks/natura/cotton_%d.png" % (data - 3))
+        return self.build_sprite(t)
     else: # TODO Unknown Block
         t = self.load_image_texture("textures/blocks/web.png")
-    return self.build_sprite(t)
+        return self.build_sprite(t)
+
+    # Barley rendering is the same as vanilla crops
+    crop1 = self.transform_image_top(raw_crop)
+    crop2 = self.transform_image_side(raw_crop)
+    crop3 = crop2.transpose(Image.FLIP_LEFT_RIGHT)
+
+    img = Image.new("RGBA", (24,24), self.bgcolor)
+    alpha_over(img, crop1, (0,12), crop1)
+    alpha_over(img, crop2, (6,3), crop2)
+    alpha_over(img, crop3, (6,3), crop3)
+    return img
 
 # Natura: Redwood logs (I:"Redwood Block"=3261)
 @material(blockid=3261, data=range(16), solid=True)
@@ -5151,13 +5149,13 @@ def natura_rareleaves(self, blockid, data):
     # The highest bit indicates non-decaying leaves(?)
     data = data & 7
 
-    if data == 0: # Maple Leaves NOTE: needs biome coloring
+    if data == 0: # Maple Leaves NOTE: needs biome coloring FIXME does it?
         t = self.load_image_texture("textures/blocks/natura/maple_leaves_fancy.png")
     elif data == 1: # Silverbell Leaves
         t = self.load_image_texture("textures/blocks/natura/silverbell_leaves_fancy.png")
-    elif data == 2: # Amaranth Leaves NOTE: needs biome coloring
+    elif data == 2: # Amaranth Leaves FIXME does this need biome coloring
         t = self.load_image_texture("textures/blocks/natura/purpleheart_leaves_fancy.png")
-    elif data == 3: # Tigerwood Leaves NOTE: needs biome coloring
+    elif data == 3: # Tigerwood Leaves
         t = self.load_image_texture("textures/blocks/natura/tiger_leaves_fancy.png")
     else: # TODO Unknown Block
         t = self.load_image_texture("textures/blocks/web.png")

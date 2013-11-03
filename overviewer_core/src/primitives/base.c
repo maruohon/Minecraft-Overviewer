@@ -111,6 +111,12 @@ base_draw(void *data, RenderState *state, PyObject *src, PyObject *mask, PyObjec
         state->block == 1962 ||
         /* Thaumcraft: Greatwood Leaves (I:BlockMagicalLeaves=2405) */
         (state->block == 2405 && (state->block_data & 7) == 0) ||
+        /* Natura: Leaves */
+        (state->block == 3259 &&
+            ((state->block_data & 7) == 0 || /* Redwood Leaves */
+            (state->block_data & 7) == 1 || /* Eucalyptus Leaves */
+            (state->block_data & 7) == 2) /* Hopseed Leaves */
+        ) ||
         /* IC2: Rubber Tree Leaves (242:0) */
         state->block == 242
         )
@@ -152,6 +158,8 @@ base_draw(void *data, RenderState *state, PyObject *src, PyObject *mask, PyObjec
         case 1962:
         /* Thaumcraft: Greatwood Leaves (I:BlockMagicalLeaves=2405) */
         case 2405:
+        /* Natura: Leaves */
+        case 3259:
             color_table = self->foliagecolor;
             break;
         /* BoP: Tall grass-like stuff (I:"Foliage ID"=1925) */
