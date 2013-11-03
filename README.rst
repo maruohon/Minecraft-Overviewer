@@ -14,6 +14,9 @@ To be more specific, this version aims to add support for rendering most of the
  - Biomes O' Plenty
  - Buildcraft (mostly just Oil)
  - Dartcraft
+ - Extra Bees
+ - Extra Trees
+ - Extra Utilities
  - Forestry
  - IC2
  - Magic Bees
@@ -49,10 +52,29 @@ You will need to create and modify the render config file as usual.
 You will also need to create the texture pack and point the config file to that.
 To create the texture pack/file, you need to create a zip file, that contains the following:
  - textures directory from the 1.5.2 version of minecraft.jar
- - next, you need to copy the blocks directory from each of the mods' supported by this version of overviewer, texture directory, into the textures/blocks/ directory, renamed to the following names: ae, bc, bop, dartcraft, forestry, ic2, magicbees, mfr, mystcraft, natura, railcraft, te, thaumcraft, tic
+ - next, you need to copy the blocks directory from each of the mods' supported by this version of overviewer, texture directory, into the textures/blocks/ directory, renamed to the following names:
+  - ae
+  - bc
+  - bop
+  - dartcraft
+  - extrabees
+  - extratrees
+  - extrautilities
+  - forestry
+  - ic2
+  - magicbees
+  - mfr
+  - mystcraft
+  - natura
+  - railcraft
+  - te
+  - thaumcraft
+  - tic
  - inside the zip file, you would then have a directory structure such as the following:
   - textures/blocks/gravel.png (vanilla)
   - textures/blocks/bop/aloe.png (Biomes O' Plenty)
+  - textures/blocks/extrabees/hives/rock.0.png (Extra Bees)
+  - textures/blocks/extratrees/planks/Fir.png (Extra Trees)
   - textures/blocks/te/Ore_Copper.png (Thermal Expansion)
   - etc.
 
