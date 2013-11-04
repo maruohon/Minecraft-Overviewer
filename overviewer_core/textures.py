@@ -4898,41 +4898,80 @@ def natura_saplings(self, blockid, data):
     return self.build_sprite(t)
 
 # Natura: Berry Bushes (I:Berry_Bush=3257)
-@material(blockid=3257, data=range(16), transparent=True, solid=True)
+@material(blockid=3257, data=range(16), solid=True, transparent=True)
 def natura_berrybushes(self, blockid, data):
     # FIXME Stage 1 and 2 should be scaled down in size
+    # Stage 1: 8x8 pixels, Stage 2: 12x12 pixels
     if data == 0: # Raspberry Bush (stage 1)
-        t = self.load_image_texture("textures/blocks/natura/raspberry_fancy.png")
+        t = self.load_image_texture("textures/blocks/natura/raspberry_fast.png").copy()
     elif data == 1: # Blueberry Bush (stage 1)
-        t = self.load_image_texture("textures/blocks/natura/blueberry_fancy.png")
+        t = self.load_image_texture("textures/blocks/natura/blueberry_fast.png").copy()
     elif data == 2: # Blackberry Bush (stage 1)
-        t = self.load_image_texture("textures/blocks/natura/blackberry_fancy.png")
+        t = self.load_image_texture("textures/blocks/natura/blackberry_fast.png").copy()
     elif data == 3: # Maloberry Bush (stage 1)
-        t = self.load_image_texture("textures/blocks/natura/geoberry_fancy.png")
+        t = self.load_image_texture("textures/blocks/natura/geoberry_fast.png").copy()
     elif data == 4: # Raspberry Bush (stage 2)
-        t = self.load_image_texture("textures/blocks/natura/raspberry_fancy.png")
+        t = self.load_image_texture("textures/blocks/natura/raspberry_fast.png").copy()
     elif data == 5: # Blueberry Bush (stage 2)
-        t = self.load_image_texture("textures/blocks/natura/blueberry_fancy.png")
+        t = self.load_image_texture("textures/blocks/natura/blueberry_fast.png").copy()
     elif data == 6: # Blackberry Bush (stage 2)
-        t = self.load_image_texture("textures/blocks/natura/blackberry_fancy.png")
+        t = self.load_image_texture("textures/blocks/natura/blackberry_fast.png").copy()
     elif data == 7: # Maloberry Bush (stage 2)
-        t = self.load_image_texture("textures/blocks/natura/geoberry_fancy.png")
+        t = self.load_image_texture("textures/blocks/natura/geoberry_fast.png").copy()
     elif data == 8: # Raspberry Bush (stage 3)
-        t = self.load_image_texture("textures/blocks/natura/raspberry_fancy.png")
+        t = self.load_image_texture("textures/blocks/natura/raspberry_fast.png").copy()
     elif data == 9: # Blueberry Bush (stage 3)
-        t = self.load_image_texture("textures/blocks/natura/blueberry_fancy.png")
+        t = self.load_image_texture("textures/blocks/natura/blueberry_fast.png").copy()
     elif data == 10: # Blackberry Bush (stage 3)
-        t = self.load_image_texture("textures/blocks/natura/blackberry_fancy.png")
+        t = self.load_image_texture("textures/blocks/natura/blackberry_fast.png").copy()
     elif data == 11: # Maloberry Bush (stage 3)
-        t = self.load_image_texture("textures/blocks/natura/geoberry_fancy.png")
+        t = self.load_image_texture("textures/blocks/natura/geoberry_fast.png").copy()
     elif data == 12: # Raspberry Bush (ripe)
-        t = self.load_image_texture("textures/blocks/natura/raspberry_ripe_fancy.png")
+        t = self.load_image_texture("textures/blocks/natura/raspberry_ripe_fast.png")
     elif data == 13: # Blueberry Bush (ripe)
-        t = self.load_image_texture("textures/blocks/natura/blueberry_ripe_fancy.png")
+        t = self.load_image_texture("textures/blocks/natura/blueberry_ripe_fast.png")
     elif data == 14: # Blackberry Bush (ripe)
-        t = self.load_image_texture("textures/blocks/natura/blackberry_ripe_fancy.png")
+        t = self.load_image_texture("textures/blocks/natura/blackberry_ripe_fast.png")
     elif data == 15: # Maloberry Bush (ripe)
-        t = self.load_image_texture("textures/blocks/natura/geoberry_ripe_fancy.png")
+        t = self.load_image_texture("textures/blocks/natura/geoberry_ripe_fast.png")
+
+    if data <= 7: # Stage 1 or 2, ie. smaller than a full block
+        if data <= 3: # Stage 1
+            size = 8
+            osl = 3 # offset left
+            oslt = 5
+            osr = 9 # offset right
+            ost = 3 # offset top
+        else: # <= 7, Stage 2
+            size = 12
+            osl = 2
+            oslt = 5
+            osr = 10
+            ost = 2
+
+        cut = (16 - size) / 2
+        ImageDraw.Draw(t).rectangle((0,0,cut-1,15),outline=(0,0,0,0),fill=(0,0,0,0))
+        ImageDraw.Draw(t).rectangle((16-cut,0,15,15),outline=(0,0,0,0),fill=(0,0,0,0))
+        ImageDraw.Draw(t).rectangle((0,0,15,cut-1),outline=(0,0,0,0),fill=(0,0,0,0))
+        ImageDraw.Draw(t).rectangle((0,16-cut,15,15),outline=(0,0,0,0),fill=(0,0,0,0))
+        top = t.copy()
+
+        side = self.transform_image_side(t)
+        side2 = side.transpose(Image.FLIP_LEFT_RIGHT)
+        top = self.transform_image_top(top)
+
+        img = Image.new("RGBA", (24,24), self.bgcolor)
+        alpha_over(img, side, (osl, oslt), side)
+        alpha_over(img, side2, (osr, oslt), side2)
+        alpha_over(img, top, (0, ost), top)
+
+        if data <= 3:
+            img.putpixel((18, 9), (0, 0, 0, 0)) # fix a horrible pixel
+        else:
+            img.putpixel((21, 8), (0, 0, 0, 0)) # fix a horrible pixel
+
+        return img
+
     return self.build_block(t, t)
 
 # Natura: Leaves (I:"Sakura Leaves"=3258)
@@ -6544,39 +6583,77 @@ def tic_oreberry1(self, blockid, data):
     # for now, we will just render them as full sized blocks
     # TODO The correctness of these data values should be verified
     if data == 0: # Iron Oreberry Bush (stage 1)
-        t = self.load_image_texture("textures/blocks/tic/crops/berry_iron_fancy.png")
+        t = self.load_image_texture("textures/blocks/tic/crops/berry_iron_fast.png")
     elif data == 1: # Gold Oreberry Bush (stage 1)
-        t = self.load_image_texture("textures/blocks/tic/crops/berry_gold_fancy.png")
+        t = self.load_image_texture("textures/blocks/tic/crops/berry_gold_fast.png")
     elif data == 2: # Copper Oreberry Bush (stage 1)
-        t = self.load_image_texture("textures/blocks/tic/crops/berry_copper_fancy.png")
+        t = self.load_image_texture("textures/blocks/tic/crops/berry_copper_fast.png")
     elif data == 3: # Tin Oreberry Bush (stage 1)
-        t = self.load_image_texture("textures/blocks/tic/crops/berry_tin_fancy.png")
+        t = self.load_image_texture("textures/blocks/tic/crops/berry_tin_fast.png")
     elif data == 4: # Iron Oreberry Bush (stage 2)
-        t = self.load_image_texture("textures/blocks/tic/crops/berry_iron_fancy.png")
+        t = self.load_image_texture("textures/blocks/tic/crops/berry_iron_fast.png")
     elif data == 5: # Gold Oreberry Bush (stage 2)
-        t = self.load_image_texture("textures/blocks/tic/crops/berry_gold_fancy.png")
+        t = self.load_image_texture("textures/blocks/tic/crops/berry_gold_fast.png")
     elif data == 6: # Copper Oreberry Bush (stage 2)
-        t = self.load_image_texture("textures/blocks/tic/crops/berry_copper_fancy.png")
+        t = self.load_image_texture("textures/blocks/tic/crops/berry_copper_fast.png")
     elif data == 7: # Tin Oreberry Bush (stage 2)
-        t = self.load_image_texture("textures/blocks/tic/crops/berry_tin_fancy.png")
+        t = self.load_image_texture("textures/blocks/tic/crops/berry_tin_fast.png")
     elif data == 8: # Iron Oreberry Bush (full size)
-        t = self.load_image_texture("textures/blocks/tic/crops/berry_iron_fancy.png")
+        t = self.load_image_texture("textures/blocks/tic/crops/berry_iron_fast.png")
     elif data == 9: # Gold Oreberry Bush (full size)
-        t = self.load_image_texture("textures/blocks/tic/crops/berry_gold_fancy.png")
+        t = self.load_image_texture("textures/blocks/tic/crops/berry_gold_fast.png")
     elif data == 10: # Copper Oreberry Bush (full size)
-        t = self.load_image_texture("textures/blocks/tic/crops/berry_copper_fancy.png")
+        t = self.load_image_texture("textures/blocks/tic/crops/berry_copper_fast.png")
     elif data == 11: # Tin Oreberry Bush (full size)
-        t = self.load_image_texture("textures/blocks/tic/crops/berry_tin_fancy.png")
+        t = self.load_image_texture("textures/blocks/tic/crops/berry_tin_fast.png")
     elif data == 12: # Iron Oreberry Bush (ripe)
-        t = self.load_image_texture("textures/blocks/tic/crops/berry_iron_ripe_fancy.png")
+        t = self.load_image_texture("textures/blocks/tic/crops/berry_iron_ripe_fast.png")
     elif data == 13: # Gold Oreberry Bush (ripe)
-        t = self.load_image_texture("textures/blocks/tic/crops/berry_gold_ripe_fancy.png")
+        t = self.load_image_texture("textures/blocks/tic/crops/berry_gold_ripe_fast.png")
     elif data == 14: # Copper Oreberry Bush (ripe)
-        t = self.load_image_texture("textures/blocks/tic/crops/berry_copper_ripe_fancy.png")
+        t = self.load_image_texture("textures/blocks/tic/crops/berry_copper_ripe_fast.png")
     elif data == 15: # Tin Oreberry Bush (ripe)
-        t = self.load_image_texture("textures/blocks/tic/crops/berry_tin_ripe_fancy.png")
+        t = self.load_image_texture("textures/blocks/tic/crops/berry_tin_ripe_fast.png")
     else: # TODO Unknown block
         t = self.load_image_texture("textures/blocks/web.png")
+
+    if data <= 7: # Stage 1 or 2, ie. smaller than a full block
+        if data <= 3: # Stage 1
+            size = 8
+            osl = 3 # offset left
+            oslt = 5
+            osr = 9 # offset right
+            ost = 3 # offset top
+        else: # <= 7, Stage 2
+            size = 12
+            osl = 2
+            oslt = 5
+            osr = 10
+            ost = 2
+
+        cut = (16 - size) / 2
+        ImageDraw.Draw(t).rectangle((0,0,cut-1,15),outline=(0,0,0,0),fill=(0,0,0,0))
+        ImageDraw.Draw(t).rectangle((16-cut,0,15,15),outline=(0,0,0,0),fill=(0,0,0,0))
+        ImageDraw.Draw(t).rectangle((0,0,15,cut-1),outline=(0,0,0,0),fill=(0,0,0,0))
+        ImageDraw.Draw(t).rectangle((0,16-cut,15,15),outline=(0,0,0,0),fill=(0,0,0,0))
+        top = t.copy()
+
+        side = self.transform_image_side(t)
+        side2 = side.transpose(Image.FLIP_LEFT_RIGHT)
+        top = self.transform_image_top(top)
+
+        img = Image.new("RGBA", (24,24), self.bgcolor)
+        alpha_over(img, side, (osl, oslt), side)
+        alpha_over(img, side2, (osr, oslt), side2)
+        alpha_over(img, top, (0, ost), top)
+
+        if data <= 3:
+            img.putpixel((18, 9), (0, 0, 0, 0)) # fix a horrible pixel
+        else:
+            img.putpixel((21, 8), (0, 0, 0, 0)) # fix a horrible pixel
+
+        return img
+
     return self.build_block(t, t)
 
 # Tinker's Construct: Oreberry bushes (I:"Ore Berry Two"=1486)
