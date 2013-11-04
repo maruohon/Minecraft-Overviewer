@@ -4750,6 +4750,9 @@ def binnie_slabs(self, blockid, data):
 # FIXME We use the same texture for all the blocks, since the wood type is stored in the tile entity data
 block(blockid=3708, top_image="textures/blocks/extratrees/planks/Fir.png")
 
+# Binnie Mods: Doors (I:door=3710)
+# This is in the Natura Doors code!
+
 # Binnie Mods (Extra Bees) Hives (I:hive=4000)
 @material(blockid=4000, data=range(4), solid=True)
 def binnie_hive(self, blockid, data):
@@ -5073,7 +5076,8 @@ def natura_bloodwood(self, blockid, data):
 #   I:"Redwood Bark Door"=3269
 #   I:"Redwood Door"=3252
 #   I:"Sakura Door"=3266
-@material(blockid=[3252,3264,3265,3266,3267,3268,3269], data=range(32), transparent=True)
+# XXX Binnie Mods: Doors (I:door=3710) XXX Here to save duplicating code
+@material(blockid=[3252,3264,3265,3266,3267,3268,3269,3710], data=range(32), transparent=True)
 def natura_doors(self, blockid, data):
     # Masked to not clobber block top/bottom & swung info
     if self.rotation == 1:
@@ -5111,6 +5115,12 @@ def natura_doors(self, blockid, data):
         raw_door = self.load_image_texture("textures/blocks/natura/bloodwood_door_%s.png" % doorpart)
     elif blockid == 3269: # Redwood Bark Door
         raw_door = self.load_image_texture("textures/blocks/natura/redwoodbark_door_%s.png" % doorpart)
+    elif blockid == 3710: # Binnie/Extra Trees doors: type in TE data, just use the vanilla texture
+        # FIXME these doors' data values don't seem to correspond to the vanilla behaviour
+        if doorpart == "top":
+            raw_door = self.load_image_texture("textures/blocks/doorWood_upper.png")
+        else:
+            raw_door = self.load_image_texture("textures/blocks/doorWood_lower.png")
 
     # if you want to render all doors as closed, then force
     # force closed to be True

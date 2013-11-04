@@ -453,7 +453,8 @@ generate_pseudo_data(RenderState *state, unsigned char ancilData) {
             state->block == 3266 ||
             state->block == 3267 ||
             state->block == 3268 ||
-            state->block == 3269)
+            state->block == 3269 ||
+            state->block == 3710) /* Extra Trees doors */
     {
         /* use bottom block data format plus one bit for top/down
          * block (0x8) and one bit for hinge position (0x10)
