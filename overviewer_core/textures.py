@@ -4203,6 +4203,43 @@ def ae_multi1(self, blockid, data):
 
 
 #################################
+#	 	Factorization			#
+#################################
+
+# Factorization: Barrels (I:factoryBlockId=1000)
+@material(blockid=1000, data=range(16), solid=True)
+def fact_machine(self, blockid, data):
+    # FIXME A lot of these things are approximations, because a lot of the data is in the tile entity data
+    if data == 1: # Router
+        side = self.load_image_texture("textures/blocks/factorization/router/south_off.png")
+        top = self.load_image_texture("textures/blocks/factorization/router/top.png")
+    elif data == 2: # Barrel (both regular and upgraded...)
+        side = self.load_image_texture("textures/blocks/factorization/storage/barrel_side.png")
+        top = self.load_image_texture("textures/blocks/factorization/storage/barrel_top.png")
+    elif data == 7: # Craftpacket Maker AND Craftpacket Stamper AND Packager... (FFS)
+        side = self.load_image_texture("textures/blocks/factorization/craft/maker_side.png")
+        top = self.load_image_texture("textures/blocks/factorization/craft/maker_top.png")
+    elif data == 8: # Slag Furnace
+        side = self.load_image_texture("textures/blocks/factorization/machine/slag_furnace_face.png")
+        top = self.load_image_texture("textures/blocks/factorization/machine/slag_furnace_top.png")
+    else: # Unsupported blocks
+        side = self.load_image_texture("textures/blocks/web.png")
+        return self.build_sprite(side)
+
+    return self.build_block(top, side)
+
+# Factorization: Resource Blocks (I:resourceBlockId=1002)
+@material(blockid=1002, data=range(16), solid=True)
+def fact_machine(self, blockid, data):
+    if data == 3: # Block of Dark Iron
+        side = self.load_image_texture("textures/blocks/factorization/resource/dark_iron_block.png")
+    else: # Unsupported blocks
+        side = self.load_image_texture("textures/blocks/web.png")
+        return self.build_sprite(side)
+
+    return self.build_block(side, side)
+
+#################################
 #	 	Dartcraft				#
 #################################
 

@@ -17,6 +17,7 @@ To be more specific, this version aims to add support for rendering most of the
  - Extra Bees
  - Extra Trees
  - Extra Utilities
+ - Factorization (barrels! ;D)
  - Forestry
  - IC2
  - Magic Bees
@@ -60,6 +61,7 @@ To create the texture pack/file, you need to create a zip file, that contains th
   - extrabees
   - extratrees
   - extrautilities
+  - factorization
   - forestry
   - ic2
   - magicbees
