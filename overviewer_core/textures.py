@@ -8705,6 +8705,8 @@ def bop_plants(self, blockid, data):
         t = self.load_image_texture("textures/blocks/bop/cattailtop.png")
     elif data == 10: # Cattail (bottom)
         t = self.load_image_texture("textures/blocks/bop/cattailbottom.png")
+    elif data == 11: # Wild Carrot
+        t = self.load_image_texture("textures/blocks/bop/wildcarrot.png")
     elif data == 12: # Tiny Cactus
         t = self.load_image_texture("textures/blocks/bop/cactus.png")
         return self.build_sprite(t)
@@ -8712,7 +8714,7 @@ def bop_plants(self, blockid, data):
         t = self.load_image_texture("textures/blocks/web.png")
         return self.build_sprite(t)
 
-    # Barley, Reed and Cattail rendering is the same as vanilla crops
+    # Barley, Reed, Cattail and Wild Carrot rendering is the same as vanilla crops
     t1 = self.transform_image_top(t)
     t2 = self.transform_image_side(t)
     t3 = t2.transpose(Image.FLIP_LEFT_RIGHT)
