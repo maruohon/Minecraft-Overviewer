@@ -35,7 +35,17 @@ walk_chunk(RenderState *state, RenderPrimitiveNether *data) {
 
             for (y = NETHER_ROOF-1; y>=0; y--) {
                 id = get_data(state, BLOCKS, x, y - (state->chunky * 16), z);
-                if (id == 7 || id == 87 || id == 169 || id == 153 || id == 11)
+                /* 7 = Bedrock; 11 = Lava (still); 87 == Netherrack;
+                88 = Soul Sand; 153 == Nether Quartz Ore */
+                /* BoP: Ash Block (I:"Ash Block ID"=163) */
+                /* Natura: Tainted Soil (I:"Tainted Soil"=169) */
+                /* Tinker's Construct: Ores (I:"Ores Slag"=1475), data = 1: Cobalt Ore, data = 2: Ardite Ore,
+                but we don't need to check the data value, since the others are overworld-only */
+                /* Magic Bees: Hives (I:hives=1754), data = 4: Infernal Hive */
+                /* Dartcraft: Power Ore (I:"Power Ore"=1900), data = 1 is the nether variant,
+                although we don't need to check for that */
+                if (id == 7 || id == 11 || id == 87 || id == 88 || id == 153 ||
+                    id == 163 || id == 169 || id == 1475 || id == 1754 || id == 1900)
                     data->remove_block[x+1][y][z+1] = 1;
                 else
                     break;
