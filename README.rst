@@ -1,3 +1,115 @@
+=========================================
+Minecraft Overviewer for FTB 1.6.4 packs
+=========================================
+
+About
+-----
+This branch (ftb-164) has a version of Minecraft Overviewer that works with the
+FTB Direwolf20 1.6.4 mod pack. As FTB is using the universal configs in their
+1.6.4 packs, this version should also be compatible (but not necessarily
+complete!) with other FTB 1.6.4 packs as well. Some other non-FTB packs are also
+using the FTB universal configs, and those packs should also be compatible,
+but again, not complete. This version of Overviewer aims to add support for
+most of the world generation/terrain that is in the FTB Direwolf20 1.6.4 mod
+pack, so that people can have nice overviews of their modded worlds.
+
+To be more specific, this version aims to add support for rendering most of the
+"regular shaped/vanilla-like" blocks in the following mods:
+ - Applied Energistics
+ - Biomes O' Plenty
+ - Buildcraft (mostly just Oil)
+ - Dartcraft (although not in the DW20 pack)
+ - Extra Bees
+ - Extra Trees (only partial support due to lots of the stuff using tile entity data)
+ - Extra Utilities
+ - Factorization (barrels! ;D)
+ - Forestry
+ - IC2
+ - Magic Bees
+ - Minefactory Reloaded
+ - Mystcraft (mostly just crystals and decay)
+ - Natura
+ - Railcraft
+ - Thaumcraft
+ - Thermal Expansion
+ - Tinker's Construct
+
+Do note that everything that would need tile entity data to be correctly rendered,
+is either missing or has some placeholder approximation. Also no connected textures.
+
+The block ids are according to the FTB Direwolf20 1.6.4 mod pack (v1.0.20) (FTB
+universal configs). If your mod pack uses a different set of ids, then they must
+be manually adjusted.
+
+The files with modifications from vanilla to modded are:
+overviewer_core/src/iterate.c
+overviewer_core/src/primitives/base.c
+overviewer_core/src/primitives/nether.c
+overviewer_core/textures.py
+
+You can view the changes and find out the parts that have changed by comparing
+he master branch to which this patch is based on and the result with the
+following git diff command:
+git diff master-164 ftb-164
+
+Some blocks might not be rendered quite correctly, either because the correct
+rendering would require the use of tile entity data, which overviewer does not
+currently support(?), or because of my laziness.
+I'm also using cobwebs as a placeholder for unimplemented/missing texture
+definitions, so if your renderings have cobwebs in places that shouldn't have
+them, then it is most likely because that block has not been added yet.
+This is mostly just with blocks that differentiate the type with the additional
+4-bit data. This means that if there are supported block ids, but with
+unrecognized additional data values, in the world data, then those will be
+rendered as cobwebs. Blocks with unknown block ids will be missing completely.
+
+Installation
+------------
+Clone this repository, change to the ftb-152 branch, and then build overviewer:
+ - git clone git@github.com:maruohon/Minecraft-Overviewer.git Minecraft-Overviewer.git
+ - cd Minecraft-Overviewer.git
+ - git checkout origin/ftb-164
+ - python setup.py build
+
+- You will also need to create the resource pack that contains all the textures.
+- To create the resource pack, you need to create a zip file or a directory
+  structure, that contains the following:
+    - the assets directory from the 1.6.4 version of minecraft jar
+      (this can be found inside the minecraft installation directory, in
+      location versions/1.6.4/1.6.4.jar)
+    - next, you need to copy the assets/<modname> directory from
+      each of the mods' jars or zips supported by this version of overviewer
+      into the assets/ directory that you copied from the vanilla jar.
+      You should then have a directory structure like this inside your resource
+      pack directory or zip file:
+      - assets/minecraft/textures/blocks (vanilla stuff)
+      - assets/appeng/textures/blocks
+      - assets/biomesoplenty/textures/blocks
+      - assets/buildcraft/textures/blocks
+      - assets/dartcraft/textures/blocks
+      - assets/extrabees/textures/blocks (from binniemods*.jar)
+      - assets/extratrees/textures/blocks (from binniemods*.jar)
+      - assets/extrautils/textures/blocks
+      - assets/factorization/textures/blocks
+      - assets/forestry/textures/blocks
+      - assets/ic2/textures/blocks
+      - assets/magicbees/textures/blocks
+      - assets/minefactoryreloaded/textures/blocks
+      - assets/mystcraft/textures/blocks
+      - assets/natura/textures/blocks
+      - assets/railcraft/textures/blocks
+      - assets/thaumcraft/textures/blocks
+      - assets/thermalexpansion/textures/blocks
+      - assets/tinker/textures/blocks
+
+- You will then need to create and modify the overviewer render config file as
+  usual. Set the texturepath to point to your resource pack directory or zip
+  file you just put together as explained above.
+
+After this, you should be able to render the world as per usual:
+ - python overviewer.py --config=yourconfigfile.py
+
+
 ====================
 Minecraft Overviewer  |Build Status|
 ====================
