@@ -4270,3 +4270,385 @@ def flower(self, blockid, data):
         alpha_over(img, bloom_tex.resize((14, 11), Image.ANTIALIAS), (5,5))
 
     return img
+
+
+
+#############################################
+#   Start mod blocks                        #
+#   Taken from FTB Direwolf20 1.6.4 configs #
+#############################################
+
+#################################
+#       Applied Energistics     #
+#################################
+
+# Applied Energistics: Machinery and cables (I:appeng.blockMulti=851)
+@material(blockid=851, data=range(16), solid=True)
+def ae_multi1(self, blockid, data):
+    # FIXME All of the blocks are rendered either with no face, or the face on every side,
+    # because the orientation and other spesific information is stored in the tile entity data
+    if data == 0: # ME Cable - Blue FIXME totally wrong, maybe we shouldn't render anything?
+        side = self.load_image_texture("assets/appeng/textures/blocks/MECable_Blue.png")
+        return self.build_block(side, side)
+    elif data == 1: # ME Pattern Provider
+        side = self.load_image_texture("assets/appeng/textures/blocks/BlockAssembler.png")
+        top = self.load_image_texture("assets/appeng/textures/blocks/block_top.png")
+    elif data == 2: # ME Controller
+        side = self.load_image_texture("assets/appeng/textures/blocks/ControllerPanel.png")
+        top = self.load_image_texture("assets/appeng/textures/blocks/block_top.png")
+    elif data == 3: # ME Drive
+        side = self.load_image_texture("assets/appeng/textures/blocks/BlockDriveFace.png")
+        top = self.load_image_texture("assets/appeng/textures/blocks/block_top.png")
+    elif data == 4: # ME Pattern Encoder
+        side = self.load_image_texture("assets/appeng/textures/blocks/BlockPatternEncoderSide.png")
+        top = self.load_image_texture("assets/appeng/textures/blocks/BlockPatternEncoder.png")
+    elif data == 5: # ME Wireless Access Point
+        side = self.load_image_texture("assets/appeng/textures/blocks/BlockWireless.png")
+        return self.build_block(side, side)
+    elif data == 6: # ME Access Terminal
+        side = self.load_image_texture("assets/appeng/textures/blocks/METerm_Clear.png")
+        top = self.load_image_texture("assets/appeng/textures/blocks/block_top.png")
+    elif data == 7: # ME Chest
+        side = self.load_image_texture("assets/appeng/textures/blocks/BlockChestFront.png")
+        top = self.load_image_texture("assets/appeng/textures/blocks/BlockChestTopGreen.png")
+    elif data == 8: # ME Interface
+        side = self.load_image_texture("assets/appeng/textures/blocks/BlockInterface.png")
+        top = self.load_image_texture("assets/appeng/textures/blocks/BlockInterface.png")
+    elif data == 9: # ME Partition Editor
+        side = self.load_image_texture("assets/appeng/textures/blocks/BlockPreformatterSide.png")
+        top = self.load_image_texture("assets/appeng/textures/blocks/BlockPreformatter.png")
+
+    # FIXME the cables are totally wrong, maybe we shouldn't render anything?
+    elif data == 10: # ME Cable - Black
+        side = self.load_image_texture("assets/appeng/textures/blocks/MECable_Black.png")
+        return self.build_block(side, side)
+    elif data == 11: # ME Cable - White
+        side = self.load_image_texture("assets/appeng/textures/blocks/MECable_White.png")
+        return self.build_block(side, side)
+    elif data == 12: # ME Cable - Brown
+        side = self.load_image_texture("assets/appeng/textures/blocks/MECable_Brown.png")
+        return self.build_block(side, side)
+    elif data == 13: # ME Cable - Red
+        side = self.load_image_texture("assets/appeng/textures/blocks/MECable_Red.png")
+        return self.build_block(side, side)
+    elif data == 14: # ME Cable - Yellow
+        side = self.load_image_texture("assets/appeng/textures/blocks/MECable_Yellow.png")
+        return self.build_block(side, side)
+    elif data == 15: # ME Cable - Green
+        side = self.load_image_texture("assets/appeng/textures/blocks/MECable_Green.png")
+        return self.build_block(side, side)
+
+    return self.build_block(top, side)
+
+# Applied Energistics: More machines etc. (I:appeng.blockMulti2=852)
+@material(blockid=852, data=[3,5,6,7,8,10,11,12,13,14], solid=True)
+def ae_multi1(self, blockid, data):
+    # FIXME All of the blocks are rendered either with no face, or the face on every side,
+    # because the orientation and other spesific information is stored in the tile entity data
+    # if data == 0: # ME Precision Export Bus
+    # elif data == 1: # ME Precision Import Bus
+    # elif data == 4: # ME Level Emitter
+    # elif data == 9: # ME Storage Bus
+    # elif data == 15: # ME Fuzzy Storage Bus
+    if data == 3: # ME Crafting Terminal
+        side = self.load_image_texture("assets/appeng/textures/blocks/MECTerm_Clear.png")
+        top = self.load_image_texture("assets/appeng/textures/blocks/block_top.png")
+    elif data == 5: # ME Crafting CPU
+        side = self.load_image_texture("assets/appeng/textures/blocks/BlockCraftingCpu.png")
+        return self.build_block(side, side)
+    elif data == 6: # ME Heat Vent
+        side = self.load_image_texture("assets/appeng/textures/blocks/BlockHeatVent.png")
+        return self.build_block(side, side)
+    elif data == 7: # ME Assembler Containment Wall
+        side = self.load_image_texture("assets/appeng/textures/blocks/BlockContainmentWall.png")
+        return self.build_block(side, side)
+    elif data == 8: # ME Dark Cable
+        side = self.load_image_texture("assets/appeng/textures/blocks/MECable_DarkClear.png")
+        return self.build_block(side, side)
+    elif data == 10: # ME IO Port
+        side = self.load_image_texture("assets/appeng/textures/blocks/BlockIOPortSide.png")
+        top = self.load_image_texture("assets/appeng/textures/blocks/BlockIOPortTop.png")
+    elif data == 11: # ME Crafting Monitor
+        side = self.load_image_texture("assets/appeng/textures/blocks/MECraftingMon_Clear.png")
+        top = self.load_image_texture("assets/appeng/textures/blocks/block_top.png")
+    elif data == 12: # ME Storage Monitor
+        side = self.load_image_texture("assets/appeng/textures/blocks/MEStorageMonitor_Clear.png")
+        top = self.load_image_texture("assets/appeng/textures/blocks/block_top.png")
+    elif data == 13: # ME Covered Cable
+        side = self.load_image_texture("assets/appeng/textures/blocks/MECableLong.png") # ??
+        return self.build_block(side, side)
+    elif data == 14: # ME Cable
+        side = self.load_image_texture("assets/appeng/textures/blocks/MECable.png")
+        return self.build_block(side, side)
+    else: # Cables, import/export/storage buses etc. that we don't support atm
+        return None
+
+    return self.build_block(top, side)
+
+# Applied Energistics: More machines etc. (I:appeng.blockMulti3=853)
+@material(blockid=853, data=[4,5,6,7], solid=True)
+def ae_multi1(self, blockid, data):
+    # FIXME All of the blocks are rendered either with no face, or the face on every side,
+    # because the orientation and other spesific information is stored in the tile entity data
+    # if data == 0: # ME Fuzzy Export Bus
+    # elif data == 1: # ME Fuzzy Import Bus
+    # elif data == 2: # ME Basic Export Bus
+    # elif data == 3: # ME Basic Import Bus
+    # elif data == 8: # Quantum Field Ring
+    # elif data == 9: # Quantum Link Chamber
+    # elif data == 11: # ME P2P Tunnel
+    if data == 4: # ME Transition Plane
+        side = self.load_image_texture("assets/appeng/textures/blocks/block_top.png")
+        top = self.load_image_texture("assets/appeng/textures/blocks/BlockTransPlaneOff.png")
+        return self.build_block(top, side)
+    elif data == 5: # Energy Cell
+        side = self.load_image_texture("assets/appeng/textures/blocks/BlockEnergyCell.png")
+    elif data == 6: # ME Power Relay
+        side = self.load_image_texture("assets/appeng/textures/blocks/BlockPowerRelay.png")
+    elif data == 7: # ME Condenser
+        side = self.load_image_texture("assets/appeng/textures/blocks/BlockCondendser.png")
+    else: # Other stuff that we don't support atm
+        return None
+
+    return self.build_block(side, side)
+
+# Applied Energistics: Ore, Glass, etc. (I:appeng.blockWorld=854)
+@material(blockid=854, data=range(10), solid=True)
+def ae_world(self, blockid, data):
+    if data == 0: # Certus Quartz Ore
+        side = self.load_image_texture("assets/appeng/textures/blocks/BlockQuartz.png")
+    elif data == 1: # Grind Stone NOTE: we render every side the same (orientation is in te data)
+        side = self.load_image_texture("assets/appeng/textures/blocks/BlockGrinderSide.png")
+        top = self.load_image_texture("assets/appeng/textures/blocks/BlockGrinderTop.png")
+        return self.build_block(top, side)
+    elif data == 2: # Certus Quartz Block
+        side = self.load_image_texture("assets/appeng/textures/blocks/BlockQuartzBlk.png")
+    elif data == 3: # Quartz Glass (NOTE: We don't do connected textures...)
+        side = self.load_image_texture("assets/appeng/textures/blocks/BlockQuartzGlass.png")
+    elif data == 4: # Vibrant Quartz Glass (NOTE: We don't do connected textures...)
+        side = self.load_image_texture("assets/appeng/textures/blocks/BlockQuartzGlass.png")
+    elif data >= 6 and data <= 8: # Certus Quartz Pillar FIXME do the orientation
+        side = self.load_image_texture("assets/appeng/textures/blocks/BlockQuartzPillerSide.png")
+        top = self.load_image_texture("assets/appeng/textures/blocks/BlockQuartzPillerEnd.png")
+        side = side.rotate(90)
+
+        # FIXME verify this
+        if data == 6:
+            return self.build_block(top, side)
+        elif data == 7: # nort-south orientation
+            orient = 0
+        elif data == 8: # east-west orientation
+            orient = 1
+
+        if self.rotation == 1 or self.rotation == 3:
+            orient = (orient + 1) & 0x01
+
+        if orient == 0:
+            return self.build_full_block(side, None, None, side.rotate(270), top)
+        else:
+            return self.build_full_block(side.rotate(90), None, None, top, side.rotate(90))
+    elif data == 9: # Certus Quartz Chiseled Block
+        side = self.load_image_texture("assets/appeng/textures/blocks/BlockQuartzChiseledSide.png")
+        top = self.load_image_texture("assets/appeng/textures/blocks/BlockQuartzChiseledEnd.png")
+        return self.build_block(top, side)
+    else:
+        t = self.load_image_texture("assets/minecraft/textures/blocks/web.png")
+        return self.build_sprite(t)
+    return self.build_block(side, side)
+
+
+#################################
+#       Binnie Mods             #
+#################################
+
+# Binnie mods: Genetic Machines (I:geneticMachine=1369)
+@material(blockid=1369, data=range(4), solid=True)
+def binnie_genetic_machine(self, blockid, data):
+    if data == 0: # Genetic Machine
+        side = self.load_image_texture("assets/extrabees/textures/tile/GeneticMachine.png")
+    elif data == 1: # Genepool
+        side = self.load_image_texture("assets/extrabees/textures/tile/Genepool.png")
+    elif data == 2: # Sequencer
+        side = self.load_image_texture("assets/extrabees/textures/tile/Sequencer.png")
+    elif data == 3: # Splicer
+        side = self.load_image_texture("assets/extrabees/textures/tile/Splicer.png")
+    top = side.crop((21, 0, 37, 16))    # FIXME this is slightly wrong, the textures are 14x14, I think...
+    side = side.crop((21, 14, 37, 30))
+    return self.build_block(top, side)
+
+# Binnie mods: Apiarist Machines (I:apiaristMachine=1370)
+@material(blockid=1370, data=range(4), solid=True)
+def binnie_apiarist_machine(self, blockid, data):
+    if data == 0: # Apiarist Machine
+        side = self.load_image_texture("assets/extrabees/textures/tile/ApiaristMachine.png")
+    elif data == 1: # Acclimatiser
+        side = self.load_image_texture("assets/extrabees/textures/tile/Acclimatiser.png")
+    elif data == 2: # Databank
+        side = self.load_image_texture("assets/extrabees/textures/tile/ApiaristDatabank.png")
+    elif data == 3: # Indexer
+        side = self.load_image_texture("assets/extrabees/textures/tile/Indexer.png")
+    top = side.crop((21, 0, 37, 16))    # FIXME this is slightly wrong, the textures are 14x14, I think...
+    side = side.crop((21, 14, 37, 30))
+    return self.build_block(top, side)
+
+# Binnie mods: Advance Genetic Machines (I:advGeneticMachine=1371)
+@material(blockid=1371, data=range(6), solid=True)
+def binnie_advanced_genetic_machine(self, blockid, data):
+    if data == 0: # Advanced Genetic Machine
+        side = self.load_image_texture("assets/extrabees/textures/tile/AdvancedGeneticMachine.png")
+    elif data == 1: # Isolator
+        side = self.load_image_texture("assets/extrabees/textures/tile/Isolator.png")
+    elif data == 2: # Replicator
+        side = self.load_image_texture("assets/extrabees/textures/tile/Replicator.png")
+    elif data == 3: # Purifier
+        side = self.load_image_texture("assets/extrabees/textures/tile/Purifier.png")
+    elif data == 4: # Inoculator
+        side = self.load_image_texture("assets/extrabees/textures/tile/Inoculator.png")
+    elif data == 5: # Synthesiser
+        side = self.load_image_texture("assets/extrabees/textures/tile/Synthesizer.png")
+    top = side.crop((21, 0, 37, 16))    # FIXME this is slightly wrong, the textures are 14x14, I think...
+    side = side.crop((21, 14, 37, 30))
+    return self.build_block(top, side)
+
+# Binnie Mods (Extra Bees) Hives (I:hive=1374)
+@material(blockid=1374, data=range(4), solid=True)
+def binnie_hive(self, blockid, data):
+    if data == 0: # Water Hive
+        side = self.load_image_texture("assets/extrabees/textures/blocks/hive/water.0.png")
+        top = self.load_image_texture("assets/extrabees/textures/blocks/hive/water.1.png")
+    elif data == 1: # Rock Hive
+        side = self.load_image_texture("assets/extrabees/textures/blocks/hive/rock.0.png")
+        top = self.load_image_texture("assets/extrabees/textures/blocks/hive/rock.1.png")
+    elif data == 2: # Nether Hive
+        side = self.load_image_texture("assets/extrabees/textures/blocks/hive/nether.0.png")
+        top = self.load_image_texture("assets/extrabees/textures/blocks/hive/nether.1.png")
+    elif data == 3: # Marble Hive
+        side = self.load_image_texture("assets/extrabees/textures/blocks/hive/marble.0.png")
+        top = self.load_image_texture("assets/extrabees/textures/blocks/hive/marble.1.png")
+    return self.build_block(top, side)
+
+
+
+#################################
+#       Magic Bees              #
+#################################
+
+# Magic Bees: Hives (I:hives=1754)
+@material(blockid=1754, data=range(6), solid=True)
+def magicbees_hives(self, blockid, data):
+    if data == 0: # Curious Hive
+        side = self.load_image_texture("assets/magicbees/textures/blocks/beehive.0.side.png")
+        top = self.load_image_texture("assets/magicbees/textures/blocks/beehive.0.top.png")
+    elif data == 1: # Unusual Hive
+        side = self.load_image_texture("assets/magicbees/textures/blocks/beehive.1.side.png")
+        top = self.load_image_texture("assets/magicbees/textures/blocks/beehive.1.top.png")
+    elif data == 2: # Resonating Hive
+        side = self.load_image_texture("assets/magicbees/textures/blocks/beehive.2.side.png")
+        top = self.load_image_texture("assets/magicbees/textures/blocks/beehive.2.top.png")
+    elif data == 3: # TODO ?? Hive
+        side = self.load_image_texture("assets/magicbees/textures/blocks/beehive.3.side.png")
+        top = self.load_image_texture("assets/magicbees/textures/blocks/beehive.3.top.png")
+    elif data == 4: # Infernal Hive
+        side = self.load_image_texture("assets/magicbees/textures/blocks/beehive.4.side.png")
+        top = self.load_image_texture("assets/magicbees/textures/blocks/beehive.4.top.png")
+    elif data == 5: # Oblivion Hive
+        side = self.load_image_texture("assets/magicbees/textures/blocks/beehive.5.side.png")
+        top = self.load_image_texture("assets/magicbees/textures/blocks/beehive.5.top.png")
+    else: # FIXME Unknown block
+        t = self.load_image_texture("assets/minecraft/textures/blocks/web.png")
+        return self.build_sprite(t)
+    return self.build_block(top, side)
+
+# Magic Bees: Planks & Double slabs (I:planksTC=1750 & I:slabFull=1751)
+@material(blockid=[1750, 1751], data=range(2), solid=True)
+def magicbees_planks(self, blockid, data):
+    if data == 0: # Greatwood planks & Greatwood Double Slab
+        side = self.load_image_texture("assets/magicbees/textures/blocks/greatwood.png")
+    elif data == 1: # Silverwood planks & Silverwood Double Slab
+        side = self.load_image_texture("assets/magicbees/textures/blocks/silverwood.png")
+    return self.build_block(side, side)
+
+# Magic Bees: Slabs (I:slabHalf=1752)
+@material(blockid=1752, data=range(16), solid=True)
+def magicbees_slabs(self, blockid, data):
+    if data & 7 == 0: # Greatwood Slab
+        top = side = self.load_image_texture("assets/magicbees/textures/blocks/greatwood.png")
+    elif data & 7 == 1: # Silverwood Slab
+        top = side = self.load_image_texture("assets/magicbees/textures/blocks/silverwood.png")
+    else: # FIXME Unknown block
+        t = self.load_image_texture("assets/minecraft/textures/blocks/web.png")
+        return self.build_sprite(t)
+
+    # cut the side texture in half
+    mask = side.crop((0,8,16,16))
+    side = Image.new(side.mode, side.size, self.bgcolor)
+    alpha_over(side, mask, (0,0,16,8), mask)
+
+    # plain slab
+    top = self.transform_image_top(top)
+    side = self.transform_image_side(side)
+    otherside = side.transpose(Image.FLIP_LEFT_RIGHT)
+
+    sidealpha = side.split()[3]
+    side = ImageEnhance.Brightness(side).enhance(0.9)
+    side.putalpha(sidealpha)
+    othersidealpha = otherside.split()[3]
+    otherside = ImageEnhance.Brightness(otherside).enhance(0.8)
+    otherside.putalpha(othersidealpha)
+
+    # upside down slab
+    delta = 0
+    if data & 8 == 8:
+        delta = 6
+
+    img = Image.new("RGBA", (24,24), self.bgcolor)
+    alpha_over(img, side, (0,12 - delta), side)
+    alpha_over(img, otherside, (12,12 - delta), otherside)
+    alpha_over(img, top, (0,6 - delta), top)
+
+    return img
+
+
+#################################
+#       Mystcraft               #
+#################################
+
+# Mystcraft: Crystal (I:block.crystal.id=1276)
+block(blockid=1276, top_image="assets/mystcraft/textures/blocks/crystal.png")
+
+# Mystcraft: Link Modifier (I:block.linkmodifier.id=1278)
+@material(blockid=1278, data=range(1), solid=True)
+def mystcraft_linkmodifier(self, blockid, data):
+    side = self.load_image_texture("assets/mystcraft/textures/blocks/linkmodifier_side1.png")
+    top = self.load_image_texture("assets/mystcraft/textures/blocks/linkmodifier_top.png")
+    return self.build_block(top, side)
+
+# Mystcraft: Decay (I:block.unstable.id=1282)
+@material(blockid=1282, data=range(7), solid=True)
+def mystcraft_decay(self, blockid, data):
+    if data == 0: # Black Decay
+        side = self.load_image_texture("assets/mystcraft/textures/blocks/decay_black.png")
+    elif data == 1: # Red Decay
+        side = self.load_image_texture("assets/mystcraft/textures/blocks/decay_red.png")
+    # elif data == 2: # ?
+    elif data == 3: # Blue Decay
+        side = self.load_image_texture("assets/mystcraft/textures/blocks/decay_blue.png")
+    elif data == 4: # Purple Decay
+        side = self.load_image_texture("assets/mystcraft/textures/blocks/decay_purple.png")
+    # elif data == 5: # ?
+    elif data == 6: # White Decay
+        side = self.load_image_texture("assets/mystcraft/textures/blocks/decay_white.png")
+    else: # FIXME Unknown block
+        t = self.load_image_texture("assets/minecraft/textures/blocks/web.png")
+        return self.build_sprite(t)
+    return self.build_block(side, side)
+
+# Mystcraft: Ink Mixer (I:block.inkmixer.id=1284)
+@material(blockid=1284, data=range(1), solid=True)
+def mystcraft_inkmixer(self, blockid, data):
+    side = self.load_image_texture("assets/mystcraft/textures/blocks/inkmixer_side.png")
+    top = self.load_image_texture("assets/mystcraft/textures/blocks/inkmixer_top.png")
+    return self.build_block(top, side)
+
+# Mystcraft: Bookbinder (I:block.bookbinder.id=1285)
+block(blockid=1285, top_image="assets/mystcraft/textures/blocks/bookbinder_side.png")
