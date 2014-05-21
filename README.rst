@@ -42,15 +42,15 @@ universal configs). If your mod pack uses a different set of ids, then they must
 be manually adjusted.
 
 The files with modifications from vanilla to modded are:
-overviewer_core/src/iterate.c
-overviewer_core/src/primitives/base.c
-overviewer_core/src/primitives/nether.c
-overviewer_core/textures.py
+ - overviewer_core/src/iterate.c
+ - overviewer_core/src/primitives/base.c
+ - overviewer_core/src/primitives/nether.c
+ - overviewer_core/textures.py
 
 You can view the changes and find out the parts that have changed by comparing
-he master branch to which this patch is based on and the result with the
+the master branch to which this patch is based on and the result with the
 following git diff command:
-git diff master-164 ftb-164
+ - git diff master-164 ftb-164
 
 Some blocks might not be rendered quite correctly, either because the correct
 rendering would require the use of tile entity data, which overviewer does not
@@ -65,44 +65,46 @@ rendered as cobwebs. Blocks with unknown block ids will be missing completely.
 
 Installation
 ------------
-Clone this repository, change to the ftb-152 branch, and then build overviewer:
+Clone this repository, change to the ftb-164 branch, and then build overviewer:
  - git clone git@github.com:maruohon/Minecraft-Overviewer.git Minecraft-Overviewer.git
  - cd Minecraft-Overviewer.git
  - git checkout origin/ftb-164
  - python setup.py build
 
-- You will also need to create the resource pack that contains all the textures.
-- To create the resource pack, you need to create a zip file or a directory
-  structure, that contains the following:
-    - the assets directory from the 1.6.4 version of minecraft jar
-      (this can be found inside the minecraft installation directory, in
-      location versions/1.6.4/1.6.4.jar)
-    - next, you need to copy the assets/<modname> directory from
-      each of the mods' jars or zips supported by this version of overviewer
-      into the assets/ directory that you copied from the vanilla jar.
-      You should then have a directory structure like this inside your resource
-      pack directory or zip file:
-      - assets/minecraft/textures/blocks (vanilla stuff)
-      - assets/appeng/textures/blocks
-      - assets/biomesoplenty/textures/blocks
-      - assets/buildcraft/textures/blocks
-      - assets/dartcraft/textures/blocks
-      - assets/extrabees/textures/blocks (from binniemods*.jar)
-      - assets/extratrees/textures/blocks (from binniemods*.jar)
-      - assets/extrautils/textures/blocks
-      - assets/factorization/textures/blocks
-      - assets/forestry/textures/blocks
-      - assets/ic2/textures/blocks
-      - assets/magicbees/textures/blocks
-      - assets/minefactoryreloaded/textures/blocks
-      - assets/mystcraft/textures/blocks
-      - assets/natura/textures/blocks
-      - assets/railcraft/textures/blocks
-      - assets/thaumcraft/textures/blocks
-      - assets/thermalexpansion/textures/blocks
-      - assets/tinker/textures/blocks
+* You will also need to create the resource pack that contains all the textures.
+* To create the resource pack, you need to create a zip file or a directory structure, that contains the following:
+ - the assets directory from the 1.6.4 version of minecraft jar
+   (this can be found inside the minecraft installation directory, in
+   location versions/1.6.4/1.6.4.jar)
+ - next, you need to copy the assets/<modname> directory from
+   each of the mods' jars or zips supported by this version of overviewer
+   into the assets/ directory that you copied from the vanilla jar.
 
-- You will then need to create and modify the overviewer render config file as
+* You should now have a directory structure like this inside your resource pack directory or zip file:
+ - assets/minecraft/textures/blocks (vanilla stuff)
+ - assets/appeng/textures/blocks
+ - assets/biomesoplenty/textures/blocks
+ - assets/buildcraft/textures/blocks
+ - assets/dartcraft/textures/blocks
+ - assets/extrabees/textures/blocks (from binniemods*.jar)
+ - assets/extratrees/textures/blocks (from binniemods*.jar)
+ - assets/extrautils/textures/blocks
+ - assets/factorization/textures/blocks
+ - assets/forestry/textures/blocks
+ - assets/ic2/textures/blocks
+ - assets/magicbees/textures/blocks
+ - assets/minefactoryreloaded/textures/blocks
+ - assets/mystcraft/textures/blocks
+ - assets/natura/textures/blocks
+ - assets/railcraft/textures/blocks
+ - assets/thaumcraft/textures/blocks
+ - assets/thermalexpansion/textures/blocks
+ - assets/tinker/textures/blocks
+* Optionally, you can delete all the other directories from
+  assets/<modname>/ leaving just the textures directory, and also
+  from assets/<modname>/textures/ leaving just the blocks directory.
+  In other words, you just need the blocks directories as listed above.
+* Finally, you will need to create and modify the overviewer render config file as
   usual. Set the texturepath to point to your resource pack directory or zip
   file you just put together as explained above.
 
