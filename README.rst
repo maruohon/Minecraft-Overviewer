@@ -59,9 +59,9 @@ I'm also using cobwebs as a placeholder for unimplemented/missing texture
 definitions, so if your renderings have cobwebs in places that shouldn't have
 them, then it is most likely because that block has not been added yet.
 This is mostly just with blocks that differentiate the type with the additional
-4-bit data. This means that if there are supported block ids, but with
-unrecognized additional data values, in the world data, then those will be
-rendered as cobwebs. Blocks with unknown block ids will be missing completely.
+4-bit metadata. This means that if there are supported block IDs, but with
+unrecognized metadata values in the world data, then those will be
+rendered as cobwebs. Blocks with unknown block IDs will be missing completely.
 
 Installation
 ------------
@@ -87,6 +87,7 @@ Clone this repository, change to the ftb-164 branch, and then build overviewer:
  - assets/buildcraft/textures/blocks
  - assets/dartcraft/textures/blocks
  - assets/extrabees/textures/blocks (from binniemods*.jar)
+ - assets/extrabees/textures/tile   NOTE: this is an exception, other mods only need the blocks directory!
  - assets/extratrees/textures/blocks (from binniemods*.jar)
  - assets/extrautils/textures/blocks
  - assets/factorization/textures/blocks
@@ -102,7 +103,7 @@ Clone this repository, change to the ftb-164 branch, and then build overviewer:
  - assets/tinker/textures/blocks
 * Optionally, you can delete all the other directories from
   assets/<modname>/ leaving just the textures directory, and also
-  from assets/<modname>/textures/ leaving just the blocks directory.
+  from assets/<modname>/textures/ leaving just the blocks directory (except BinnieMods - ExtraBees also needs the textures/tile/ directory!).
   In other words, you just need the blocks directories as listed above.
 * Finally, you will need to create and modify the overviewer render config file as
   usual. Set the texturepath to point to your resource pack directory or zip

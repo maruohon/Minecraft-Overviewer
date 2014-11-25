@@ -4528,6 +4528,231 @@ def binnie_hive(self, blockid, data):
     return self.build_block(top, side)
 
 
+#################################
+#       Buildcraft              #
+#################################
+
+# TODO:
+# I:drill.id=1501
+# I:frame.id=1509
+# I:pipe.id=1513
+# I:springBlock.id=1522
+
+# Buildcraft: Mining Well (I:miningWell.id=1500)
+@material(blockid=1500, data=range(16), solid=True)
+def bc_miningwell(self, blockid, data):
+    side = self.load_image_texture("assets/buildcraft/textures/blocks/miningwell_side.png")
+    top = self.load_image_texture("assets/buildcraft/textures/blocks/miningwell_top.png")
+    return self.build_block(top, side)
+
+# Buildcraft: Auto Workbench (I:autoWorkbench.id=1502)
+@material(blockid=1502, data=range(16), solid=True)
+def bc_autoworkbench(self, blockid, data):
+    side = self.load_image_texture("assets/buildcraft/textures/blocks/autoWorkbench_side.png")
+    top = self.load_image_texture("assets/buildcraft/textures/blocks/autoWorkbench_top.png")
+    return self.build_block(top, side)
+
+# Buildcraft: Quarry (I:quarry.id=1503)
+@material(blockid=1503, data=range(16), solid=True)
+def bc_quarry(self, blockid, data):
+    side = self.load_image_texture("assets/buildcraft/textures/blocks/quarry_front.png")
+    top = self.load_image_texture("assets/buildcraft/textures/blocks/quarry_top.png")
+    return self.build_block(top, side)
+
+# Buildcraft: Marker (I:marker.id=1504 & I:pathMarker.id=1518)
+@material(blockid=[1504,1518], data=range(16), solid=True)
+def bc_marker(self, blockid, data):
+    # FIXME check how the metadata is defined
+    # first, rotations
+    if self.rotation == 1:
+        if data == 1: data = 3
+        elif data == 2: data = 4
+        elif data == 3: data = 2
+        elif data == 4: data = 1
+    elif self.rotation == 2:
+        if data == 1: data = 2
+        elif data == 2: data = 1
+        elif data == 3: data = 4
+        elif data == 4: data = 3
+    elif self.rotation == 3:
+        if data == 1: data = 4
+        elif data == 2: data = 3
+        elif data == 3: data = 1
+        elif data == 4: data = 2
+
+    if blockid == 1504:
+        small = self.load_image_texture("assets/buildcraft/textures/blocks/blockMarker.png")
+    else:
+        small = self.load_image_texture("assets/buildcraft/textures/blocks/blockPathMarkerActive.png")
+
+    # compose a torch bigger than the normal
+    # (better for doing transformations)
+    torch = Image.new("RGBA", (16,16), self.bgcolor)
+    alpha_over(torch,small,(-4,-3))
+    alpha_over(torch,small,(-5,-2))
+    alpha_over(torch,small,(-3,-2))
+
+    # angle of inclination of the texture
+    rotation = 90
+
+    if data == 1: # pointing south
+        torch = torch.rotate(-rotation, Image.NEAREST) # nearest filter is more nitid.
+        img = self.build_full_block(None, None, None, torch, None, None)
+
+    elif data == 2: # pointing north
+        torch = torch.rotate(rotation, Image.NEAREST)
+        img = self.build_full_block(None, None, torch, None, None, None)
+
+    elif data == 3: # pointing west
+        torch = torch.rotate(rotation, Image.NEAREST)
+        img = self.build_full_block(None, torch, None, None, None, None)
+
+    elif data == 4: # pointing east
+        torch = torch.rotate(-rotation, Image.NEAREST)
+        img = self.build_full_block(None, None, None, None, torch, None)
+
+    elif data == 5: # standing on the floor
+        # compose a "3d torch".
+        img = Image.new("RGBA", (24,24), self.bgcolor)
+
+        small_crop = small.crop((2,2,14,14))
+        slice = small_crop.copy()
+        ImageDraw.Draw(slice).rectangle((6,0,12,12),outline=(0,0,0,0),fill=(0,0,0,0))
+        ImageDraw.Draw(slice).rectangle((0,0,4,12),outline=(0,0,0,0),fill=(0,0,0,0))
+
+        alpha_over(img, slice, (7,5))
+        alpha_over(img, small_crop, (6,6))
+        alpha_over(img, small_crop, (7,6))
+        alpha_over(img, slice, (7,7))
+
+    return img
+
+# Buildcraft: Filler (I:filler.id=1505)
+@material(blockid=1505, data=range(16), solid=True)
+def bc_filler(self, blockid, data):
+    side = self.load_image_texture("assets/buildcraft/textures/blocks/blockFillerSides.png")
+    top = self.load_image_texture("assets/buildcraft/textures/blocks/blockFillerTopOn.png")
+    return self.build_block(top, side)
+
+# Buildcraft: Builder (I:builder.id=1507)
+@material(blockid=1507, data=range(16), solid=True)
+def bc_builder(self, blockid, data):
+    side = self.load_image_texture("assets/buildcraft/textures/blocks/builder_side.png")
+    top = self.load_image_texture("assets/buildcraft/textures/blocks/builder_top.png")
+    return self.build_block(top, side)
+
+# Buildcraft: Architect (I:architect.id=1508)
+@material(blockid=1508, data=range(16), solid=True)
+def bc_architect(self, blockid, data):
+    side = self.load_image_texture("assets/buildcraft/textures/blocks/architect_front.png")
+    top = self.load_image_texture("assets/buildcraft/textures/blocks/architect_top.png")
+    return self.build_block(top, side)
+
+# Buildcraft: Engine (I:engine.id=1510)
+@material(blockid=1510, data=range(16), solid=True)
+def bc_engine(self, blockid, data):
+    # Only a rough placeholder
+    side = self.load_image_texture("assets/buildcraft/textures/blocks/engineWoodSide.png")
+    top = self.load_image_texture("assets/buildcraft/textures/blocks/engineWoodTop.png")
+    return self.build_block(top, side)
+
+# Buildcraft: Pump (I:pump.id=1511)
+@material(blockid=1511, data=range(16), solid=True)
+def bc_pump(self, blockid, data):
+    side = self.load_image_texture("assets/buildcraft/textures/blocks/pump_side.png")
+    top = self.load_image_texture("assets/buildcraft/textures/blocks/pump_top.png")
+    return self.build_block(top, side)
+
+# Buildcraft: Tank (I:tank.id=1512)
+@material(blockid=1512, data=range(16), solid=True, transparent=True)
+def bc_tank(self, blockid, data):
+    side = self.load_image_texture("assets/buildcraft/textures/blocks/tank_bottom_side.png")
+    top = self.load_image_texture("assets/buildcraft/textures/blocks/tank_top.png")
+    return self.build_block(top, side)
+
+# Buildcraft: Refinery (I:refinery.id=1514)
+@material(blockid=1514, data=range(16), solid=True)
+def bc_refinery(self, blockid, data):
+    # Only a rough placeholder
+    side = self.load_image_texture("assets/buildcraft/textures/blocks/refineryFront.png")
+    top = self.load_image_texture("assets/buildcraft/textures/blocks/refineryTop.png")
+    return self.build_block(top, side)
+
+# Buildcraft: Blueprint Library (I:blueprintLibrary.id=1515)
+@material(blockid=1515, data=range(16), solid=True)
+def bc_blueprintlibrary(self, blockid, data):
+    side = self.load_image_texture("assets/buildcraft/textures/blocks/library_side.png")
+    top = self.load_image_texture("assets/buildcraft/textures/blocks/library_topbottom.png")
+    return self.build_block(top, side)
+
+# Buildcraft: Laser (I:laser.id=1516)
+@material(blockid=1516, data=range(16), solid=True, transparent=True)
+def bc_laser(self, blockid, data):
+    # Only a rough placeholder
+    side = self.load_image_texture("assets/buildcraft/textures/blocks/laser_side.png")
+    top = self.load_image_texture("assets/buildcraft/textures/blocks/laser_top.png")
+    return self.build_block(top, side)
+
+# Buildcraft: Assembly Table (I:assemblyTable.id=1517)
+@material(blockid=1517, data=range(16), solid=True, transparent=True)
+def bc_assemblytable(self, blockid, data):
+    # Only a rough placeholder
+    side = self.load_image_texture("assets/buildcraft/textures/blocks/library_side.png")
+    top = self.load_image_texture("assets/buildcraft/textures/blocks/library_topbottom.png")
+
+    # cut the side texture in half
+    mask = side.crop((0,8,16,16))
+    side = Image.new(side.mode, side.size, self.bgcolor)
+    alpha_over(side, mask,(0,0,16,8), mask)
+
+    top = self.transform_image_top(top)
+    side = self.transform_image_side(side)
+    otherside = side.transpose(Image.FLIP_LEFT_RIGHT)
+
+    sidealpha = side.split()[3]
+    side = ImageEnhance.Brightness(side).enhance(0.9)
+    side.putalpha(sidealpha)
+    othersidealpha = otherside.split()[3]
+    otherside = ImageEnhance.Brightness(otherside).enhance(0.8)
+    otherside.putalpha(othersidealpha)
+
+    delta = 0
+    img = Image.new("RGBA", (24,24), self.bgcolor)
+    alpha_over(img, side, (0,12 - delta), side)
+    alpha_over(img, otherside, (12,12 - delta), otherside)
+    alpha_over(img, top, (0,6 - delta), top)
+
+    return img
+
+# Buildcraft: Chute (Hopper) (I:hopper.id=1519)
+@material(blockid=1519, data=range(16), solid=True)
+def bc_chute(self, blockid, data):
+    side = self.load_image_texture("assets/buildcraft/textures/blocks/hopperSide.png")
+    top = self.load_image_texture("assets/buildcraft/textures/blocks/hopperTop.png")
+    return self.build_block(top, side)
+
+# Buildcraft: Filtered Buffer (I:filteredBuffer.id=1523)
+block(blockid=1523, top_image="assets/buildcraft/textures/blocks/filteredBuffer_all.png")
+
+# Buildcraft: Floodgate (I:floodGate.id=1524)
+@material(blockid=1524, data=range(16), solid=True)
+def bc_floodgate(self, blockid, data):
+    side = self.load_image_texture("assets/buildcraft/textures/blocks/floodgate_side.png")
+    top = self.load_image_texture("assets/buildcraft/textures/blocks/floodgate_top.png")
+    return self.build_block(top, side)
+
+# Buildcraft: Oil (I:oil.id=1530)
+@material(blockid=1530, data=range(16), fluid=True, transparent=True, nospawn=True)
+def bc_oil(self, blockid, data):
+    t = self.load_image_texture("assets/buildcraft/textures/blocks/oil_still.png")
+    return self.build_block(t, t)
+
+# Buildcraft: Fuel (I:fuel.id=1531)
+@material(blockid=1531, data=range(16), fluid=True, transparent=True, nospawn=True)
+def bc_fuel(self, blockid, data):
+    t = self.load_image_texture("assets/buildcraft/textures/blocks/fuel_still.png")
+    return self.build_block(t, t)
+
 
 #################################
 #       Magic Bees              #
