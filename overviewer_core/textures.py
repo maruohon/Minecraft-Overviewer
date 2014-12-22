@@ -751,6 +751,19 @@ class Textures(object):
             return None
         return (img, self.generate_opaque_mask(img))
 
+    def get_forge_rotation(self, rot):
+        # ForgeDirections: 0: down, 1: up, 2: north, 3: south, 4: west, 5: east
+        # opposites = [1, 0, 3, 2, 5, 4]
+
+        # rotation matrix. The "group" is self.rotation
+        # We only need to have these for self.rotation 1, 2 and 3
+        rotations = [0,1,5,4,2,3,  0,1,3,2,5,4,  0,1,4,5,3,2]
+
+        # Don't adjust down, up or unknown rotations
+        if self.rotation == 0 or rot > 5 or rot < 2:
+            return rot
+
+        return rotations[(self.rotation - 1) * 6 + rot]
 ##
 ## The other big one: @material and associated framework
 ##
@@ -4560,25 +4573,10 @@ def bc_quarry(self, blockid, data):
     return self.build_block(top, side)
 
 # Buildcraft: Marker (I:marker.id=1504 & I:pathMarker.id=1518)
-@material(blockid=[1504,1518], data=range(16), solid=True)
+@material(blockid=[1504,1518], data=range(16), transparent=True)
 def bc_marker(self, blockid, data):
     # FIXME check how the metadata is defined
-    # first, rotations
-    if self.rotation == 1:
-        if data == 1: data = 3
-        elif data == 2: data = 4
-        elif data == 3: data = 2
-        elif data == 4: data = 1
-    elif self.rotation == 2:
-        if data == 1: data = 2
-        elif data == 2: data = 1
-        elif data == 3: data = 4
-        elif data == 4: data = 3
-    elif self.rotation == 3:
-        if data == 1: data = 4
-        elif data == 2: data = 3
-        elif data == 3: data = 1
-        elif data == 4: data = 2
+    forge_rotation = self.get_forge_rotation(data)
 
     if blockid == 1504:
         small = self.load_image_texture("assets/buildcraft/textures/blocks/blockMarker.png")
@@ -4588,42 +4586,53 @@ def bc_marker(self, blockid, data):
     # compose a torch bigger than the normal
     # (better for doing transformations)
     torch = Image.new("RGBA", (16,16), self.bgcolor)
-    alpha_over(torch,small,(-4,-3))
-    alpha_over(torch,small,(-5,-2))
-    alpha_over(torch,small,(-3,-2))
+    alpha_over(torch, small, (-4,-3))
+    alpha_over(torch, small, (-5,-2))
+    alpha_over(torch, small, (-3,-2))
 
     # angle of inclination of the texture
     rotation = 90
+    img = None
 
-    if data == 1: # pointing south
-        torch = torch.rotate(-rotation, Image.NEAREST) # nearest filter is more nitid.
-        img = self.build_full_block(None, None, None, torch, None, None)
-
-    elif data == 2: # pointing north
-        torch = torch.rotate(rotation, Image.NEAREST)
-        img = self.build_full_block(None, None, torch, None, None, None)
-
-    elif data == 3: # pointing west
-        torch = torch.rotate(rotation, Image.NEAREST)
-        img = self.build_full_block(None, torch, None, None, None, None)
-
-    elif data == 4: # pointing east
-        torch = torch.rotate(-rotation, Image.NEAREST)
-        img = self.build_full_block(None, None, None, None, torch, None)
-
-    elif data == 5: # standing on the floor
+    if forge_rotation == 1 or forge_rotation == 0: # standing on the floor or pointing down
         # compose a "3d torch".
         img = Image.new("RGBA", (24,24), self.bgcolor)
 
         small_crop = small.crop((2,2,14,14))
         slice = small_crop.copy()
-        ImageDraw.Draw(slice).rectangle((6,0,12,12),outline=(0,0,0,0),fill=(0,0,0,0))
-        ImageDraw.Draw(slice).rectangle((0,0,4,12),outline=(0,0,0,0),fill=(0,0,0,0))
 
-        alpha_over(img, slice, (7,5))
-        alpha_over(img, small_crop, (6,6))
-        alpha_over(img, small_crop, (7,6))
-        alpha_over(img, slice, (7,7))
+        # Cut away the left side of the torch's top sphere
+        ImageDraw.Draw(slice).rectangle((0,0,4,12),outline=(0,0,0,0),fill=(0,0,0,0))
+        # Cut away the whole right side of the torch, leaving a one pixel wide strip
+        ImageDraw.Draw(slice).rectangle((6,0,12,12),outline=(0,0,0,0),fill=(0,0,0,0))
+
+        # Draw that one pixel wide strip to four positions
+        alpha_over(img, slice, (7,5)) # One pixel on the top
+        alpha_over(img, small_crop, (6,6)) # Left side (using the un-cut texture)
+        alpha_over(img, small_crop, (7,6)) # Right side (using the un-cut texture)
+        alpha_over(img, slice, (7,7)) # Bottom and center of the torch
+
+        # pointing down
+        if forge_rotation == 0:
+            img.rotate(180, Image.NEAREST)
+
+    # FIXME either the nort-south or the east-west sides are flipped depending on north direction
+    # (only tested with upper left and upper right)
+    elif forge_rotation == 2: # pointing north
+        torch = torch.rotate(rotation, Image.NEAREST)
+        img = self.build_full_block(None, None, torch, None, None, None)
+
+    elif forge_rotation == 3: # pointing south
+        torch = torch.rotate(-rotation, Image.NEAREST) # nearest filter is more nitid.
+        img = self.build_full_block(None, None, None, torch, None, None)
+
+    elif forge_rotation == 4: # pointing west
+        torch = torch.rotate(rotation, Image.NEAREST)
+        img = self.build_full_block(None, torch, None, None, None, None)
+
+    elif forge_rotation == 5: # pointing east
+        torch = torch.rotate(-rotation, Image.NEAREST)
+        img = self.build_full_block(None, None, None, None, torch, None)
 
     return img
 
@@ -4694,16 +4703,20 @@ def bc_laser(self, blockid, data):
     return self.build_block(top, side)
 
 # Buildcraft: Assembly Table (I:assemblyTable.id=1517)
-@material(blockid=1517, data=range(16), solid=True, transparent=True)
+@material(blockid=1517, data=range(2), solid=True, transparent=True)
 def bc_assemblytable(self, blockid, data):
     # Only a rough placeholder
-    side = self.load_image_texture("assets/buildcraft/textures/blocks/library_side.png")
-    top = self.load_image_texture("assets/buildcraft/textures/blocks/library_topbottom.png")
+    if data == 0:
+        side = self.load_image_texture("assets/buildcraft/textures/blocks/assemblytable_side.png")
+        top = self.load_image_texture("assets/buildcraft/textures/blocks/assemblytable_top.png")
+    else:
+        side = self.load_image_texture("assets/buildcraft/textures/blocks/advworkbenchtable_side.png")
+        top = self.load_image_texture("assets/buildcraft/textures/blocks/advworkbenchtable_top.png")
 
     # cut the side texture in half
-    mask = side.crop((0,8,16,16))
+    mask = side.crop((0,7,16,16))
     side = Image.new(side.mode, side.size, self.bgcolor)
-    alpha_over(side, mask,(0,0,16,8), mask)
+    alpha_over(side, mask, (0,-8,16,16), mask)
 
     top = self.transform_image_top(top)
     side = self.transform_image_side(side)
@@ -4716,11 +4729,10 @@ def bc_assemblytable(self, blockid, data):
     otherside = ImageEnhance.Brightness(otherside).enhance(0.8)
     otherside.putalpha(othersidealpha)
 
-    delta = 0
     img = Image.new("RGBA", (24,24), self.bgcolor)
-    alpha_over(img, side, (0,12 - delta), side)
-    alpha_over(img, otherside, (12,12 - delta), otherside)
-    alpha_over(img, top, (0,6 - delta), top)
+    alpha_over(img, side, (0,12), side)
+    alpha_over(img, otherside, (12,12), otherside)
+    alpha_over(img, top, (0,6), top)
 
     return img
 
@@ -4757,32 +4769,6 @@ def bc_fuel(self, blockid, data):
 #################################
 #       Magic Bees              #
 #################################
-
-# Magic Bees: Hives (I:hives=1754)
-@material(blockid=1754, data=range(6), solid=True)
-def magicbees_hives(self, blockid, data):
-    if data == 0: # Curious Hive
-        side = self.load_image_texture("assets/magicbees/textures/blocks/beehive.0.side.png")
-        top = self.load_image_texture("assets/magicbees/textures/blocks/beehive.0.top.png")
-    elif data == 1: # Unusual Hive
-        side = self.load_image_texture("assets/magicbees/textures/blocks/beehive.1.side.png")
-        top = self.load_image_texture("assets/magicbees/textures/blocks/beehive.1.top.png")
-    elif data == 2: # Resonating Hive
-        side = self.load_image_texture("assets/magicbees/textures/blocks/beehive.2.side.png")
-        top = self.load_image_texture("assets/magicbees/textures/blocks/beehive.2.top.png")
-    elif data == 3: # TODO ?? Hive
-        side = self.load_image_texture("assets/magicbees/textures/blocks/beehive.3.side.png")
-        top = self.load_image_texture("assets/magicbees/textures/blocks/beehive.3.top.png")
-    elif data == 4: # Infernal Hive
-        side = self.load_image_texture("assets/magicbees/textures/blocks/beehive.4.side.png")
-        top = self.load_image_texture("assets/magicbees/textures/blocks/beehive.4.top.png")
-    elif data == 5: # Oblivion Hive
-        side = self.load_image_texture("assets/magicbees/textures/blocks/beehive.5.side.png")
-        top = self.load_image_texture("assets/magicbees/textures/blocks/beehive.5.top.png")
-    else: # FIXME Unknown block
-        t = self.load_image_texture("assets/minecraft/textures/blocks/web.png")
-        return self.build_sprite(t)
-    return self.build_block(top, side)
 
 # Magic Bees: Planks & Double slabs (I:planksTC=1750 & I:slabFull=1751)
 @material(blockid=[1750, 1751], data=range(2), solid=True)
@@ -4832,6 +4818,32 @@ def magicbees_slabs(self, blockid, data):
     alpha_over(img, top, (0,6 - delta), top)
 
     return img
+
+# Magic Bees: Hives (I:hives=1754)
+@material(blockid=1754, data=range(6), solid=True)
+def magicbees_hives(self, blockid, data):
+    if data == 0: # Curious Hive
+        side = self.load_image_texture("assets/magicbees/textures/blocks/beehive.0.side.png")
+        top = self.load_image_texture("assets/magicbees/textures/blocks/beehive.0.top.png")
+    elif data == 1: # Unusual Hive
+        side = self.load_image_texture("assets/magicbees/textures/blocks/beehive.1.side.png")
+        top = self.load_image_texture("assets/magicbees/textures/blocks/beehive.1.top.png")
+    elif data == 2: # Resonating Hive
+        side = self.load_image_texture("assets/magicbees/textures/blocks/beehive.2.side.png")
+        top = self.load_image_texture("assets/magicbees/textures/blocks/beehive.2.top.png")
+    elif data == 3: # TODO ?? Hive
+        side = self.load_image_texture("assets/magicbees/textures/blocks/beehive.3.side.png")
+        top = self.load_image_texture("assets/magicbees/textures/blocks/beehive.3.top.png")
+    elif data == 4: # Infernal Hive
+        side = self.load_image_texture("assets/magicbees/textures/blocks/beehive.4.side.png")
+        top = self.load_image_texture("assets/magicbees/textures/blocks/beehive.4.top.png")
+    elif data == 5: # Oblivion Hive
+        side = self.load_image_texture("assets/magicbees/textures/blocks/beehive.5.side.png")
+        top = self.load_image_texture("assets/magicbees/textures/blocks/beehive.5.top.png")
+    else: # FIXME Unknown block
+        t = self.load_image_texture("assets/minecraft/textures/blocks/web.png")
+        return self.build_sprite(t)
+    return self.build_block(top, side)
 
 
 #################################
