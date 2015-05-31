@@ -17,17 +17,16 @@ To be more specific, this version aims to add support for rendering most of the
 "regular shaped/vanilla-like" blocks in the following mods:
  - Applied Energistics
  - Biomes O' Plenty
- - Buildcraft (mostly just Oil)
+ - Buildcraft
  - Dartcraft (although not in the DW20 pack)
  - Extra Bees
  - Extra Trees (only partial support due to lots of the stuff using tile entity data)
  - Extra Utilities
- - Factorization (barrels! ;D)
  - Forestry
  - IC2
  - Magic Bees
  - Minefactory Reloaded
- - Mystcraft (mostly just crystals and decay)
+ - Mystcraft
  - Natura
  - Railcraft
  - Thaumcraft
@@ -101,10 +100,18 @@ Clone this repository, change to the ftb-164 branch, and then build overviewer:
  - assets/thaumcraft/textures/blocks
  - assets/thermalexpansion/textures/blocks
  - assets/tinker/textures/blocks
+
+* Special cases:
+  - From binniemods*.jar copy the following textures from assets/forestry/textures/tile/ into assets/extratrees/textures/blocks/
+    - carpenter_base.png & carpenter_tank_resource_empty.png
+    - paneler_base.png & paneler_tank_resource_empty.png
+    - sawmill_base.png & sawmill_tank_resource_empty.png
+
 * Optionally, you can delete all the other directories from
   assets/<modname>/ leaving just the textures directory, and also
   from assets/<modname>/textures/ leaving just the blocks directory (except BinnieMods - ExtraBees also needs the textures/tile/ directory!).
   In other words, you just need the blocks directories as listed above.
+
 * Finally, you will need to create and modify the overviewer render config file as
   usual. Set the texturepath to point to your resource pack directory or zip
   file you just put together as explained above.

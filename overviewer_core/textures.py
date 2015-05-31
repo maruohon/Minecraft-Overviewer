@@ -23,6 +23,8 @@ import math
 from random import randint
 import numpy
 from PIL import Image, ImageEnhance, ImageOps, ImageDraw
+from ImageColor import getcolor, getrgb # for tint_texture2
+from ImageOps import grayscale
 import logging
 import functools
 
@@ -430,7 +432,7 @@ class Textures(object):
             self.foliagecolor = list(self.load_image("foliage.png").getdata())
         return self.foliagecolor
 
-	#I guess "watercolor" is wrong. But I can't correct as my texture pack don't define water color.
+    #I guess "watercolor" is wrong. But I can't correct as my texture pack don't define water color.
     def load_water_color(self):
         """Helper function to load the water color texture."""
         if not hasattr(self, "watercolor"):
@@ -743,6 +745,31 @@ class Textures(object):
         i = ImageOps.colorize(ImageOps.grayscale(im), (0,0,0), c)
         i.putalpha(im.split()[3]); # copy the alpha band back in. assuming RGBA
         return i
+
+    # Taken from StackOverflow at:
+    # http://stackoverflow.com/questions/12251896/python-colorize-image-while-preserving-transparency-with-pil
+    def tint_texture2(self, src, tint='#ffffff'):
+        tr, tg, tb = getrgb(tint)
+        tl = getcolor(tint, "L")  # tint color's overall luminosity
+        if not tl: tl = 1  # avoid division by zero
+        tl = float(tl)  # compute luminosity preserving tint factors
+        sr, sg, sb = map(lambda tv: tv/tl, (tr, tg, tb))  # per component adjustments
+
+        # create look-up tables to map luminosity to adjusted tint
+        # (using floating-point math only to compute table)
+        luts = (map(lambda lr: int(lr*sr + 0.5), range(256)) +
+                map(lambda lg: int(lg*sg + 0.5), range(256)) +
+                map(lambda lb: int(lb*sb + 0.5), range(256)))
+        l = grayscale(src)  # 8-bit luminosity version of whole image
+        if Image.getmodebands(src.mode) < 4:
+            merge_args = (src.mode, (l, l, l))  # for RGB verion of grayscale
+        else:  # include copy of src image's alpha layer
+            a = Image.new("L", src.size)
+            a.putdata(src.getdata(3))
+            merge_args = (src.mode, (l, l, l, a))  # for RGBA verion of grayscale
+            luts += range(256)  # for 1:1 mapping of copied alpha values
+
+        return Image.merge(*merge_args).point(luts)
 
     def generate_texture_tuple(self, img):
         """ This takes an image and returns the needed tuple for the
@@ -4291,6 +4318,12 @@ def flower(self, blockid, data):
 #   Taken from FTB Direwolf20 1.6.4 configs #
 #############################################
 
+
+# PIL crop:
+# Returns a copy of a rectangular region from the current image.
+# The box is a 4-tuple defining the left, upper, right, and lower pixel coordinate.
+
+
 #################################
 #       Applied Energistics     #
 #################################
@@ -4298,7 +4331,7 @@ def flower(self, blockid, data):
 # Applied Energistics: Machinery and cables (I:appeng.blockMulti=851)
 @material(blockid=851, data=range(16), solid=True)
 def ae_multi1(self, blockid, data):
-    # FIXME All of the blocks are rendered either with no face, or the face on every side,
+    # All of the blocks are rendered either with no face, or the face on every side,
     # because the orientation and other spesific information is stored in the tile entity data
     if data == 0: # ME Cable - Blue FIXME totally wrong, maybe we shouldn't render anything?
         side = self.load_image_texture("assets/appeng/textures/blocks/MECable_Blue.png")
@@ -4326,7 +4359,7 @@ def ae_multi1(self, blockid, data):
         top = self.load_image_texture("assets/appeng/textures/blocks/BlockChestTopGreen.png")
     elif data == 8: # ME Interface
         side = self.load_image_texture("assets/appeng/textures/blocks/BlockInterface.png")
-        top = self.load_image_texture("assets/appeng/textures/blocks/BlockInterface.png")
+        return self.build_block(side, side)
     elif data == 9: # ME Partition Editor
         side = self.load_image_texture("assets/appeng/textures/blocks/BlockPreformatterSide.png")
         top = self.load_image_texture("assets/appeng/textures/blocks/BlockPreformatter.png")
@@ -4354,8 +4387,8 @@ def ae_multi1(self, blockid, data):
     return self.build_block(top, side)
 
 # Applied Energistics: More machines etc. (I:appeng.blockMulti2=852)
-@material(blockid=852, data=[3,5,6,7,8,10,11,12,13,14], solid=True)
-def ae_multi1(self, blockid, data):
+@material(blockid=852, data=range(16), solid=True)
+def ae_multi2(self, blockid, data):
     # FIXME All of the blocks are rendered either with no face, or the face on every side,
     # because the orientation and other spesific information is stored in the tile entity data
     # if data == 0: # ME Precision Export Bus
@@ -4399,16 +4432,14 @@ def ae_multi1(self, blockid, data):
     return self.build_block(top, side)
 
 # Applied Energistics: More machines etc. (I:appeng.blockMulti3=853)
-@material(blockid=853, data=[4,5,6,7], solid=True)
-def ae_multi1(self, blockid, data):
+@material(blockid=853, data=[4,5,6,7,8,9], solid=True)
+def ae_multi3(self, blockid, data):
     # FIXME All of the blocks are rendered either with no face, or the face on every side,
     # because the orientation and other spesific information is stored in the tile entity data
     # if data == 0: # ME Fuzzy Export Bus
     # elif data == 1: # ME Fuzzy Import Bus
     # elif data == 2: # ME Basic Export Bus
     # elif data == 3: # ME Basic Import Bus
-    # elif data == 8: # Quantum Field Ring
-    # elif data == 9: # Quantum Link Chamber
     # elif data == 11: # ME P2P Tunnel
     if data == 4: # ME Transition Plane
         side = self.load_image_texture("assets/appeng/textures/blocks/block_top.png")
@@ -4420,13 +4451,17 @@ def ae_multi1(self, blockid, data):
         side = self.load_image_texture("assets/appeng/textures/blocks/BlockPowerRelay.png")
     elif data == 7: # ME Condenser
         side = self.load_image_texture("assets/appeng/textures/blocks/BlockCondendser.png")
+    elif data == 8: # Quantum Field Ring
+        side = self.load_image_texture("assets/appeng/textures/blocks/BlockQRingEdge.png")
+    elif data == 9: # Quantum Link Chamber
+        side = self.load_image_texture("assets/appeng/textures/blocks/BlockQLink.png")
     else: # Other stuff that we don't support atm
         return None
 
     return self.build_block(side, side)
 
 # Applied Energistics: Ore, Glass, etc. (I:appeng.blockWorld=854)
-@material(blockid=854, data=range(10), solid=True)
+@material(blockid=854, data=range(10), solid=False)
 def ae_world(self, blockid, data):
     if data == 0: # Certus Quartz Ore
         side = self.load_image_texture("assets/appeng/textures/blocks/BlockQuartz.png")
@@ -4445,7 +4480,6 @@ def ae_world(self, blockid, data):
         top = self.load_image_texture("assets/appeng/textures/blocks/BlockQuartzPillerEnd.png")
         side = side.rotate(90)
 
-        # FIXME verify this
         if data == 6:
             return self.build_block(top, side)
         elif data == 7: # nort-south orientation
@@ -4474,51 +4508,105 @@ def ae_world(self, blockid, data):
 #       Binnie Mods             #
 #################################
 
-# Binnie mods: Genetic Machines (I:geneticMachine=1369)
+# Binnie mods (Binnie Core): Alveary Blocks (I:alvearyBlock=1372)
+@material(blockid=1372, data=range(5), solid=True)
+def binnie_alveary(self, blockid, data):
+    if data == 0: # Mutator
+        tex = self.load_image("assets/extrabees/textures/tile/alveary/AlvearyMutator.png")
+    elif data == 1: # Frame Housing
+        tex = self.load_image("assets/extrabees/textures/tile/alveary/AlvearyFrame.png")
+        side = tex.crop((0, 16, 16, 32))
+        top = tex.crop((16, 0, 32, 16))
+        return self.build_block(top, side)
+    elif data == 2: # Rain Shield
+        tex = self.load_image("assets/extrabees/textures/tile/alveary/AlvearyRainShield.png")
+    elif data == 3: # Alveary Lighting
+        tex = self.load_image("assets/extrabees/textures/tile/alveary/AlvearyLighting.png")
+    elif data == 4: # Electrical Stimulator
+        tex = self.load_image("assets/extrabees/textures/tile/alveary/AlvearyStimulator.png")
+    #else:
+    #    side = self.load_image("assets/minecraft/textures/blocks/web.png")
+    #    return self.build_block(side, side)
+    side = tex.crop((0, 16, 16, 32))
+    return self.build_block(side, side)
+
+# Binnie mods (Binnie Core): Wood Workers (I:machine=3705)
+@material(blockid=3705, data=range(3), solid=True)
+def binnie_woodworker(self, blockid, data):
+    if data == 0: # Lumber Mill
+        base = self.load_image("assets/extratrees/textures/blocks/sawmill_base.png")
+        inner = self.load_image("assets/extratrees/textures/blocks/sawmill_tank_resource_empty.png")
+    elif data == 1: # Woodworker
+        base = self.load_image("assets/extratrees/textures/blocks/carpenter_base.png")
+        inner = self.load_image("assets/extratrees/textures/blocks/carpenter_tank_resource_empty.png")
+    elif data == 2: # Panelworker
+        base = self.load_image("assets/extratrees/textures/blocks/paneler_base.png")
+        inner = self.load_image("assets/extratrees/textures/blocks/paneler_tank_resource_empty.png")
+
+    top       = base.crop((16, 0, 32, 16))
+    top_inner = inner.crop((6, 0, 18, 6))
+    side_strip = base.crop((0, 16, 16, 20))
+    side_wide   = inner.crop((6, 10, 18, 18))
+    side_narrow = inner.crop((0, 10, 6, 18))
+
+    side1 = Image.new("RGBA", (16,16), (26, 26, 26, 0))
+    side1.paste(side_strip, (0,0))
+    side1.paste(side_strip, (0,12))
+    side2 = side1.copy()
+
+    top.paste(top_inner, (2,2))
+    top.paste(top_inner, (2,8))
+    side1.paste(side_wide, (2,4))
+    side2.paste(side_narrow, (2,4))
+    side2.paste(side_narrow, (8,4))
+
+    return self.build_full_block(top, side2, side1, side1, side2, None) # top, east, south, north, west, bottom
+
+# Binnie mods (Extra Bees): Genetic Machines (I:geneticMachine=1369)
 @material(blockid=1369, data=range(4), solid=True)
 def binnie_genetic_machine(self, blockid, data):
     if data == 0: # Genetic Machine
-        side = self.load_image_texture("assets/extrabees/textures/tile/GeneticMachine.png")
+        side = self.load_image("assets/extrabees/textures/tile/GeneticMachine.png")
     elif data == 1: # Genepool
-        side = self.load_image_texture("assets/extrabees/textures/tile/Genepool.png")
+        side = self.load_image("assets/extrabees/textures/tile/Genepool.png")
     elif data == 2: # Sequencer
-        side = self.load_image_texture("assets/extrabees/textures/tile/Sequencer.png")
+        side = self.load_image("assets/extrabees/textures/tile/Sequencer.png")
     elif data == 3: # Splicer
-        side = self.load_image_texture("assets/extrabees/textures/tile/Splicer.png")
+        side = self.load_image("assets/extrabees/textures/tile/Splicer.png")
     top = side.crop((21, 0, 37, 16))    # FIXME this is slightly wrong, the textures are 14x14, I think...
     side = side.crop((21, 14, 37, 30))
     return self.build_block(top, side)
 
-# Binnie mods: Apiarist Machines (I:apiaristMachine=1370)
+# Binnie mods (Extra Bees): Apiarist Machines (I:apiaristMachine=1370)
 @material(blockid=1370, data=range(4), solid=True)
 def binnie_apiarist_machine(self, blockid, data):
     if data == 0: # Apiarist Machine
-        side = self.load_image_texture("assets/extrabees/textures/tile/ApiaristMachine.png")
+        side = self.load_image("assets/extrabees/textures/tile/ApiaristMachine.png")
     elif data == 1: # Acclimatiser
-        side = self.load_image_texture("assets/extrabees/textures/tile/Acclimatiser.png")
+        side = self.load_image("assets/extrabees/textures/tile/Acclimatiser.png")
     elif data == 2: # Databank
-        side = self.load_image_texture("assets/extrabees/textures/tile/ApiaristDatabank.png")
+        side = self.load_image("assets/extrabees/textures/tile/ApiaristDatabank.png")
     elif data == 3: # Indexer
-        side = self.load_image_texture("assets/extrabees/textures/tile/Indexer.png")
+        side = self.load_image("assets/extrabees/textures/tile/Indexer.png")
     top = side.crop((21, 0, 37, 16))    # FIXME this is slightly wrong, the textures are 14x14, I think...
     side = side.crop((21, 14, 37, 30))
     return self.build_block(top, side)
 
-# Binnie mods: Advance Genetic Machines (I:advGeneticMachine=1371)
+# Binnie mods (Extra Bees): Advance Genetic Machines (I:advGeneticMachine=1371)
 @material(blockid=1371, data=range(6), solid=True)
 def binnie_advanced_genetic_machine(self, blockid, data):
     if data == 0: # Advanced Genetic Machine
-        side = self.load_image_texture("assets/extrabees/textures/tile/AdvancedGeneticMachine.png")
+        side = self.load_image("assets/extrabees/textures/tile/AdvancedGeneticMachine.png")
     elif data == 1: # Isolator
-        side = self.load_image_texture("assets/extrabees/textures/tile/Isolator.png")
+        side = self.load_image("assets/extrabees/textures/tile/Isolator.png")
     elif data == 2: # Replicator
-        side = self.load_image_texture("assets/extrabees/textures/tile/Replicator.png")
+        side = self.load_image("assets/extrabees/textures/tile/Replicator.png")
     elif data == 3: # Purifier
-        side = self.load_image_texture("assets/extrabees/textures/tile/Purifier.png")
+        side = self.load_image("assets/extrabees/textures/tile/Purifier.png")
     elif data == 4: # Inoculator
-        side = self.load_image_texture("assets/extrabees/textures/tile/Inoculator.png")
+        side = self.load_image("assets/extrabees/textures/tile/Inoculator.png")
     elif data == 5: # Synthesiser
-        side = self.load_image_texture("assets/extrabees/textures/tile/Synthesizer.png")
+        side = self.load_image("assets/extrabees/textures/tile/Synthesizer.png")
     top = side.crop((21, 0, 37, 16))    # FIXME this is slightly wrong, the textures are 14x14, I think...
     side = side.crop((21, 14, 37, 30))
     return self.build_block(top, side)
@@ -4540,6 +4628,56 @@ def binnie_hive(self, blockid, data):
         top = self.load_image_texture("assets/extrabees/textures/blocks/hive/marble.1.png")
     return self.build_block(top, side)
 
+
+# Binnie mods (Extra Trees): Wood logs (I:log=3704)
+@material(blockid=3704, data=range(16), solid=True)
+def extratrees_wood_logs(self, blockid, data):
+    # Filler/approximation, needs TE data for actual type
+    top = self.load_image_texture("assets/extratrees/textures/blocks/logs/elmTrunk.png")
+    side = self.load_image_texture("assets/extratrees/textures/blocks/logs/elmBark.png")
+    return self.build_block(top, side)
+
+# Binnie mods (Extra Trees): Planks (I:planks=3700)
+@material(blockid=3700, data=range(16), solid=True)
+def extratrees_planks(self, blockid, data):
+    # Filler/approximation, needs TE data for actual type
+    tex = self.load_image_texture("assets/extratrees/textures/blocks/planks/Elm.png")
+    return self.build_block(tex, tex)
+
+# Binnie mods (Extra Trees): Slabs (I:slab=3707)
+@material(blockid=3707, data=range(16), solid=True, transparent=True)
+def extratrees_slabs(self, blockid, data):
+    # Filler/approximation, needs TE data for actual type
+    top = side = self.load_image_texture("assets/extratrees/textures/blocks/planks/Elm.png")
+
+    # cut the side texture in half
+    mask = side.crop((0,8,16,16))
+    side = Image.new(side.mode, side.size, self.bgcolor)
+    alpha_over(side, mask,(0,0,16,8), mask)
+
+    # plain slab
+    top = self.transform_image_top(top)
+    side = self.transform_image_side(side)
+    otherside = side.transpose(Image.FLIP_LEFT_RIGHT)
+
+    sidealpha = side.split()[3]
+    side = ImageEnhance.Brightness(side).enhance(0.9)
+    side.putalpha(sidealpha)
+    othersidealpha = otherside.split()[3]
+    otherside = ImageEnhance.Brightness(otherside).enhance(0.8)
+    otherside.putalpha(othersidealpha)
+
+    # upside down slab
+    delta = 0
+    if data & 8 == 8:
+        delta = 6
+
+    img = Image.new("RGBA", (24,24), self.bgcolor)
+    alpha_over(img, side, (0,12 - delta), side)
+    alpha_over(img, otherside, (12,12 - delta), otherside)
+    alpha_over(img, top, (0,6 - delta), top)
+
+    return img
 
 #################################
 #       Buildcraft              #
@@ -4658,11 +4796,17 @@ def bc_architect(self, blockid, data):
     return self.build_block(top, side)
 
 # Buildcraft: Engine (I:engine.id=1510)
-@material(blockid=1510, data=range(16), solid=True)
+@material(blockid=1510, data=range(3), solid=True)
 def bc_engine(self, blockid, data):
-    # Only a rough placeholder
-    side = self.load_image_texture("assets/buildcraft/textures/blocks/engineWoodSide.png")
-    top = self.load_image_texture("assets/buildcraft/textures/blocks/engineWoodTop.png")
+    if data == 0:
+        side = self.load_image_texture("assets/buildcraft/textures/blocks/engineWoodSide.png")
+        top = self.load_image_texture("assets/buildcraft/textures/blocks/engineWoodTop.png")
+    elif data == 1:
+        side = self.load_image_texture("assets/buildcraft/textures/blocks/engineStoneSide.png")
+        top = self.load_image_texture("assets/buildcraft/textures/blocks/engineStoneTop.png")
+    else:
+        side = self.load_image_texture("assets/buildcraft/textures/blocks/engineIronSide.png")
+        top = self.load_image_texture("assets/buildcraft/textures/blocks/engineIronTop.png")
     return self.build_block(top, side)
 
 # Buildcraft: Pump (I:pump.id=1511)
@@ -4765,6 +4909,282 @@ def bc_fuel(self, blockid, data):
     t = self.load_image_texture("assets/buildcraft/textures/blocks/fuel_still.png")
     return self.build_block(t, t)
 
+
+#################################
+#       Extra Utilities         #
+#################################
+
+# Extra Utilities: Angel Block (I:angelBlock=2500)
+block(blockid=2500, top_image="assets/extrautils/textures/blocks/angelBlock.png")
+
+# Extra Utilities: Block Update Detector & (Advanced) (I:BUDBlockId=2501)
+@material(blockid=2501, data=range(2), solid=True)
+def extrautils_bud(self, blockid, data):
+    if data == 0: # Block Update Detector
+        tex = self.load_image_texture("assets/extrautils/textures/blocks/budoff.png")
+    else:   # Block Update Detector (Advanced)
+        tex = self.load_image_texture("assets/extrautils/textures/blocks/advbudoff.png")
+    return self.build_block(tex, tex)
+
+# Extra Utilities: Chandelier (I:chandelierId=2502)
+sprite(blockid=2502, imagename="assets/extrautils/textures/blocks/chandelier.png", nospawn=True)
+
+# Extra Utilities: Colored Bricks (I:colorBlockBrickId=2504)
+@material(blockid=2504, data=range(16), solid=True)
+def extrautils_coloredbricks(self, blockid, data):
+    texture = self.load_image_texture("assets/minecraft/textures/blocks/stonebrick.png")
+
+    # FIXME: The colors may not be entirely accurate, they are estimates from a screenshot...
+    if data == 0: # White: Do nothing
+        side = self.tint_texture2(texture, '#ffffff') # FIXME broken
+    elif data == 1: # Orange
+        side = self.tint_texture2(texture, '#c88435')
+    elif data == 2: # Magenta
+        side = self.tint_texture2(texture, '#cc57dd')
+    elif data == 3: # Light Blue
+        side = self.tint_texture2(texture, '#6ea5d1')
+    elif data == 4: # Yellow
+        side = self.tint_texture2(texture, '#dddd3a')
+    elif data == 5: # Lime
+        side = self.tint_texture2(texture, '#8ad11c')
+    elif data == 6: # Pink
+        side = self.tint_texture2(texture, '#dd92be')
+    elif data == 7: # Gray
+        side = self.tint_texture2(texture, '#575757')
+    elif data == 8: # Light Gray
+        side = self.tint_texture2(texture, '#9e9e9e')
+    elif data == 9: # Cyan
+        side = self.tint_texture2(texture, '#5792af')
+    elif data == 10: # Purple
+        side = self.tint_texture2(texture, '#8442b9')
+    elif data == 11: # Blue
+        side = self.tint_texture2(texture, '#3a57cc')
+    elif data == 12: # Brown
+        side = self.tint_texture2(texture, '#6a4f35')
+    elif data == 13: # Green
+        side = self.tint_texture2(texture, '#75923a')
+    elif data == 14: # Red
+        side = self.tint_texture2(texture, '#9e3535')
+    elif data == 15: # Black
+        side = self.tint_texture2(texture, '#181818') # FIXME broken
+
+    return self.build_block(side, side)
+
+# Extra Utilities: Sound Muffler & Rain Muffler (I:soundMufflerId=2510)
+@material(blockid=2510, data=range(2), solid=True)
+def extrautils_muffler(self, blockid, data):
+    if data == 0: # Sound Muffler
+        side = self.load_image_texture("assets/extrautils/textures/blocks/sound_muffler.png")
+    elif data == 1: # Rain Muffler
+        side = self.load_image_texture("assets/extrautils/textures/blocks/rain_muffler.png")
+    return self.build_block(side, side)
+
+# Extra Utilities: Trading Post (I:tradingPost=2511)
+@material(blockid=2511, nodata=True, solid=True)
+def extrautils_tradingpost(self, blockid, data):
+    side = self.load_image_texture("assets/extrautils/textures/blocks/trading_post_side.png")
+    top = self.load_image_texture("assets/extrautils/textures/blocks/trading_post_top.png")
+    return self.build_block(top, side)
+
+# Extra Utilities: Blackout Curtains (I:curtainId=2514)
+@material(blockid=2514, data=range(2), nospawn=True)
+def extrautils_bocurtains(self, blockid, data):
+    tex = self.load_image_texture("assets/extrautils/textures/blocks/curtains.png")
+    left = tex.copy()
+    right = tex.copy()
+
+    # generate the four small pieces
+    ImageDraw.Draw(right).rectangle((0,0,7,15),outline=(0,0,0,0),fill=(0,0,0,0))
+    ImageDraw.Draw(left).rectangle((8,0,15,15),outline=(0,0,0,0),fill=(0,0,0,0))
+
+    up_left = self.transform_image_side(left)
+    up_right = self.transform_image_side(right).transpose(Image.FLIP_TOP_BOTTOM)
+    dw_right = self.transform_image_side(right)
+    dw_left = self.transform_image_side(left).transpose(Image.FLIP_TOP_BOTTOM)
+
+    # Create img to compose the texture
+    img = Image.new("RGBA", (24,24), self.bgcolor)
+
+    # +x axis points top right direction
+    # +y axis points bottom right direction
+    # First compose things in the back of the image,
+    # then things in the front.
+
+    if data == 0:
+        alpha_over(img, up_left, (6,3), up_left)    # top left
+        alpha_over(img, dw_right, (6,3), dw_right)  # bottom right
+    else:
+        alpha_over(img, up_right, (6,3), up_right)  # top right
+        alpha_over(img, dw_left, (6,3), dw_left)    # bottom left
+
+    return img
+
+# Extra Utilities: Cursed Earth (I:cursedEarth=2515)
+@material(blockid=2515, nodata=True, solid=True)
+def extrautils_cursedearth(self, blockid, data):
+    side = self.load_image_texture("assets/extrautils/textures/blocks/cursedearthside.png")
+    top = self.load_image_texture("assets/extrautils/textures/blocks/cursedearthtop.png")
+    return self.build_block(top, side)
+
+# Extra Utilities: Trash Can (I:trashCan=2516)
+@material(blockid=2516, nodata=True, solid=True)
+def extrautils_trashcan(self, blockid, data):
+    # Approximation
+    side = self.load_image_texture("assets/extrautils/textures/blocks/trashcan.png")
+    top = self.load_image_texture("assets/extrautils/textures/blocks/trashcan_top.png")
+    return self.build_block(top, side)
+
+# Extra Utilities: Ethereal Glass (I:etherealBlockId=2518)
+block(blockid=2518, top_image="assets/extrautils/textures/blocks/etherealglass.png", transparent=True, nospawn=True)
+
+# Extra Utilities: Colored Planks (I:coloredWoodId=2519)
+@material(blockid=2519, data=range(16), solid=True)
+def extrautils_coloredplanks(self, blockid, data):
+    texture = self.load_image_texture("assets/minecraft/textures/blocks/planks_oak.png")
+
+    # FIXME: The colors may not be entirely accurate, they are estimates from a screenshot...
+    if data == 0: # White
+        side = self.tint_texture2(texture, '#ffffff')
+    elif data == 1: # Orange
+        side = self.tint_texture2(texture, '#ff9c32')
+    elif data == 2: # Magenta
+        side = self.tint_texture2(texture, '#d8549e')
+    elif data == 3: # Light Blue
+        side = self.tint_texture2(texture, '#86b4b4')
+    elif data == 4: # Yellow
+        side = self.tint_texture2(texture, '#ead52a')
+    elif data == 5: # Lime
+        side = self.tint_texture2(texture, '#9ad515')
+    elif data == 6: # Pink
+        side = self.tint_texture2(texture, '#ff969a')
+    elif data == 7: # Gray
+        side = self.tint_texture2(texture, '#655a47')
+    elif data == 8: # Light Gray
+        side = self.tint_texture2(texture, '#cabc96')
+    elif data == 9: # Cyan
+        side = self.tint_texture2(texture, '#5d8c7d')
+    elif data == 10: # Purple
+        side = self.tint_texture2(texture, '#9a4692')
+    elif data == 11: # Blue
+        side = self.tint_texture2(texture, '#435eaf')
+    elif data == 12: # Brown
+        side = self.tint_texture2(texture, '#865e32')
+    elif data == 13: # Green
+        side = self.tint_texture2(texture, '#869630')
+    elif data == 14: # Red
+        side = self.tint_texture2(texture, '#ca3f32')
+    elif data == 15: # Black
+        side = self.tint_texture2(texture, '#1f1c15')
+
+    return self.build_block(side, side)
+
+# Extra Utilities: Ender-Thermic Pump (I:enderThermicPumpId=2520)
+@material(blockid=2520, nodata=True, solid=True)
+def extrautils_enderthermicpump(self, blockid, data):
+    side = self.load_image_texture("assets/extrautils/textures/blocks/enderThermicPump_side.png")
+    top = self.load_image_texture("assets/extrautils/textures/blocks/enderThermicPump_top.png")
+    return self.build_block(top, side)
+
+# Extra Utilities: Redstone Clock (I:timerBlockId=2521)
+block(blockid=2521, top_image="assets/extrautils/textures/blocks/timer.png")
+
+# Extra Utilities: Magnum Torch (I:magnumTorchId=2522)
+@material(blockid=2522, nodata=True, transparent=True, nospawn=True)
+def extrautils_magnumtorch(self, blockid, data):
+    side = self.load_image_texture("assets/extrautils/textures/blocks/magnumTorch.png")
+    top = self.load_image_texture("assets/extrautils/textures/blocks/magnumTorchTop.png")
+
+    right = Image.new("RGBA", (16,16), (26, 26, 26, 0))
+    left = right.copy()
+    small_crop = side.crop((6,0,10,16))
+    right.paste(small_crop, (0,0))
+    left.paste(small_crop, (12,0))
+    left = self.transform_image_side(left)
+    right = left.transpose(Image.FLIP_LEFT_RIGHT)
+
+    img = Image.new("RGBA", (24,24), (26, 26, 26, 0))
+    img.paste(left.crop((9,5,12,18)), (9,5))
+    img.paste(right.crop((0,5,3,18)), (12,5))
+    top = self.transform_image_top(top)
+    alpha_over(img, top, (0,-1), top)
+
+    return img
+
+# Extra Utilities: Decorative Blocks (I:decorative_1Id=2523)
+@material(blockid=2523, data=range(13), solid=True)
+def extrautils_decorative1(self, blockid, data):
+    if data == 0: # Edged Stone Bricks
+        tex = self.load_image_texture("assets/extrautils/textures/blocks/ConnectedTextures/test_corners.png")
+    elif data == 1: # Ender Infused Obsidian
+        tex = self.load_image_texture("assets/extrautils/textures/blocks/ConnectedTextures/endsidian_corners.png")
+    elif data == 2: # Burnt Quartz
+        tex = self.load_image_texture("assets/extrautils/textures/blocks/ConnectedTextures/dark_corners.png")
+    elif data == 3: # Frosted Stone
+        tex = self.load_image_texture("assets/extrautils/textures/blocks/ConnectedTextures/icystone_corners.png")
+    elif data == 4: # Border Stone
+        tex = self.load_image_texture("assets/extrautils/textures/blocks/ConnectedTextures/carved_corners.png")
+    elif data == 5: # Unstable Ingot Block
+        tex = self.load_image_texture("assets/extrautils/textures/blocks/ConnectedTextures/uingot_corners.png")
+    elif data == 6: # Gravel Bricks
+        tex = self.load_image_texture("assets/extrautils/textures/blocks/ConnectedTextures/gravel_brick.png")
+    elif data == 7: # Border Stone (Alternate)
+        tex = self.load_image_texture("assets/extrautils/textures/blocks/ConnectedTextures/singlestonebrick_corners.png")
+    elif data == 8: # Magical Wood
+        tex = self.load_image_texture("assets/extrautils/textures/blocks/ConnectedTextures/magic_wood_corners.png")
+    elif data == 9: # Sandy Glass
+        tex = self.load_image_texture("assets/extrautils/textures/blocks/sandedGlass.png")
+    elif data == 10: # Gravel Road
+        tex = self.load_image_texture("assets/extrautils/textures/blocks/ConnectedTextures/gravel_road.png")
+    elif data == 11: # Ender Core
+        tex = self.load_image_texture("assets/extrautils/textures/blocks/endCore.png")
+    elif data == 12: # Diamond-Etched Computational Matrix
+        tex = self.load_image_texture("assets/extrautils/textures/blocks/diamondCore.png")
+    return self.build_block(tex, tex)
+
+# Extra Utilities: Filing Cabinet (I:filingCabinetId=2524)
+@material(blockid=2524, data=range(2), solid=True)
+def extrautils_filing(self, blockid, data):
+    if data == 0: # Filing Cabinet
+        side = self.load_image_texture("assets/extrautils/textures/blocks/filingcabinet.png")
+        top = self.load_image_texture("assets/extrautils/textures/blocks/filingcabinet_side.png")
+    elif data == 1: # Filing Cabinet (Advanced)
+        side = self.load_image_texture("assets/extrautils/textures/blocks/filingcabinet_diamond.png")
+        top = self.load_image_texture("assets/extrautils/textures/blocks/filingcabinet_side_diamond.png")
+    return self.build_block(top, side)
+
+# Extra Utilities: Ender Lily (I:enderLilyId=2525)
+@material(blockid=2525, data=range(8), transparent=True)
+def extrautils_enderlily(self, blockid, data):
+    tex = self.load_image_texture("assets/extrautils/textures/blocks/plant/ender_lilly_stage_%d.png" % data)
+    return self.build_sprite(tex)
+
+# Extra Utilities: Portal to the Deep Dark (I:portal=2526)
+block(blockid=2526, top_image="assets/extrautils/textures/blocks/dark_portal.png")
+
+# Extra Utilities: Drum (I:drumId=2527)
+@material(blockid=2527, nodata=True, solid=True)
+def extrautils_drum(self, blockid, data):
+    side = self.load_image_texture("assets/extrautils/textures/blocks/drum_side.png")
+    top = self.load_image_texture("assets/extrautils/textures/blocks/drum_top.png")
+    return self.build_block(top, side)
+
+# Extra Utilities: Ender Quarry (I:enderQuarryId=2530)
+@material(blockid=2530, nodata=True, solid=True)
+def extrautils_enderquarry(self, blockid, data):
+    side = self.load_image_texture("assets/extrautils/textures/blocks/enderQuarry.png")
+    top = self.load_image_texture("assets/extrautils/textures/blocks/enderQuarry_top.png")
+    return self.build_block(top, side)
+
+# Extra Utilities: Decorative Blocks (I:decorative_2Id=4082)
+@material(blockid=4082, data=range(11), solid=True, transparent=True)
+def extrautils_decorative1(self, blockid, data):
+    if data >= 0 and data <= 8:
+        tex = self.load_image_texture("assets/extrautils/textures/blocks/ConnectedTextures/glass%d_corners.png" % (data + 1))
+    elif data == 9: # Square Glass
+        tex = self.load_image_texture("assets/extrautils/textures/blocks/glassQuadrants.png")
+    elif data == 10: # Dark Glass
+        tex = self.load_image_texture("assets/extrautils/textures/blocks/ConnectedTextures/darkglass_corners.png")
+    return self.build_block(tex, tex)
 
 #################################
 #       Magic Bees              #
