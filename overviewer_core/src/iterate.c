@@ -309,10 +309,18 @@ generate_pseudo_data(RenderState *state, unsigned short ancilData) {
         }
         data = (check_adjacent_blocks(state, x, y, z, state->block) ^ 0x0f) | data;
         return (data << 4) | (ancilData & 0x0f);
-    } else if (state->block == 85) { /* fences */
+    } else if (state->block == 85 /* fences */
+            || state->block == 1394 || state->block == 1418 /* Forestry Fences */
+            ) {
         /* check for fences AND fence gates */
-        return check_adjacent_blocks(state, x, y, z, state->block) | check_adjacent_blocks(state, x, y, z, 107);
-
+        data = check_adjacent_blocks(state, x, y, z, state->block) | check_adjacent_blocks(state, x, y, z, 107)
+                | check_adjacent_blocks(state, x, y, z, 1394) | check_adjacent_blocks(state, x, y, z, 1418) /* Forestry Fences */
+            ;
+        if (state->block == 1394 || state->block == 1418) { /* Forestry Fences; the wood type is in the meta,
+                                                            we need to shift the pseudo data to not overlap with the meta */
+            data = (data << 4) | (ancilData & 0xf);
+        }
+        return data;
     } else if (state->block == 55) { /* redstone */
         /* three addiotional bit are added, one for on/off state, and
          * another two for going-up redstone wire in the same block
@@ -711,6 +719,7 @@ chunk_render(PyObject *self, PyObject *args) {
                         (state.block == 139) || (state.block == 175) || 
                         (state.block == 160) || (state.block == 95) ||
                         (state.block == 146) ||
+                        (state.block == 1394) || (state.block == 1418) || /* Forestry Fences */
                         is_stairs(state.block)) {
                         ancilData = generate_pseudo_data(&state, ancilData);
                         state.block_pdata = ancilData;

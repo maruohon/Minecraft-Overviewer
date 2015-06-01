@@ -791,6 +791,128 @@ class Textures(object):
             return rot
 
         return rotations[(self.rotation - 1) * 6 + rot]
+
+
+    def build_slab(self, top, side, data):
+        # cut the side texture in half
+        mask = side.crop((0,8,16,16))
+        side = Image.new(side.mode, side.size, self.bgcolor)
+        alpha_over(side, mask, (0,0,16,8), mask)
+
+        # plain slab
+        top = self.transform_image_top(top)
+        side = self.transform_image_side(side)
+        otherside = side.transpose(Image.FLIP_LEFT_RIGHT)
+
+        sidealpha = side.split()[3]
+        side = ImageEnhance.Brightness(side).enhance(0.9)
+        side.putalpha(sidealpha)
+        othersidealpha = otherside.split()[3]
+        otherside = ImageEnhance.Brightness(otherside).enhance(0.8)
+        otherside.putalpha(othersidealpha)
+
+        # upside down slab
+        delta = 0
+        if data & 8 == 8:
+            delta = 6
+
+        img = Image.new("RGBA", (24,24), self.bgcolor)
+        alpha_over(img, side, (0,12 - delta), side)
+        alpha_over(img, otherside, (12,12 - delta), otherside)
+        alpha_over(img, top, (0,6 - delta), top)
+
+        return img
+
+    def build_fence(self, tex, data):
+        # no need for rotations, it uses pseudo data.
+        # create needed images for Big stick fence
+        fence_top = tex.copy()
+        fence_side = tex.copy()
+        fence_small_side = tex.copy()
+
+        # generate the textures of the fence
+        ImageDraw.Draw(fence_top).rectangle((0,0,5,15),outline=(0,0,0,0),fill=(0,0,0,0))
+        ImageDraw.Draw(fence_top).rectangle((10,0,15,15),outline=(0,0,0,0),fill=(0,0,0,0))
+        ImageDraw.Draw(fence_top).rectangle((0,0,15,5),outline=(0,0,0,0),fill=(0,0,0,0))
+        ImageDraw.Draw(fence_top).rectangle((0,10,15,15),outline=(0,0,0,0),fill=(0,0,0,0))
+
+        ImageDraw.Draw(fence_side).rectangle((0,0,5,15),outline=(0,0,0,0),fill=(0,0,0,0))
+        ImageDraw.Draw(fence_side).rectangle((10,0,15,15),outline=(0,0,0,0),fill=(0,0,0,0))
+
+        # Create the sides and the top of the big stick
+        fence_side = self.transform_image_side(fence_side)
+        fence_other_side = fence_side.transpose(Image.FLIP_LEFT_RIGHT)
+        fence_top = self.transform_image_top(fence_top)
+
+        # Darken the sides slightly. These methods also affect the alpha layer,
+        # so save them first (we don't want to "darken" the alpha layer making
+        # the block transparent)
+        sidealpha = fence_side.split()[3]
+        fence_side = ImageEnhance.Brightness(fence_side).enhance(0.9)
+        fence_side.putalpha(sidealpha)
+        othersidealpha = fence_other_side.split()[3]
+        fence_other_side = ImageEnhance.Brightness(fence_other_side).enhance(0.8)
+        fence_other_side.putalpha(othersidealpha)
+
+        # Compose the fence big stick
+        fence_big = Image.new("RGBA", (24,24), self.bgcolor)
+        alpha_over(fence_big,fence_side, (5,4),fence_side)
+        alpha_over(fence_big,fence_other_side, (7,4),fence_other_side)
+        alpha_over(fence_big,fence_top, (0,0),fence_top)
+
+        # Now render the small sticks.
+        # Create needed images
+        ImageDraw.Draw(fence_small_side).rectangle((0,0,15,0),outline=(0,0,0,0),fill=(0,0,0,0))
+        ImageDraw.Draw(fence_small_side).rectangle((0,4,15,6),outline=(0,0,0,0),fill=(0,0,0,0))
+        ImageDraw.Draw(fence_small_side).rectangle((0,10,15,16),outline=(0,0,0,0),fill=(0,0,0,0))
+        ImageDraw.Draw(fence_small_side).rectangle((0,0,4,15),outline=(0,0,0,0),fill=(0,0,0,0))
+        ImageDraw.Draw(fence_small_side).rectangle((11,0,15,15),outline=(0,0,0,0),fill=(0,0,0,0))
+
+        # Create the sides and the top of the small sticks
+        fence_small_side = self.transform_image_side(fence_small_side)
+        fence_small_other_side = fence_small_side.transpose(Image.FLIP_LEFT_RIGHT)
+
+        # Darken the sides slightly. These methods also affect the alpha layer,
+        # so save them first (we don't want to "darken" the alpha layer making
+        # the block transparent)
+        sidealpha = fence_small_other_side.split()[3]
+        fence_small_other_side = ImageEnhance.Brightness(fence_small_other_side).enhance(0.9)
+        fence_small_other_side.putalpha(sidealpha)
+        sidealpha = fence_small_side.split()[3]
+        fence_small_side = ImageEnhance.Brightness(fence_small_side).enhance(0.9)
+        fence_small_side.putalpha(sidealpha)
+
+        # Create img to compose the fence
+        img = Image.new("RGBA", (24,24), self.bgcolor)
+
+        # Position of fence small sticks in img.
+        # These postitions are strange because the small sticks of the
+        # fence are at the very left and at the very right of the 16x16 images
+        pos_top_left = (2,3)
+        pos_top_right = (10,3)
+        pos_bottom_right = (10,7)
+        pos_bottom_left = (2,7)
+
+        # +x axis points top right direction
+        # +y axis points bottom right direction
+        # First compose small sticks in the back of the image,
+        # then big stick and thecn small sticks in the front.
+
+        if (data & 0b0001) == 1:
+            alpha_over(img, fence_small_side, pos_top_left, fence_small_side) # top left
+        if (data & 0b1000) == 8:
+            alpha_over(img, fence_small_other_side, pos_top_right, fence_small_other_side) # top right
+
+        alpha_over(img,fence_big,(0,0),fence_big)
+
+        if (data & 0b0010) == 2:
+            alpha_over(img, fence_small_other_side, pos_bottom_left, fence_small_other_side) # bottom left
+        if (data & 0b0100) == 4:
+            alpha_over(img, fence_small_side, pos_bottom_right, fence_small_side) # bottom right
+
+        return img
+
+
 ##
 ## The other big one: @material and associated framework
 ##
@@ -4549,7 +4671,7 @@ def binnie_woodworker(self, blockid, data):
     side_wide   = inner.crop((6, 10, 18, 18))
     side_narrow = inner.crop((0, 10, 6, 18))
 
-    side1 = Image.new("RGBA", (16,16), (26, 26, 26, 0))
+    side1 = Image.new("RGBA", (16,16), self.bgcolor)
     side1.paste(side_strip, (0,0))
     side1.paste(side_strip, (0,12))
     side2 = side1.copy()
@@ -4649,35 +4771,7 @@ def extratrees_planks(self, blockid, data):
 def extratrees_slabs(self, blockid, data):
     # Filler/approximation, needs TE data for actual type
     top = side = self.load_image_texture("assets/extratrees/textures/blocks/planks/Elm.png")
-
-    # cut the side texture in half
-    mask = side.crop((0,8,16,16))
-    side = Image.new(side.mode, side.size, self.bgcolor)
-    alpha_over(side, mask,(0,0,16,8), mask)
-
-    # plain slab
-    top = self.transform_image_top(top)
-    side = self.transform_image_side(side)
-    otherside = side.transpose(Image.FLIP_LEFT_RIGHT)
-
-    sidealpha = side.split()[3]
-    side = ImageEnhance.Brightness(side).enhance(0.9)
-    side.putalpha(sidealpha)
-    othersidealpha = otherside.split()[3]
-    otherside = ImageEnhance.Brightness(otherside).enhance(0.8)
-    otherside.putalpha(othersidealpha)
-
-    # upside down slab
-    delta = 0
-    if data & 8 == 8:
-        delta = 6
-
-    img = Image.new("RGBA", (24,24), self.bgcolor)
-    alpha_over(img, side, (0,12 - delta), side)
-    alpha_over(img, otherside, (12,12 - delta), otherside)
-    alpha_over(img, top, (0,6 - delta), top)
-
-    return img
+    return self.build_slab(top, side, data)
 
 #################################
 #       Buildcraft              #
@@ -4932,7 +5026,7 @@ sprite(blockid=2502, imagename="assets/extrautils/textures/blocks/chandelier.png
 # Extra Utilities: Colored Bricks (I:colorBlockBrickId=2504)
 @material(blockid=2504, data=range(16), solid=True)
 def extrautils_coloredbricks(self, blockid, data):
-    texture = self.load_image_texture("assets/minecraft/textures/blocks/stonebrick.png")
+    texture = self.load_image_texture("assets/minecraft/textures/blocks/stonebrick.png").copy()
 
     # FIXME: The colors may not be entirely accurate, they are estimates from a screenshot...
     if data == 0: # White: Do nothing
@@ -5013,7 +5107,7 @@ def extrautils_bocurtains(self, blockid, data):
     if data == 0:
         alpha_over(img, up_left, (6,3), up_left)    # top left
         alpha_over(img, dw_right, (6,3), dw_right)  # bottom right
-    else:
+    else: # FIXME? It seems that the meta value doesn't change?
         alpha_over(img, up_right, (6,3), up_right)  # top right
         alpha_over(img, dw_left, (6,3), dw_left)    # bottom left
 
@@ -5040,7 +5134,7 @@ block(blockid=2518, top_image="assets/extrautils/textures/blocks/etherealglass.p
 # Extra Utilities: Colored Planks (I:coloredWoodId=2519)
 @material(blockid=2519, data=range(16), solid=True)
 def extrautils_coloredplanks(self, blockid, data):
-    texture = self.load_image_texture("assets/minecraft/textures/blocks/planks_oak.png")
+    texture = self.load_image_texture("assets/minecraft/textures/blocks/planks_oak.png").copy()
 
     # FIXME: The colors may not be entirely accurate, they are estimates from a screenshot...
     if data == 0: # White
@@ -5186,6 +5280,376 @@ def extrautils_decorative1(self, blockid, data):
         tex = self.load_image_texture("assets/extrautils/textures/blocks/ConnectedTextures/darkglass_corners.png")
     return self.build_block(tex, tex)
 
+###############################
+#       Forestry              #
+###############################
+
+# Forestry: Lepidopterist's Chest (I:lepidopterology=1376)
+@material(blockid=1376, nodata=True, solid=True)
+def forestry_lepi_chest(self, blockid, data):
+    top = self.load_image_texture("assets/forestry/textures/blocks/lepichest.1.png")
+    side = self.load_image_texture("assets/forestry/textures/blocks/lepichest.3.png")
+    return self.build_block(top, side)
+
+# Forestry: Arborist's Chest (I:arboriculture=1377)
+@material(blockid=1377, nodata=True, solid=True)
+def forestry_arbo_chest(self, blockid, data):
+    top = self.load_image_texture("assets/forestry/textures/blocks/arbchest.1.png")
+    side = self.load_image_texture("assets/forestry/textures/blocks/arbchest.3.png")
+    return self.build_block(top, side)
+
+# Forestry: Candles (I:candle=1378 & I:stump=1379)
+@material(blockid=[1378, 1379], data=[1, 2, 3, 4, 5], transparent=True)
+def forestry_torches(self, blockid, data):
+    # first, rotations
+    if self.rotation == 1:
+        if data == 1: data = 3
+        elif data == 2: data = 4
+        elif data == 3: data = 2
+        elif data == 4: data = 1
+    elif self.rotation == 2:
+        if data == 1: data = 2
+        elif data == 2: data = 1
+        elif data == 3: data = 4
+        elif data == 4: data = 3
+    elif self.rotation == 3:
+        if data == 1: data = 4
+        elif data == 2: data = 3
+        elif data == 3: data = 1
+        elif data == 4: data = 2
+
+    if blockid == 1378:
+        small = self.load_image_texture("assets/forestry/textures/blocks/candle.png")
+    else:
+        small = self.load_image_texture("assets/forestry/textures/blocks/candleStumpUnlit.png")
+
+    # compose a torch bigger than the normal
+    # (better for doing transformations)
+    torch = Image.new("RGBA", (16,16), self.bgcolor)
+    alpha_over(torch,small,(-4,-3))
+    alpha_over(torch,small,(-5,-2))
+    alpha_over(torch,small,(-3,-2))
+
+    # angle of inclination of the texture
+    rotation = 15
+
+    if data == 1: # pointing south
+        torch = torch.rotate(-rotation, Image.NEAREST) # nearest filter is more nitid.
+        img = self.build_full_block(None, None, None, torch, None, None)
+
+    elif data == 2: # pointing north
+        torch = torch.rotate(rotation, Image.NEAREST)
+        img = self.build_full_block(None, None, torch, None, None, None)
+
+    elif data == 3: # pointing west
+        torch = torch.rotate(rotation, Image.NEAREST)
+        img = self.build_full_block(None, torch, None, None, None, None)
+
+    elif data == 4: # pointing east
+        torch = torch.rotate(-rotation, Image.NEAREST)
+        img = self.build_full_block(None, None, None, None, torch, None)
+
+    elif data == 5: # standing on the floor
+        # compose a "3d torch".
+        img = Image.new("RGBA", (24,24), self.bgcolor)
+
+        small_crop = small.crop((2,2,14,14))
+        slice = small_crop.copy()
+        ImageDraw.Draw(slice).rectangle((6,0,12,12),outline=(0,0,0,0),fill=(0,0,0,0))
+        ImageDraw.Draw(slice).rectangle((0,0,4,12),outline=(0,0,0,0),fill=(0,0,0,0))
+
+        alpha_over(img, slice, (7,5))
+        alpha_over(img, small_crop, (6,6))
+        alpha_over(img, small_crop, (7,6))
+        alpha_over(img, slice, (7,7))
+
+    return img
+
+# Forestry: Wood Planks (I:planks=1380 & I:planks2=1417)
+@material(blockid=[1380,1417], data=range(16), solid=True)
+def forestry_planks(self, blockid, data):
+    names = ["larch", "teak", "acacia", "lime", "chestnut", "wenge", "baobab", "sequoia", "kapok", "ebony", "mahogany", "balsa", "willow", "walnut", "greenheart", "cherry", "mahoe", "poplar", "palm", "papaya", "pine", "plum", "maple", "citrus"]
+    if blockid == 1380:
+        name = names[data]
+    elif blockid == 1417 and data <= 7:
+        name = names[data + 16]
+    else:
+        return None
+    tex = self.load_image_texture("assets/forestry/textures/blocks/wood/planks.%s.png" % name)
+    return self.build_block(tex, tex)
+
+# Forestry: Stained Glass (I:stained=1381)
+@material(blockid=1381, data=range(16), solid=True, transparent=True)
+def forestry_stained(self, blockid, data):
+    # For somea reason the texture names are (15 - meta).png
+    tex = self.load_image_texture("assets/forestry/textures/blocks/stained/%d.png" % (15 - data))
+    return self.build_block(tex, tex)
+
+# Forestry: Alveary blocks (I:alveary=1382)
+@material(blockid=1382, data=[0,2,3,4,5,6,7], solid=True)
+def forestry_alveary(self, blockid, data):
+    if data == 0: # Alveary
+        side = self.load_image_texture("assets/forestry/textures/blocks/apiculture/alveary.entrance.png")
+        top = self.load_image_texture("assets/forestry/textures/blocks/apiculture/alveary.bottom.png")
+    elif data == 2: # Alveary Swarmer
+        side = self.load_image_texture("assets/forestry/textures/blocks/apiculture/alveary.swarmer.on.png")
+        top = self.load_image_texture("assets/forestry/textures/blocks/apiculture/alveary.bottom.png")
+    elif data == 3: # Alveary Fan
+        side = self.load_image_texture("assets/forestry/textures/blocks/apiculture/alveary.fan.off.png")
+        return self.build_block(side, side)
+    elif data == 4: # Alveary Heater
+        side = self.load_image_texture("assets/forestry/textures/blocks/apiculture/alveary.heater.off.png")
+        return self.build_block(side, side)
+    elif data == 5: # Alveary Hygroregulator
+        side = self.load_image_texture("assets/forestry/textures/blocks/apiculture/alveary.valve.png")
+        return self.build_block(side, side)
+    elif data == 6: # Alveary Stabilizer
+        side = self.load_image_texture("assets/forestry/textures/blocks/apiculture/alveary.stabiliser.png")
+        top = self.load_image_texture("assets/forestry/textures/blocks/apiculture/alveary.bottom.png")
+    elif data == 7: # Alveary Sieve
+        side = self.load_image_texture("assets/forestry/textures/blocks/apiculture/alveary.sieve.png")
+        top = self.load_image_texture("assets/forestry/textures/blocks/apiculture/alveary.bottom.png")
+    return self.build_block(top, side)
+
+# Forestry: Slabs (I:slabs1=1386 & I:slabs2=1387 & I:slabs3=1415)
+@material(blockid=[1386,1387,1415], data=range(16), solid=True, transparent=True)
+def forestry_slabs(self, blockid, data):
+    names = ["larch", "teak", "acacia", "lime", "chestnut", "wenge", "baobab", "sequoia", "kapok", "ebony", "mahogany", "balsa", "willow", "walnut", "greenheart", "cherry", "mahoe", "poplar", "palm", "papaya", "pine", "plum", "maple", "citrus"]
+    if blockid == 1386:
+        name = names[data & 0x7]
+    elif blockid == 1387:
+        name = names[(data & 0x7) + 8]
+    elif blockid == 1415:
+        name = names[(data & 0x7) + 16]
+    top = side = self.load_image_texture("assets/forestry/textures/blocks/wood/planks.%s.png" % name)
+    return self.build_slab(top, side, data)
+
+# Forestry: Wood (I:log1=1388 & I:log2=1389 & I:log3=1390 & I:log4=1391 & I:log5=1411 & I:log6=1412 & I:log7=1413)
+@material(blockid=[1388,1389,1390,1391,1411,1412,1413], data=range(16), solid=True)
+def forestry_wood(self, blockid, data):
+    names = ["larch", "teak", "acacia", "lime", "chestnut", "wenge", "baobab", "sequoia", "kapok", "ebony", "mahogany", "balsa", "willow", "walnut", "greenheart", "cherry", "mahoe", "poplar", "palm", "papaya", "pine", "plum", "maple", "citrus", "giganteum", "larch"]
+    if blockid == 1388:
+        name = names[data & 0x3]
+    elif blockid == 1389:
+        name = names[(data & 0x3) + 4]
+    elif blockid == 1390:
+        name = names[(data & 0x3) + 8]
+    elif blockid == 1391:
+        name = names[(data & 0x3) + 12]
+    elif blockid == 1411:
+        name = names[(data & 0x3) + 16]
+    elif blockid == 1412:
+        name = names[(data & 0x3) + 20]
+    elif blockid == 1413 and (data & 0x3) <= 1:
+        name = names[(data & 0x3) + 24]
+    else:
+        return None
+
+    top = self.load_image_texture("assets/forestry/textures/blocks/wood/heart.%s.png" % name)
+    side = self.load_image_texture("assets/forestry/textures/blocks/wood/bark.%s.png" % name)
+
+    # extract orientation from data bits
+    wood_orientation = data & 12
+    if self.rotation == 1:
+        if wood_orientation == 4: wood_orientation = 8
+        elif wood_orientation == 8: wood_orientation = 4
+    elif self.rotation == 3:
+        if wood_orientation == 4: wood_orientation = 8
+        elif wood_orientation == 8: wood_orientation = 4
+
+    # choose orientation and paste textures
+    if wood_orientation == 0:
+        return self.build_block(top, side)
+    elif wood_orientation == 4: # east-west orientation
+        return self.build_full_block(side.rotate(90), None, None, top, side.rotate(90))
+    elif wood_orientation == 8: # north-south orientation
+        return self.build_full_block(side, None, None, side.rotate(270), top)
+
+# Forestry: Fences (I:fences=1394 & I:fences2=1418)
+@material(blockid=[1394,1418], data=range(256), transparent=True, nospawn=True)
+def forestry_fence(self, blockid, data):
+    names = ["larch", "teak", "acacia", "lime", "chestnut", "wenge", "baobab", "sequoia", "kapok", "ebony", "mahogany", "balsa", "willow", "walnut", "greenheart", "cherry", "mahoe", "poplar", "palm", "papaya", "pine", "plum", "maple", "citrus"]
+    if blockid == 1394:
+        name = names[data & 0xF]
+    elif (data & 0xF) <= 7:
+        name = names[(data & 0xF) + 16]
+    else:
+        return None
+    tex = self.load_image_texture("assets/forestry/textures/blocks/wood/planks.%s.png" % name)
+    return self.build_fence(tex, data >> 4) # The pseudo data for the adjacent blocks is in the upper 4 bits, see iterate.c
+
+# Forestry: Farm multiblocks (I:farm=1395)
+@material(blockid=1395, data=[0,2,3,4,5], solid=True)
+def forestry_farm(self, blockid, data):
+    tex = self.load_image_texture("assets/minecraft/textures/blocks/stonebrick.png").copy()
+    if data == 0: # Farm Block
+        overlay = self.load_image_texture("assets/forestry/textures/blocks/farm/top.png")
+    elif data == 2: # Farm Gearbox
+        overlay = self.load_image_texture("assets/forestry/textures/blocks/farm/gears.png")
+    elif data == 3: # Farm Hatch
+        overlay = self.load_image_texture("assets/forestry/textures/blocks/farm/hatch.png")
+    elif data == 4: # Farm Valve
+        overlay = self.load_image_texture("assets/forestry/textures/blocks/farm/valve.png")
+    elif data == 5: # Farm Control
+        overlay = self.load_image_texture("assets/forestry/textures/blocks/farm/control.png")
+    alpha_over(tex, overlay, (0,0), overlay)
+    return self.build_block(tex, tex)
+
+# Forestry: Stairs (I:stairs=1396)
+# FIXME TODO
+
+# Forestry: Farm Humus & Bog Earth (I:soil=1397)
+@material(blockid=1397, data=range(3), solid=True)
+def forestry_soil(self, blockid, data):
+    if data == 0: # Humus
+        tex = self.load_image_texture("assets/forestry/textures/blocks/soil/humus.png")
+    elif data == 1: # Bog Earth
+        tex = self.load_image_texture("assets/forestry/textures/blocks/soil/bog.png")
+    elif data == 2: # Peat FIXME verify this
+        tex = self.load_image_texture("assets/forestry/textures/blocks/soil/peat.png")
+    return self.build_block(tex, tex)
+
+# Forestry: Ores (I:resources=1398)
+@material(blockid=1398, data=range(3), solid=True)
+def forestry_ores(self, blockid, data):
+    if data == 0: # Apatite
+        tex = self.load_image_texture("assets/forestry/textures/blocks/ores/apatite.png")
+    elif data == 1: # Copper Ore
+        tex = self.load_image_texture("assets/forestry/textures/blocks/ores/copper.png")
+    elif data == 2: # Tin Ore
+        tex = self.load_image_texture("assets/forestry/textures/blocks/ores/tin.png")
+    return self.build_block(tex, tex)
+
+# Forestry: Hives (I:beehives=1399)
+@material(blockid=1399, data=range(1,8), solid=True)
+def forestry_hives(self, blockid, data):
+    top = self.load_image_texture("assets/forestry/textures/blocks/beehives/beehive.%d.top.png" % (data & 0xf))
+    side = self.load_image_texture("assets/forestry/textures/blocks/beehives/beehive.%d.side.png" % (data & 0xf))
+    return self.build_block(top, side)
+
+# Forestry: Engines (I:engine=1404)
+@material(blockid=1404, data=range(5), solid=True)
+def forestry_engines(self, blockid, data):
+    if data == 0: # Electrical Engine
+        side = self.load_image("assets/forestry/textures/blocks/engine_tin_base.png")
+    elif data == 1: # Peat-fired Engine
+        side = self.load_image("assets/forestry/textures/blocks/engine_copper_base.png")
+    elif data == 2: # Biogas Engine
+        side = self.load_image("assets/forestry/textures/blocks/engine_bronze_base.png")
+    elif data == 3: # Bio Generator
+        side = self.load_image("assets/forestry/textures/blocks/generator_base.png").crop((16,0,32,16))
+        tex = self.load_image("assets/forestry/textures/blocks/generator_tank_product_empty.png").crop((6,0,18,6)).rotate(90)
+        side.paste(tex, (2,2))
+        side.paste(tex, (8,2))
+        return self.build_block(side, side)
+    elif data == 4: # Clockwork Engine
+        side = self.load_image("assets/forestry/textures/blocks/engine_clock_base.png")
+    side = side.crop((16,0,32,16))
+    return self.build_block(side, side)
+
+# Forestry: Machines (I:machine=1405)
+@material(blockid=1405, data=range(8), solid=True)
+def forestry_machines1(self, blockid, data):
+    if data == 0: # Bottler
+        tex1 = self.load_image("assets/forestry/textures/blocks/bottler_base.png")
+        tex2 = self.load_image("assets/forestry/textures/blocks/bottler_tank_resource_high.png")
+    elif data == 1: # Carpenter
+        tex1 = self.load_image("assets/forestry/textures/blocks/carpenter_base.png")
+        tex2 = self.load_image("assets/forestry/textures/blocks/carpenter_tank_product_empty.png")
+    elif data == 2: # Centrifuge
+        tex1 = self.load_image("assets/forestry/textures/blocks/centrifuge_base.png")
+        tex2 = self.load_image("assets/forestry/textures/blocks/centrifuge_tank_product_empty.png")
+    elif data == 3: # Fermenter
+        tex1 = self.load_image("assets/forestry/textures/blocks/fermenter_base.png")
+        tex2 = self.load_image("assets/forestry/textures/blocks/fermenter_tank_product_high.png")
+    elif data == 4: # Moistener
+        tex1 = self.load_image("assets/forestry/textures/blocks/moistener_base.png")
+        tex2 = self.load_image("assets/forestry/textures/blocks/moistener_tank_resource_high.png")
+    elif data == 5: # Squeezer
+        tex1 = self.load_image("assets/forestry/textures/blocks/squeezer_base.png")
+        tex2 = self.load_image("assets/forestry/textures/blocks/squeezer_tank_product_high.png")
+    elif data == 6: # Still
+        tex1 = self.load_image("assets/forestry/textures/blocks/still_base.png")
+        tex2 = self.load_image("assets/forestry/textures/blocks/still_tank_product_high.png")
+    elif data == 7: # Rainmaker TODO
+        tex = self.load_image_texture("assets/forestry/textures/blocks/rainmaker.0.png")
+        return self.build_block(tex, tex)
+
+    side_strip  = tex1.crop((0, 16, 16, 20)).rotate(90)
+    side_wide   = tex2.crop((4, 10, 20, 18)).rotate(90)
+    side_narrow = tex2.crop((0, 10, 6, 18)).rotate(90)
+
+    # The front side (the side facing you when placing the machine)
+    side1 = tex1.crop((16, 0, 32, 16))
+    side1_inner = tex2.crop((6, 0, 18, 6)).rotate(90)
+    side1.paste(side1_inner, (2,2))
+    side1.paste(side1_inner, (8,2))
+
+    # Side 2 is the wider striped side
+    side2 = Image.new("RGBA", (16,16), self.bgcolor)
+    side2.paste(side_strip, (0,0))
+    side2.paste(side_strip, (12,0))
+    side3 = side2.copy()
+    side2.paste(side_wide, (4,0))
+
+    # Side 3 is the thinner double patterned side
+    side3.paste(side_narrow, (4,0))
+    side3.paste(side_narrow, (4,8))
+
+    return self.build_full_block(side3.rotate(90), side1, side2, side2, side1, None) # top, east, south, north, west, bottom
+
+# Forestry: Machines (I:mill=1406)
+@material(blockid=1406, data=range(3), solid=True)
+def forestry_machines2(self, blockid, data):
+    if data == 0: # Thermionic Fabricator
+        top = self.load_image_texture("assets/forestry/textures/blocks/fabricator.1.png")
+        side = self.load_image_texture("assets/forestry/textures/blocks/fabricator.3.png")
+    elif data == 1: # Raintank
+        top = self.load_image_texture("assets/forestry/textures/blocks/raintank.0.png")
+        side = self.load_image_texture("assets/forestry/textures/blocks/raintank.1.png")
+    elif data == 2: # Worktable
+        top = self.load_image_texture("assets/forestry/textures/blocks/worktable.1.png")
+        side = self.load_image_texture("assets/forestry/textures/blocks/worktable.3.png")
+    return self.build_block(top, side)
+
+# Forestry: Mailboxes (I:mail=1407)
+@material(blockid=1407, data=range(3), solid=True)
+def forestry_mail(self, blockid, data):
+    if data == 0: # Mailbox
+        top = self.load_image_texture("assets/forestry/textures/blocks/mailbox.1.png")
+        side = self.load_image_texture("assets/forestry/textures/blocks/mailbox.2.png")
+    elif data == 1: # Trade Station
+        top = self.load_image_texture("assets/forestry/textures/blocks/tradestation.1.png")
+        side = self.load_image_texture("assets/forestry/textures/blocks/tradestation.3.png")
+    elif data == 2: # Stamp Collector
+        top = self.load_image_texture("assets/forestry/textures/blocks/philatelist.1.png")
+        side = self.load_image_texture("assets/forestry/textures/blocks/philatelist.3.png")
+    return self.build_block(top, side)
+
+# Forestry: Apiary stuff (I:apiculture=1408)
+@material(blockid=1408, data=range(3), solid=True)
+def forestry_apiculture(self, blockid, data):
+    if data == 0: # Apiary
+        top = self.load_image_texture("assets/forestry/textures/blocks/apiary.1.png")
+        side = self.load_image_texture("assets/forestry/textures/blocks/apiary.2.png")
+    elif data == 1: # Apiarist's Chest
+        top = self.load_image_texture("assets/forestry/textures/blocks/apiaristchest.1.png")
+        side = self.load_image_texture("assets/forestry/textures/blocks/apiaristchest.3.png")
+    elif data == 2: # Bee House
+        top = self.load_image_texture("assets/forestry/textures/blocks/beehouse.1.png")
+        side = self.load_image_texture("assets/forestry/textures/blocks/beehouse.2.png")
+    return self.build_block(top, side)
+
+# Forestry: Analyzer (I:core=1409)
+@material(blockid=1409, nodata=True, solid=True)
+def forestry_analyzer(self, blockid, data):
+    tex1 = self.load_image("assets/forestry/textures/blocks/analyzer_pedestal.png")
+    tex2 = self.load_image("assets/forestry/textures/blocks/analyzer_tower2.png")
+    top = tex1.crop((16, 0, 32, 16))
+    side = tex2.crop((15, 13, 31, 29))
+    return self.build_block(top, side)
+
+
 #################################
 #       Magic Bees              #
 #################################
@@ -5209,35 +5673,7 @@ def magicbees_slabs(self, blockid, data):
     else: # FIXME Unknown block
         t = self.load_image_texture("assets/minecraft/textures/blocks/web.png")
         return self.build_sprite(t)
-
-    # cut the side texture in half
-    mask = side.crop((0,8,16,16))
-    side = Image.new(side.mode, side.size, self.bgcolor)
-    alpha_over(side, mask, (0,0,16,8), mask)
-
-    # plain slab
-    top = self.transform_image_top(top)
-    side = self.transform_image_side(side)
-    otherside = side.transpose(Image.FLIP_LEFT_RIGHT)
-
-    sidealpha = side.split()[3]
-    side = ImageEnhance.Brightness(side).enhance(0.9)
-    side.putalpha(sidealpha)
-    othersidealpha = otherside.split()[3]
-    otherside = ImageEnhance.Brightness(otherside).enhance(0.8)
-    otherside.putalpha(othersidealpha)
-
-    # upside down slab
-    delta = 0
-    if data & 8 == 8:
-        delta = 6
-
-    img = Image.new("RGBA", (24,24), self.bgcolor)
-    alpha_over(img, side, (0,12 - delta), side)
-    alpha_over(img, otherside, (12,12 - delta), otherside)
-    alpha_over(img, top, (0,6 - delta), top)
-
-    return img
+    return self.build_slab(top, side, data)
 
 # Magic Bees: Hives (I:hives=1754)
 @material(blockid=1754, data=range(6), solid=True)
