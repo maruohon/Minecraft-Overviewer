@@ -5521,7 +5521,7 @@ def forestry_ores(self, blockid, data):
     return self.build_block(tex, tex)
 
 # Forestry: Hives (I:beehives=1399)
-@material(blockid=1399, data=range(1,8), solid=True)
+@material(blockid=1399, data=range(1,9), solid=True)
 def forestry_hives(self, blockid, data):
     top = self.load_image_texture("assets/forestry/textures/blocks/beehives/beehive.%d.top.png" % (data & 0xf))
     side = self.load_image_texture("assets/forestry/textures/blocks/beehives/beehive.%d.side.png" % (data & 0xf))
@@ -5649,6 +5649,135 @@ def forestry_analyzer(self, blockid, data):
     side = tex2.crop((15, 13, 31, 29))
     return self.build_block(top, side)
 
+
+#################################
+#       Industrial Craft 2      #
+#################################
+
+# IC2: Reinforced Stone (I:blockAlloy=3456)
+block(blockid=3456, top_image="assets/ic2/textures/blocks/blockAlloy.png")
+
+# IC2: Iron Fence (I:blockFenceIron=3465)
+@material(blockid=3465, data=range(16), transparent=True, nospawn=True)
+def forestry_fence(self, blockid, data):
+    tex = self.load_image_texture("assets/minecraft/textures/blocks/iron_block.png")
+    return self.build_fence(tex, data) # The pseudo data for the adjacent blocks, see iterate.c
+
+# IC2: Construction Foam (I:blockFoam=3467)
+block(blockid=3467, top_image="assets/ic2/textures/blocks/cf/blockFoam.png")
+
+# IC2: Iron Scaffold & Scaffold (I:blockIronScaffold=3471 & I:blockScaffold=3491)
+@material(blockid=[3471,3491], nodata=True, solid=True)
+def ic2_scaffold(self, blockid, data):
+    if blockid == 3471:
+        tex = self.load_image("assets/ic2/textures/blocks/blockIronScaffold.png")
+    else:
+        tex = self.load_image("assets/ic2/textures/blocks/blockScaffold.png")
+    top = tex.crop((0,0,16,16))
+    side = tex.crop((32,0,48,16))
+    return self.build_block(top, side)
+
+# IC2: Metal Blocks (I:blockMetal=3476)
+@material(blockid=3476, data=range(3), solid=True)
+def ic2_metal_blocks(self, blockid, data):
+    if data == 0: # Copper Block
+        tex = self.load_image("assets/ic2/textures/blocks/blockMetalCopper.png")
+    elif data == 1: # Tin Block
+        tex = self.load_image("assets/ic2/textures/blocks/blockMetalTin.png")
+    elif data == 2: # Bronze Block
+        tex = self.load_image("assets/ic2/textures/blocks/blockMetalBronze.png")
+    return self.build_block(tex, tex)
+
+# IC2: Uranium Ore (I:blockOreUran=3483)
+block(blockid=3483, top_image="assets/ic2/textures/blocks/blockOreUran.png")
+
+# IC2: Reinforced Construction Foam (I:blockReinforcedFoam=3486)
+block(blockid=3486, top_image="assets/ic2/textures/blocks/cf/blockReinforcedFoam.png")
+
+# IC2: Rubber Tree Leaves (I:blockRubLeaves=3487)
+@material(blockid=3487, nodata=True, solid=True, transparent=True)
+def ic2_leaves(self, blockid, data):
+    tex = self.load_image_texture("assets/ic2/textures/blocks/blockRubLeaves.png")
+    return self.build_block(tex, tex)
+
+# IC2: Rubber Wood (I:blockRubWood=3489)
+@material(blockid=3489, data=range(16), solid=True)
+def ic2_rubberwood(self, blockid, data):
+    img_wet = self.load_image("assets/ic2/textures/blocks/blockRubWood.wet.png")
+    img_dry = self.load_image("assets/ic2/textures/blocks/blockRubWood.dry.png")
+    side_empty = img_dry.crop((32, 0, 48, 16))
+    side_dry = img_dry.crop((48, 0, 64, 16))
+    side_wet = img_wet.crop((48, 0, 64, 16))
+    top = img_dry.crop((0, 0, 16, 16))
+
+    side_east = side_empty
+    side_west = side_empty
+    side_north = side_empty
+    side_south = side_empty
+
+    # build_full_block(top, side1, side2, side3, side4, bottom=None):
+    #    side1 is in the -y face of the cube     (top left, east)
+    #    side2 is in the +x                      (top right, south)
+    #    side3 is in the -x                      (bottom left, north)
+    #    side4 is in the +y                      (bottom right, west)
+
+    # data == 0: player placed empty log, always pointing up
+    # data == 1: World gen empty log
+    if data == 2: # Resin pointing North
+        side_north = side_wet
+    elif data == 3: # Resin pointing South
+        side_south = side_wet
+    elif data == 4: # Resin pointing West
+        side_west = side_wet
+    elif data == 5: # Resin pointing East
+        side_east = side_wet
+    elif data == 8: # Dry resin hole pointing North
+        side_north = side_dry
+    elif data == 9: # Dry resin hole pointing South
+        side_south = side_dry
+    elif data == 10: # Dry resin hole pointing West
+        side_west = side_dry
+    elif data == 11: # Dry resin hole pointing East
+        side_east = side_dry
+
+    if self.rotation == 0: # north upper-left
+        side1 = side_north
+        side2 = side_east
+        side3 = side_west
+        side4 = side_south
+    elif self.rotation == 1: # north upper-right
+        side1 = side_west
+        side2 = side_north
+        side3 = side_south
+        side4 = side_east
+    elif self.rotation == 2: # north lower-right
+        side1 = side_south
+        side2 = side_west
+        side3 = side_east
+        side4 = side_north
+    elif self.rotation == 3: # north lower-left
+        side1 = side_east
+        side2 = side_south
+        side3 = side_north
+        side4 = side_west
+    return self.build_full_block(top, side1, side2, side3, side4)
+
+# IC2: UU-Matter (I:blockfluidUuMatter=3494)
+@material(blockid=3494, data=range(16), fluid=True, transparent=True, nospawn=True)
+def ic2_uumatter(self, blockid, data):
+    tex = self.load_image("assets/ic2/textures/blocks/blockuumatter_still.png").crop((0,0,16,16))
+    return self.build_block(tex, tex)
+
+######################
+#       JABBA        #
+######################
+
+# JABBA: Barrel (I:BetterBarrel=3510)
+@material(blockid=3510, nodata=True, solid=True)
+def jabba_barrel(self, blockid, data):
+    side = self.load_image("assets/jabba/textures/blocks/barrel_label_0.png")
+    top = self.load_image("assets/jabba/textures/blocks/barrel_top_0.png")
+    return self.build_block(top, side)
 
 #################################
 #       Magic Bees              #

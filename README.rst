@@ -24,6 +24,7 @@ To be more specific, this version aims to add support for rendering most of the
  - Extra Utilities
  - Forestry
  - IC2
+ - JABBA (Barrels)
  - Magic Bees
  - Minefactory Reloaded
  - Mystcraft
@@ -106,6 +107,9 @@ Clone this repository, change to the ftb-164 branch, and then build overviewer:
     - carpenter_base.png & carpenter_tank_resource_empty.png
     - paneler_base.png & paneler_tank_resource_empty.png
     - sawmill_base.png & sawmill_tank_resource_empty.png
+  - For JABBA, you only need the following textures:
+    - textures/blocks/barrel_label_0.png
+    - textures/blocks/barrel_top_0.png
 
 * Optionally, you can delete all the other directories from
   assets/<modname>/ leaving just the textures directory, and also

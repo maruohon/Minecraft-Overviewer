@@ -110,7 +110,9 @@ base_draw(void *data, RenderState *state, PyObject *src, PyObject *mask, PyObjec
         /* doublePlant grass & ferns */
         (state->block == 175 && (state->block_data == 2 || state->block_data == 3)) ||
         /* doublePlant grass & ferns tops */
-        (state->block == 175 && below_block == 175 && (below_data == 2 || below_data == 3)) )
+        (state->block == 175 && below_block == 175 && (below_data == 2 || below_data == 3))
+        || state->block == 3487 /* IC2: Rubber Tree Leaves */
+    )
     {
         /* do the biome stuff! */
         PyObject *facemask = mask;
@@ -118,58 +120,32 @@ base_draw(void *data, RenderState *state, PyObject *src, PyObject *mask, PyObjec
         PyObject *color_table = NULL;
         unsigned char flip_xy = 0;
         
-        if (state->block == 2) {
-            /* grass needs a special facemask */
-            facemask = self->grass_texture;
-        }
-
         switch (state->block) {
-        case 2:
-            /* grass */
-            color_table = self->grasscolor;
-            break;
-        case 8:
-        case 9:
-            /* water */
-            color_table = self->watercolor;
-            break;
-        case 18:
-        case 161:
-            /* leaves */
-            color_table = self->foliagecolor;
-            if (state->block_data == 2)
-            {
-                /* birch!
-                   birch foliage color is flipped XY-ways */
-                flip_xy = 1;
-            }
-            break;
-        case 31:
-            /* tall grass */
-            color_table = self->grasscolor;
-            break;
-        case 104:
-            /* pumpkin stem */
-            color_table = self->grasscolor;
-            break;
-        case 105:
-            /* melon stem */
-            color_table = self->grasscolor;
-            break;
-        case 106:
-            /* vines */
-            color_table = self->grasscolor;
-            break;
-        case 111:
-            /* lily pads */
-            color_table = self->grasscolor;
-            break;
-        case 175:
-            /* doublePlant grass & ferns */
-            color_table = self->grasscolor;
-            break;
-        default:
-            break;
+            case 8: /* water */
+            case 9:
+                color_table = self->watercolor;
+                break;
+            case 18: /* leaves */
+                if (state->block_data == 2) /* Birch Leaves */
+                {
+                    flip_xy = 1; /* birch foliage color is flipped XY-ways */
+                }
+            case 161:
+            case 3487: /* IC2: Rubber Tree Leaves */
+                color_table = self->foliagecolor;
+                break;
+            case 2: /* grass */
+                facemask = self->grass_texture;
+            case 31: /* tall grass */
+            case 104: /* pumpkin stem */
+            case 105: /* melon stem */
+            case 106: /* vines */
+            case 111: /* lily pads */
+            case 175: /* doublePlant grass & ferns */
+                color_table = self->grasscolor;
+                break;
+            default:
+                break;
         };
             
         if (color_table) {

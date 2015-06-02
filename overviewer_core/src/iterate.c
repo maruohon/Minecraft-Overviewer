@@ -311,7 +311,11 @@ generate_pseudo_data(RenderState *state, unsigned short ancilData) {
         return (data << 4) | (ancilData & 0x0f);
     } else if (state->block == 85 /* fences */
             || state->block == 1394 || state->block == 1418 /* Forestry Fences */
+            || state->block == 3465 /* IC2: Iron Fence */
             ) {
+        if (state->block == 3465) { /* IC2: Iron Fence; only check for other Iron Fences? Not sure if that is correct... */
+            return check_adjacent_blocks(state, x, y, z, state->block);
+        }
         /* check for fences AND fence gates */
         data = check_adjacent_blocks(state, x, y, z, state->block) | check_adjacent_blocks(state, x, y, z, 107)
                 | check_adjacent_blocks(state, x, y, z, 1394) | check_adjacent_blocks(state, x, y, z, 1418) /* Forestry Fences */
@@ -720,6 +724,7 @@ chunk_render(PyObject *self, PyObject *args) {
                         (state.block == 160) || (state.block == 95) ||
                         (state.block == 146) ||
                         (state.block == 1394) || (state.block == 1418) || /* Forestry Fences */
+                        (state.block == 3465) || /* IC2: Iron Fence */
                         is_stairs(state.block)) {
                         ancilData = generate_pseudo_data(&state, ancilData);
                         state.block_pdata = ancilData;
