@@ -912,6 +912,61 @@ class Textures(object):
 
         return img
 
+    def build_pressure_plate(self, tex, pressed):
+        # cut out the outside border, pressure plates are smaller
+        # than a normal block
+        ImageDraw.Draw(tex).rectangle((0,0,15,15),outline=(0,0,0,0))
+
+        # create the textures and a darker version to make a 3d by
+        # pasting them with an offstet of 1 pixel
+        img = Image.new("RGBA", (24,24), self.bgcolor)
+        top = self.transform_image_top(tex)
+        alpha = top.split()[3]
+        topd = ImageEnhance.Brightness(top).enhance(0.8)
+        topd.putalpha(alpha)
+
+        #show it in 3D if unpressed or 2D if pressed
+        if pressed == True:
+            alpha_over(img, topd, (0,12), topd)
+            alpha_over(img, top, (0,11), top)
+        else:
+            alpha_over(img, top, (0,12), top)
+        return img
+
+    def build_glass_panes(self, tex, data):
+        left = tex.copy()
+        right = tex.copy()
+
+        # generate the four small pieces of the glass pane
+        ImageDraw.Draw(right).rectangle((0,0,7,15),outline=(0,0,0,0),fill=(0,0,0,0))
+        ImageDraw.Draw(left).rectangle((8,0,15,15),outline=(0,0,0,0),fill=(0,0,0,0))
+
+        up_left = self.transform_image_side(left)
+        up_right = self.transform_image_side(right).transpose(Image.FLIP_TOP_BOTTOM)
+        dw_right = self.transform_image_side(right)
+        dw_left = self.transform_image_side(left).transpose(Image.FLIP_TOP_BOTTOM)
+
+        # Create img to compose the texture
+        img = Image.new("RGBA", (24,24), self.bgcolor)
+
+        # +x axis points top right direction
+        # +y axis points bottom right direction
+        # First compose things in the back of the image,
+        # then things in the front.
+
+        # the lower 4 bits encode color, the upper 4 encode adjencies
+        data = data >> 4
+
+        if (data & 0b0001) == 1 or data == 0:
+            alpha_over(img, up_left, (6,3), up_left)    # top left
+        if (data & 0b1000) == 8 or data == 0:
+            alpha_over(img, up_right, (6,3), up_right)  # top right
+        if (data & 0b0010) == 2 or data == 0:
+            alpha_over(img, dw_left, (6,3), dw_left)    # bottom left
+        if (data & 0b0100) == 4 or data == 0:
+            alpha_over(img, dw_right, (6,3), dw_right)  # bottom right
+
+        return img
 
 ##
 ## The other big one: @material and associated framework
@@ -5830,6 +5885,293 @@ def magicbees_hives(self, blockid, data):
         return self.build_sprite(t)
     return self.build_block(top, side)
 
+######################
+#       MFR          #
+######################
+
+# MFR: Machines 1 (I:BaseID=3120)
+@material(blockid=3120, data=range(16), solid=True)
+def mfr_machines1(self, blockid, data):
+    if data == 0: # Planter
+        name = "planter"
+    elif data == 1: # Fisher
+        name = "fisher"
+    elif data == 2: # Harvester
+        name = "harvester"
+    elif data == 3: # Rancher
+        name = "rancher"
+    elif data == 4: # Fertilizer
+        name = "fertilizer"
+    elif data == 5: # Veterinary Station
+        name = "vet"
+    elif data == 6: # Item Collector
+        name = "itemcollector"
+    elif data == 7: # Block Breaker
+        name = "blockbreaker"
+    elif data == 8: # Weather Collector
+        name = "weathercollector"
+    elif data == 9: # Sludge Boiler
+        name = "sludgeboiler"
+    elif data ==10: # Sewer
+        name = "sewer"
+    elif data ==11: # Composter
+        name = "composter"
+    elif data ==12: # Breeder
+        name = "breeder"
+    elif data ==13: # Grinder
+        name = "grinder"
+    elif data ==14: # Auto-Echanter
+        name = "autoenchanter"
+    elif data ==15: # Chronotyper
+        name = "chronotyper"
+    side = self.load_image_texture("assets/minefactoryreloaded/textures/blocks/tile.mfr.machine.%s.idle.front.png" % name)
+    top = self.load_image_texture("assets/minefactoryreloaded/textures/blocks/tile.mfr.machine.%s.idle.top.png" % name)
+    return self.build_block(top, side)
+
+# MFR: Conveyor Belt (I:ID.ConveyorBlock=3121)
+@material(blockid=3121, data=range(16), solid=True, transparent=True)
+def mfr_conveyor(self, blockid, data):
+    tex = self.load_image_texture("assets/minefactoryreloaded/textures/blocks/tile.mfr.conveyor.base.png")
+    overlay = self.load_image_texture("assets/minefactoryreloaded/textures/blocks/tile.mfr.conveyor.overlay.stopped.png")
+    colors = ['#ffffff', '#c88435', '#cc57dd', '#6ea5d1', '#dddd3a', '#8ad11c', '#dd92be', '#575757', '#9e9e9e', '#5792af', '#8442b9', '#3a57cc', '#6a4f35', '#75923a', '#9e3535', '#181818']
+    tex = self.tint_texture2(tex, colors[data])
+    alpha_over(tex, overlay, (0,0), overlay)
+    return self.build_pressure_plate(tex, False)
+
+# MFR: Rubber Wood (I:ID.RubberWood=3122)
+@material(blockid=3122, data=range(16), solid=True)
+def mfr_rubber_wood(self, blockid, data):
+    top = self.load_image_texture("assets/minefactoryreloaded/textures/blocks/tile.mfr.rubberwood.log.top.png")
+    side = self.load_image_texture("assets/minefactoryreloaded/textures/blocks/tile.mfr.rubberwood.log.side.png")
+
+    # extract orientation from data bits
+    wood_orientation = data & 12
+    if self.rotation == 1:
+        if wood_orientation == 4: wood_orientation = 8
+        elif wood_orientation == 8: wood_orientation = 4
+    elif self.rotation == 3:
+        if wood_orientation == 4: wood_orientation = 8
+        elif wood_orientation == 8: wood_orientation = 4
+
+    # choose orientation and paste textures
+    if wood_orientation == 0:
+        return self.build_block(top, side)
+    elif wood_orientation == 4: # east-west orientation
+        return self.build_full_block(side.rotate(90), None, None, top, side.rotate(90))
+    elif wood_orientation == 8: # north-south orientation
+        return self.build_full_block(side, None, None, side.rotate(270), top)
+
+# MFR: Rubber Leaves (I:ID.RubberLeaves=3123)
+@material(blockid=3123, data=range(2), solid=True, transparent=True)
+def mfr_rubber_leaves(self, blockid, data):
+    if data == 0:
+        tex = self.load_image_texture("assets/minefactoryreloaded/textures/blocks/tile.mfr.rubberwood.leaves.transparent.png")
+    else:
+        tex = self.load_image_texture("assets/minefactoryreloaded/textures/blocks/tile.mfr.rubberwood.leaves.dry.transparent.png")
+    return self.build_block(tex, tex)
+
+# MFR: Rubber Saplings (I:ID.RubberSapling=3124)
+sprite(blockid=3124, imagename="assets/minefactoryreloaded/textures/blocks/tile.mfr.rubberwood.sapling.png")
+
+# MFR: Rails (I:ID.CargoRailDropoffBlock=3125 & I:ID.CargoRailPickupBlock=3126 & I:ID.PassengerRailDropoffBlock=3127 & I:ID.PassengerRailPickupBlock=3128)
+@material(blockid=[3125,3126,3127,3128], nodata=True, transparent=True)
+def mfr_rails(self, blockid, data):
+    if blockid == 3125: # Cargo Dropoff Rail
+        tex = self.load_image_texture("assets/minefactoryreloaded/textures/blocks/tile.mfr.rail.cargo.dropoff.png")
+    elif blockid == 3126: # Cargo Pickup Rail
+        tex = self.load_image_texture("assets/minefactoryreloaded/textures/blocks/tile.mfr.rail.cargo.pickup.png")
+    elif blockid == 3127: # Passenger Dropoff Rail
+        tex = self.load_image_texture("assets/minefactoryreloaded/textures/blocks/tile.mfr.rail.passenger.dropoff.png")
+    elif blockid == 3128: # Passenger Pickup Rail
+        tex = self.load_image_texture("assets/minefactoryreloaded/textures/blocks/tile.mfr.rail.passenger.pickup.png")
+    return self.build_pressure_plate(tex, False) # Approximation
+
+# MFR: Stained Glass (I:ID.StainedGlass=3129)
+@material(blockid=3129, data=range(16), solid=True, transparent=True)
+def mfr_stained_glass(self, blockid, data):
+    tex = self.load_image("assets/minefactoryreloaded/textures/blocks/tile.mfr.stainedglass.png")
+    overlay = tex.crop((112,112,128,128))
+    tex = tex.crop((0,0,16,16))
+    colors = ['#ffffff', '#c88435', '#cc57dd', '#6ea5d1', '#dddd3a', '#8ad11c', '#dd92be', '#575757', '#9e9e9e', '#5792af', '#8442b9', '#3a57cc', '#6a4f35', '#75923a', '#9e3535', '#181818']
+    overlay = self.tint_texture2(overlay, colors[data])
+    alpha_over(tex, overlay, (1,1,14,14), overlay)
+    return self.build_block(tex, tex)
+
+# MFR: Stained Glass Panes (I:ID.StainedGlassPane=3130)
+@material(blockid=3130, data=range(256), transparent=True)
+def mfr_stained_glass(self, blockid, data):
+    tex = self.load_image("assets/minefactoryreloaded/textures/blocks/tile.mfr.stainedglass.png")
+    overlay = tex.crop((112,112,128,128))
+    tex = tex.crop((0,0,16,16))
+    colors = ['#ffffff', '#c88435', '#cc57dd', '#6ea5d1', '#dddd3a', '#8ad11c', '#dd92be', '#575757', '#9e9e9e', '#5792af', '#8442b9', '#3a57cc', '#6a4f35', '#75923a', '#9e3535', '#181818']
+    overlay = self.tint_texture2(overlay, colors[data & 0xF])
+    alpha_over(tex, overlay, (1,1,14,14), overlay)
+    return self.build_glass_panes(tex, data)
+
+# MFR: Machines 2 (I:ID.MachineBlock1=3131)
+@material(blockid=3131, data=range(16), solid=True)
+def mfr_machines2(self, blockid, data):
+    if data == 0: # Ejector
+        name = "ejector"
+    elif data == 1: # Item Router
+        name = "itemrouter"
+    elif data == 2: # Liquid Router
+        name = "liquidrouter"
+    elif data == 3: # Deep Storage Unit
+        name = "deepstorageunit"
+    elif data == 4: # LiquiCrafter
+        name = "liquicrafter"
+    elif data == 5: # Lava Fabricator
+        name = "lavafabricator"
+    elif data == 6: # Oil Fabricator
+        name = "oilfabricator"
+    elif data == 7: # Auto-Jukebox
+        name = "autojukebox"
+    elif data == 8: # Unifier
+        name = "unifier"
+    elif data == 9: # Auto-Spawner
+        name = "autospawner"
+    elif data == 10: # BioReactor
+        name = "bioreactor"
+    elif data == 11: # BioFuel Generator
+        name = "biofuelgenerator"
+    elif data == 12: # Auto-Disenchanter
+        name = "autodisenchanter"
+    elif data == 13: # Slaughterhouse
+        name = "slaughterhouse"
+    elif data == 14: # Meat Packer
+        name = "meatpacker"
+    elif data == 15: # Enchantment Router
+        name = "enchantmentrouter"
+    side = self.load_image_texture("assets/minefactoryreloaded/textures/blocks/tile.mfr.machine.%s.idle.front.png" % name)
+    top = self.load_image_texture("assets/minefactoryreloaded/textures/blocks/tile.mfr.machine.%s.idle.top.png" % name)
+    return self.build_block(top, side)
+
+# MFR: Road (I:ID.Road=3132)
+@material(blockid=3132, data=[0,1,4], solid=True)
+def mfr_road(self, blockid, data):
+    if data == 0: # Road
+        tex = self.load_image_texture("assets/minefactoryreloaded/textures/blocks/tile.mfr.road.png")
+    elif data == 1: # Road Light
+        tex = self.load_image_texture("assets/minefactoryreloaded/textures/blocks/tile.mfr.road.light.on.png")
+    elif data == 4: # Road Light (Inverted)
+        tex = self.load_image_texture("assets/minefactoryreloaded/textures/blocks/tile.mfr.road.light.on.png")
+    return self.build_block(tex, tex)
+
+# MFR: Decorative Blocks (I:ID.Bricks=3133)
+@material(blockid=3133, data=range(16), solid=True)
+def mfr_decorative1(self, blockid, data):
+    if data == 0: # Ice Bricks
+        tex = self.load_image_texture("assets/minefactoryreloaded/textures/blocks/tile.mfr.decorativebrick.ice.png")
+    elif data == 1: # Glowstone Bricks
+        tex = self.load_image_texture("assets/minefactoryreloaded/textures/blocks/tile.mfr.decorativebrick.glowstone.png")
+    elif data == 2: # Lapis Bricks
+        tex = self.load_image_texture("assets/minefactoryreloaded/textures/blocks/tile.mfr.decorativebrick.lapis.png")
+    elif data == 3: # Obsidian Bricks
+        tex = self.load_image_texture("assets/minefactoryreloaded/textures/blocks/tile.mfr.decorativebrick.obsidian.png")
+    elif data == 4: # Paved Stone Bricks
+        tex = self.load_image_texture("assets/minefactoryreloaded/textures/blocks/tile.mfr.decorativebrick.pavedstone.png")
+    elif data == 5: # Snow Bricks
+        tex = self.load_image_texture("assets/minefactoryreloaded/textures/blocks/tile.mfr.decorativebrick.snow.png")
+    elif data == 6: # Large Glowstone Bricks
+        tex = self.load_image_texture("assets/minefactoryreloaded/textures/blocks/tile.mfr.decorativebrick.glowstone_large.png")
+    elif data == 7: # Large Ice Bricks
+        tex = self.load_image_texture("assets/minefactoryreloaded/textures/blocks/tile.mfr.decorativebrick.ice_large.png")
+    elif data == 8: # Large Lapis Bricks
+        tex = self.load_image_texture("assets/minefactoryreloaded/textures/blocks/tile.mfr.decorativebrick.lapis_large.png")
+    elif data == 9: # Large Obsidian Bricks
+        tex = self.load_image_texture("assets/minefactoryreloaded/textures/blocks/tile.mfr.decorativebrick.obsidian_large.png")
+    elif data == 10: # Large Snow Bricks
+        tex = self.load_image_texture("assets/minefactoryreloaded/textures/blocks/tile.mfr.decorativebrick.snow_large.png")
+    elif data == 11: # Programmable Rednet Controller
+        tex = self.load_image_texture("assets/minefactoryreloaded/textures/blocks/tile.mfr.decorativebrick.prc.png")
+    elif data == 12: # Raw Meat Block
+        tex = self.load_image_texture("assets/minefactoryreloaded/textures/blocks/tile.mfr.decorativebrick.meat.raw.png")
+    elif data == 13: # Cooked Meat Block
+        tex = self.load_image_texture("assets/minefactoryreloaded/textures/blocks/tile.mfr.decorativebrick.meat.cooked.png")
+    elif data == 14: # Large Paved Stone Bricks
+        tex = self.load_image_texture("assets/minefactoryreloaded/textures/blocks/tile.mfr.decorativebrick.pavedstone_large.png")
+    elif data == 15: # Large Bricks
+        tex = self.load_image_texture("assets/minefactoryreloaded/textures/blocks/tile.mfr.decorativebrick.brick_large.png")
+    return self.build_block(tex, tex)
+
+# MFR: Decorative Blocks (I:ID.Stone=3134)
+@material(blockid=3134, data=range(12), solid=True)
+def mfr_decorative2(self, blockid, data):
+    if data == 0: # Smooth Blackstone
+        tex = self.load_image_texture("assets/minefactoryreloaded/textures/blocks/tile.mfr.decorativestone.black.smooth.png")
+    elif data == 1: # Smooth Whitestone
+        tex = self.load_image_texture("assets/minefactoryreloaded/textures/blocks/tile.mfr.decorativestone.white.smooth.png")
+    elif data == 2: # Cobble Blackstone
+        tex = self.load_image_texture("assets/minefactoryreloaded/textures/blocks/tile.mfr.decorativestone.black.cobble.png")
+    elif data == 3: # Cobble Whitestone
+        tex = self.load_image_texture("assets/minefactoryreloaded/textures/blocks/tile.mfr.decorativestone.white.cobble.png")
+    elif data == 4: # Large Blackstone Bricks
+        tex = self.load_image_texture("assets/minefactoryreloaded/textures/blocks/tile.mfr.decorativestone.black.brick.large.png")
+    elif data == 5: # Large Whitestone Bricks
+        tex = self.load_image_texture("assets/minefactoryreloaded/textures/blocks/tile.mfr.decorativestone.white.brick.large.png")
+    elif data == 6: # Small Blackstone Bricks
+        tex = self.load_image_texture("assets/minefactoryreloaded/textures/blocks/tile.mfr.decorativestone.black.brick.small.png")
+    elif data == 7: # Small Whitestone Bricks
+        tex = self.load_image_texture("assets/minefactoryreloaded/textures/blocks/tile.mfr.decorativestone.white.brick.small.png")
+    elif data == 8: # Blackstone Gravel
+        tex = self.load_image_texture("assets/minefactoryreloaded/textures/blocks/tile.mfr.decorativestone.black.gravel.png")
+    elif data == 9: # Whitestone Gravel
+        tex = self.load_image_texture("assets/minefactoryreloaded/textures/blocks/tile.mfr.decorativestone.white.gravel.png")
+    elif data == 10: # Paved Blackstone
+        tex = self.load_image_texture("assets/minefactoryreloaded/textures/blocks/tile.mfr.decorativestone.black.paved.png")
+    elif data == 11: # Paved Whitestone
+        tex = self.load_image_texture("assets/minefactoryreloaded/textures/blocks/tile.mfr.decorativestone.white.paved.png")
+    return self.build_block(tex, tex)
+
+# MFR: Sludge & Sewage (I:ID.Sludge.Still=3137 & I:ID.Sewage.Still=3139)
+@material(blockid=[3137,3139], data=range(16), fluid=True, transparent=True, nospawn=True)
+def mfr_fluid(self, blockid, data):
+    if blockid == 3137: # Sludge
+        tex = self.load_image("assets/minefactoryreloaded/textures/blocks/fluid.mfr.liquid.sludge.still.png").crop((0,0,16,16))
+    elif blockid == 3139: # Sewage
+        tex = self.load_image("assets/minefactoryreloaded/textures/blocks/fluid.mfr.liquid.sewage.still.png").crop((0,0,16,16))
+    return self.build_block(tex, tex)
+
+# MFR: Machines 3 (I:ID.MachineBlock2=3146)
+@material(blockid=3146, data=range(13), solid=True)
+def mfr_machines3(self, blockid, data):
+    if data == 0: # Laser Drill
+        name = "laserdrill"
+    elif data == 1: # Laser Drill Precharger
+        name = "laserdrillprecharger"
+    elif data == 2: # Auto-Anvil
+        name = "autoanvil"
+    elif data == 3: # Block Smasher
+        name = "blocksmasher"
+    elif data == 4: # RedNote Block
+        name = "rednote"
+    elif data == 5: # Auto-Brewer
+        name = "autobrewer"
+    elif data == 6: # Fruit Picker
+        name = "fruitpicker"
+    elif data == 7: # Block Placer
+        name = "blockplacer"
+    elif data == 8: # Mob Counter
+        name = "mobcounter"
+    elif data == 9: # Steam Turbine
+        name = "steamturbine"
+    elif data == 10: # Chunk Loader
+        name = "chunkloader"
+    elif data == 11: # Fountain
+        name = "fountain"
+    elif data == 12: # Mob Router
+        name = "mobrouter"
+    side = self.load_image_texture("assets/minefactoryreloaded/textures/blocks/tile.mfr.machine.%s.idle.front.png" % name)
+    top = self.load_image_texture("assets/minefactoryreloaded/textures/blocks/tile.mfr.machine.%s.idle.top.png" % name)
+    return self.build_block(top, side)
+
+# MFR: Vine Scaffolding (I:ID.VineScaffold=3148)
+@material(blockid=3148, nodata=True, solid=True, transparent=True)
+def mfr_vine_scaffold(self, blockid, data):
+    top = self.load_image_texture("assets/minefactoryreloaded/textures/blocks/tile.mfr.vinescaffold.top.png")
+    side = self.load_image_texture("assets/minefactoryreloaded/textures/blocks/tile.mfr.vinescaffold.side.png")
+    return self.build_block(top, side)
 
 #################################
 #       Mystcraft               #

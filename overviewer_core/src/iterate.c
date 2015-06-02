@@ -396,7 +396,9 @@ generate_pseudo_data(RenderState *state, unsigned short ancilData) {
         }
         return final_data;
 
-    } else if ((state->block == 101) || (state->block == 102) || (state->block == 160)) {
+    } else if ((state->block == 101) || (state->block == 102) || (state->block == 160)
+            || (state->block == 3130) /* MFR Glass Panes */
+            ) {
         /* iron bars and glass panes:
          * they seem to stick to almost everything but air,
          * not sure yet! Still a TODO! */
@@ -725,6 +727,7 @@ chunk_render(PyObject *self, PyObject *args) {
                         (state.block == 146) ||
                         (state.block == 1394) || (state.block == 1418) || /* Forestry Fences */
                         (state.block == 3465) || /* IC2: Iron Fence */
+                        (state.block == 3130) || /* MFR Glass Panes */
                         is_stairs(state.block)) {
                         ancilData = generate_pseudo_data(&state, ancilData);
                         state.block_pdata = ancilData;
