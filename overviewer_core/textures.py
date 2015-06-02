@@ -6216,3 +6216,215 @@ def mystcraft_inkmixer(self, blockid, data):
 
 # Mystcraft: Bookbinder (I:block.bookbinder.id=1285)
 block(blockid=1285, top_image="assets/mystcraft/textures/blocks/bookbinder_side.png")
+
+
+#########################
+#   Thermal Expansion   #
+#########################
+
+# Thermal Expansion: Ores (I:Ore=2001)
+@material(blockid=2001, data=range(5), solid=True)
+def te_ore(self, blockid, data):
+    if data == 0: # Copper Ore
+        tex = self.load_image_texture("assets/thermalexpansion/textures/blocks/ore/Ore_Copper.png")
+    elif data == 1: # Tin Ore
+        tex = self.load_image_texture("assets/thermalexpansion/textures/blocks/ore/Ore_Tin.png")
+    elif data == 2: # Silver Ore
+        tex = self.load_image_texture("assets/thermalexpansion/textures/blocks/ore/Ore_Silver.png")
+    elif data == 3: # Lead Ore
+        tex = self.load_image_texture("assets/thermalexpansion/textures/blocks/ore/Ore_Lead.png")
+    elif data == 4: # Ferrous Ore
+        tex = self.load_image_texture("assets/thermalexpansion/textures/blocks/ore/Ore_Nickel.png")
+    return self.build_block(tex, tex)
+
+# Thermal Expansion: Machines 1 (I:Machine=2002)
+@material(blockid=2002, data=range(11), solid=True)
+def te_machines1(self, blockid, data):
+    if data == 0: # Redstone Furnace
+        front = self.load_image_texture("assets/thermalexpansion/textures/blocks/machine/Machine_Face_Furnace.png")
+    elif data == 1: # Pulverizer
+        front = self.load_image_texture("assets/thermalexpansion/textures/blocks/machine/Machine_Face_Pulverizer.png")
+    elif data == 2: # Sawmill
+        front = self.load_image_texture("assets/thermalexpansion/textures/blocks/machine/Machine_Face_Sawmill.png")
+    elif data == 3: # Induction Smelter
+        front = self.load_image_texture("assets/thermalexpansion/textures/blocks/machine/Machine_Face_Smelter.png")
+    elif data == 4: # Magma Crucible
+        front = self.load_image_texture("assets/thermalexpansion/textures/blocks/machine/Machine_Face_Crucible.png")
+    elif data == 5: # Fluid Transposer
+        front = self.load_image_texture("assets/thermalexpansion/textures/blocks/machine/Machine_Face_Transposer.png")
+    elif data == 6: # Glacial Precipitator
+        front = self.load_image_texture("assets/thermalexpansion/textures/blocks/machine/Machine_Face_IceGen.png")
+    elif data == 7: # Igneous Extruder
+        front = self.load_image_texture("assets/thermalexpansion/textures/blocks/machine/Machine_Face_RockGen.png")
+    elif data == 8: # Aqueous Accumulator
+        front = self.load_image_texture("assets/thermalexpansion/textures/blocks/machine/Machine_Face_WaterGen.png")
+    elif data == 9: # Cyclic Assembler
+        front = self.load_image_texture("assets/thermalexpansion/textures/blocks/machine/Machine_Face_Assembler.png")
+    elif data == 10: # Energetic Infuser
+        front = self.load_image_texture("assets/thermalexpansion/textures/blocks/machine/Machine_Face_Charger.png")
+    top = self.load_image_texture("assets/thermalexpansion/textures/blocks/machine/Machine_Top.png")
+    return self.build_block(top, front)
+
+# Thermal Expansion: Machines 2 (I:Device=2003)
+@material(blockid=2003, data=[0,2,3,4], solid=True)
+def te_machines2(self, blockid, data):
+    if data == 0: # Machinist's Workbench
+        front = self.load_image_texture("assets/thermalexpansion/textures/blocks/device/Device_Side_Workbench.png")
+    elif data == 2: # Autonomous Activator
+        front = self.load_image_texture("assets/thermalexpansion/textures/blocks/device/Device_Face_Activator.png")
+    elif data == 3: # Terrain Smasher
+        front = self.load_image_texture("assets/thermalexpansion/textures/blocks/device/Device_Face_Breaker.png")
+    elif data == 4: # Nullifier
+        front = self.load_image_texture("assets/thermalexpansion/textures/blocks/device/Device_Face_Nullifier.png")
+    top = self.load_image_texture("assets/thermalexpansion/textures/blocks/device/Device_Side.png")
+    return self.build_block(top, front)
+
+# Thermal Expansion: Dynamos (I:Dynamo=2004)
+@material(blockid=2004, data=range(4), solid=True, transparent=True)
+def te_energycell(self, blockid, data):
+    if data == 0: # Steam Dynamo
+        tex = self.load_image("assets/thermalexpansion/textures/blocks/dynamo/Dynamo_Steam.png")
+    elif data == 1: # Magmatic Dynamo
+        tex = self.load_image("assets/thermalexpansion/textures/blocks/dynamo/Dynamo_Magmatic.png")
+    elif data == 2: # Compression Dynamo
+        tex = self.load_image("assets/thermalexpansion/textures/blocks/dynamo/Dynamo_Compression.png")
+    elif data == 3: # Reactant Dynamo
+        tex = self.load_image("assets/thermalexpansion/textures/blocks/dynamo/Dynamo_Reactant.png")
+    top = tex.crop((16,0,32,16))
+    side1 = tex.crop((0,42,16,58))
+    side2 = tex.crop((0,10,16,26))
+    alpha_over(side1, side2, (0,0), side2)
+    return self.build_full_block((top, 4), side1, side1, side1, side1, None)
+
+# Thermal Expansion: Energy Cells (I:EnergyCell=2005)
+@material(blockid=2005, data=range(5), solid=True)
+def te_energycell(self, blockid, data):
+    if data == 0: # Creative Energy Cell
+        tex = self.load_image_texture("assets/thermalexpansion/textures/blocks/energycell/Cell_Creative.png")
+    elif data == 1: # Leadstone Energy Cell
+        tex = self.load_image_texture("assets/thermalexpansion/textures/blocks/energycell/Cell_Basic.png")
+    elif data == 2: # Hardened Energy Cell
+        tex = self.load_image_texture("assets/thermalexpansion/textures/blocks/energycell/Cell_Hardened.png")
+    elif data == 3: # Redstone Energy Cell
+        tex = self.load_image_texture("assets/thermalexpansion/textures/blocks/energycell/Cell_Reinforced.png")
+    elif data == 4: # Resonant Energy Cell
+        tex = self.load_image_texture("assets/thermalexpansion/textures/blocks/energycell/Cell_Resonant.png")
+    inner = self.load_image_texture("assets/thermalexpansion/textures/blocks/energycell/Cell_Meter_8.png")
+    alpha_over(tex, inner, (0,0), inner)
+    return self.build_block(tex, tex)
+
+# Thermal Expansion: Tanks (I:Tank=2006)
+@material(blockid=2006, data=range(5), solid=True, transparent=True)
+def te_tank(self, blockid, data):
+    if data == 0: # Creative Portable Tank
+        top = self.load_image_texture("assets/thermalexpansion/textures/blocks/tank/Tank_Creative_Top_Blue.png")
+        side = self.load_image_texture("assets/thermalexpansion/textures/blocks/tank/Tank_Creative_Side_Blue.png")
+    elif data == 1: # Portable Tank
+        top = self.load_image_texture("assets/thermalexpansion/textures/blocks/tank/Tank_Basic_Top_Blue.png")
+        side = self.load_image_texture("assets/thermalexpansion/textures/blocks/tank/Tank_Basic_Side_Blue.png")
+    elif data == 2: # Hardened Portable Tank
+        top = self.load_image_texture("assets/thermalexpansion/textures/blocks/tank/Tank_Hardened_Top_Blue.png")
+        side = self.load_image_texture("assets/thermalexpansion/textures/blocks/tank/Tank_Hardened_Side_Blue.png")
+    elif data == 3: # Reinforced Portable Tank
+        top = self.load_image_texture("assets/thermalexpansion/textures/blocks/tank/Tank_Reinforced_Top_Blue.png")
+        side = self.load_image_texture("assets/thermalexpansion/textures/blocks/tank/Tank_Reinforced_Side_Blue.png")
+    elif data == 4: # Resonant Portable Tank
+        top = self.load_image_texture("assets/thermalexpansion/textures/blocks/tank/Tank_Resonant_Top_Blue.png")
+        side = self.load_image_texture("assets/thermalexpansion/textures/blocks/tank/Tank_Resonant_Side_Blue.png")
+    return self.build_block(top, side)
+
+# Thermal Expansion: Strongbox (I:Strongbox=2007)
+@material(blockid=2007, data=range(5), solid=True, transparent=True)
+def te_strongbox(self, blockid, data):
+    if data == 0: # Creative Strongbox
+        tex = self.load_image("assets/thermalexpansion/textures/blocks/strongbox/Strongbox_Creative.png")
+    elif data == 1: # Strongbox
+        tex = self.load_image("assets/thermalexpansion/textures/blocks/strongbox/Strongbox_Basic.png")
+    elif data == 2: # Hardened Strongbox
+        tex = self.load_image("assets/thermalexpansion/textures/blocks/strongbox/Strongbox_Hardened.png")
+    elif data == 3: # Reinforced Strongbox
+        tex = self.load_image("assets/thermalexpansion/textures/blocks/strongbox/Strongbox_Reinforced.png")
+    elif data == 4: # Resonant Strongbox
+        tex = self.load_image("assets/thermalexpansion/textures/blocks/strongbox/Strongbox_Resonant.png")
+    top = Image.new("RGBA", (16,16), self.bgcolor)
+    side = top.copy()
+    top.paste(tex.crop((14,0,28,14)), (1,1))
+    side.paste(tex.crop((0,33,14,47)), (1,4))
+    side.paste(tex.crop((0,14,14,18)), (0,0))
+    return self.build_block(top, side)
+
+# Thermal Expansion: Tesseract (I:Tesseract=2009)
+@material(blockid=2009, data=range(5), solid=True)
+def te_tesseract(self, blockid, data):
+    tex1 = self.load_image("assets/thermalexpansion/textures/blocks/tesseract/Tesseract_Active.png")
+    tex2 = self.load_image("assets/thermalexpansion/textures/blocks/tesseract/Sky_Ender.png")
+    side = tex1.crop((0,0,16,16))
+    side.paste(tex2.crop((13,13,21,21)), (4,4))
+    return self.build_block(side, side)
+
+# Thermal Expansion: Glowstone Illuminator (I:Lamp=2011)
+@material(blockid=2011, nodata=True, solid=True)
+def te_illuminator(self, blockid, data):
+    tex1 = self.load_image("assets/thermalexpansion/textures/blocks/lamp/Lamp_Effect.png").crop((0,0,16,16))
+    self.tint_texture2(tex1, '#dddd3a')
+    tex2 = self.load_image_texture("assets/thermalexpansion/textures/blocks/lamp/Lamp_Basic.png")
+    alpha_over(tex1, tex2, (0,0), tex2)
+    return self.build_block(tex1, tex1)
+
+# Thermal Expansion: Storage Blocks (I:Storage=2012)
+@material(blockid=2012, data=range(11), solid=True)
+def te_storage_blocks(self, blockid, data):
+    if data == 0: # Copper Block
+        tex = self.load_image_texture("assets/thermalexpansion/textures/blocks/storage/Block_Copper.png")
+    elif data == 1: # Tin Block
+        tex = self.load_image_texture("assets/thermalexpansion/textures/blocks/storage/Block_Tin.png")
+    elif data == 2: # Silver Block
+        tex = self.load_image_texture("assets/thermalexpansion/textures/blocks/storage/Block_Silver.png")
+    elif data == 3: # Lead Block
+        tex = self.load_image_texture("assets/thermalexpansion/textures/blocks/storage/Block_Lead.png")
+    elif data == 4: # Ferrous Block
+        tex = self.load_image_texture("assets/thermalexpansion/textures/blocks/storage/Block_Nickel.png")
+    elif data == 5: # Shiny Block
+        tex = self.load_image_texture("assets/thermalexpansion/textures/blocks/storage/Block_Platinum.png")
+    elif data == 6: # Electrum Block
+        tex = self.load_image_texture("assets/thermalexpansion/textures/blocks/storage/Block_Electrum.png")
+    elif data == 7: # Invar Block
+        tex = self.load_image_texture("assets/thermalexpansion/textures/blocks/storage/Block_Invar.png")
+    elif data == 8: # Tinker's Alloy Block
+        tex = self.load_image_texture("assets/thermalexpansion/textures/blocks/storage/Block_Bronze.png")
+    elif data == 10: # Enderium Block
+        tex = self.load_image_texture("assets/thermalexpansion/textures/blocks/storage/Block_Enderium.png")
+    else:
+        return None
+    return self.build_block(tex, tex)
+
+# Thermal Expansion: Hardened Glass (I:Glass=2013)
+@material(blockid=2013, nodata=True, solid=True, transparent=True)
+def te_hardened_glass(self, blockid, data):
+    tex = self.load_image_texture("assets/thermalexpansion/textures/blocks/glass/Glass_Hardened.png")
+    return self.build_block(tex, tex)
+
+# Thermal Expansion: Rockwool (I:Rockwool=2014)
+@material(blockid=2014, data=range(16), solid=True)
+def te_rockwool(self, blockid, data):
+    return wool(self, blockid, data)
+
+
+# Thermal Expansion: Fluids (I:FluidRedstone=2016 & I:FluidGlowstone=2017 & I:FluidEnder=2018 & I:FluidPyrotheum=2019 & I:FluidCryotheum=2020 & I:FluidMana=2021 & I:FluidCoal=2022)
+@material(blockid=range(2016,2023), nodata=True, solid=True, fluid=True)
+def te_fluids(self, blockid, data):
+    if blockid == 2016: # Destabilized Redstone
+        tex = self.load_image("assets/thermalexpansion/textures/blocks/fluid/Fluid_Redstone_Still.png").crop((0,0,16,16))
+    elif blockid == 2017: # Energized Glowstone
+        tex = self.load_image("assets/thermalexpansion/textures/blocks/fluid/Fluid_Glowstone_Still.png").crop((0,0,16,16))
+    elif blockid == 2018: # Resonant Ender
+        tex = self.load_image("assets/thermalexpansion/textures/blocks/fluid/Fluid_Ender_Still.png").crop((0,0,16,16))
+    elif blockid == 2019: # Blazing Pyrotheum
+        tex = self.load_image("assets/thermalexpansion/textures/blocks/fluid/Fluid_Pyrotheum_Still.png").crop((0,0,16,16))
+    elif blockid == 2020: # Gelid Cryotheum
+        tex = self.load_image("assets/thermalexpansion/textures/blocks/fluid/Fluid_Cryotheum_Still.png").crop((0,0,16,16))
+    elif blockid == 2022: # Liquifacted Coal
+        tex = self.load_image("assets/thermalexpansion/textures/blocks/fluid/Fluid_Coal_Still.png").crop((0,0,16,16))
+    else:
+        return None
+    return self.build_block(tex, tex)
