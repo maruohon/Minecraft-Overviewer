@@ -309,19 +309,30 @@ generate_pseudo_data(RenderState *state, unsigned short ancilData) {
         }
         data = (check_adjacent_blocks(state, x, y, z, state->block) ^ 0x0f) | data;
         return (data << 4) | (ancilData & 0x0f);
-    } else if (state->block == 85 /* fences */
+    }
+    /* NOTE: The pseudodata handling for the vanilla walls has been changed in this port for modded
+    Minecraft, because a lot of the mod blocks use block metadata for the material type.
+    That's why it makes more sense to put the pseudo data in the upper 4 bits,
+    which are not used by Minecraft. It also makes this the same as the Fences. */
+    else if (state->block == 85 /* fences */
+            || state->block == 139 /* Cobblestone Wall and Mossy Cobblestone Wall */
+            || state->block == 459 || state->block == 460 /* Railcraft: Posts (= Fences) */
+            || state->block == 461 || state->block == 463 /* Railcraft: Walls */
             || state->block == 1394 || state->block == 1418 /* Forestry Fences */
             || state->block == 3465 /* IC2: Iron Fence */
             ) {
-        if (state->block == 3465) { /* IC2: Iron Fence; only check for other Iron Fences? Not sure if that is correct... */
-            return check_adjacent_blocks(state, x, y, z, state->block);
-        }
-        /* check for fences AND fence gates */
+
+        /* check for adjacent connectable blocks */
         data = check_adjacent_blocks(state, x, y, z, state->block) | check_adjacent_blocks(state, x, y, z, 107)
+                | check_adjacent_blocks(state, x, y, z, 139) /* Cobblestone Wall and Mossy Cobblestone Wall */
+                | check_adjacent_blocks(state, x, y, z, 459) | check_adjacent_blocks(state, x, y, z, 460) /* Railcraft: Posts (= Fences) */
+                | check_adjacent_blocks(state, x, y, z, 461) | check_adjacent_blocks(state, x, y, z, 463) /* Railcraft: Walls */
                 | check_adjacent_blocks(state, x, y, z, 1394) | check_adjacent_blocks(state, x, y, z, 1418) /* Forestry Fences */
+                | check_adjacent_blocks(state, x, y, z, 3465) /* IC2: Iron Fence */
             ;
-        if (state->block == 1394 || state->block == 1418) { /* Forestry Fences; the wood type is in the meta,
-                                                            we need to shift the pseudo data to not overlap with the meta */
+
+        /* Blocks that have metadata need to have the pseudo data shifted by 4 bits */
+        if (state->block != 85) { /* Fence */
             data = (data << 4) | (ancilData & 0xf);
         }
         return data;
@@ -437,13 +448,6 @@ generate_pseudo_data(RenderState *state, unsigned short ancilData) {
         
         }
         return data;
-    } else if (state->block == 139) { /* cobblestone and mossy cobbleston wall  */
-        /* check for walls and add one bit with the type of wall (mossy or cobblestone)*/
-        if (ancilData == 0x1) {
-            return check_adjacent_blocks(state, x, y, z, state->block) | 0x10;
-        } else {
-            return check_adjacent_blocks(state, x, y, z, state->block);
-        }
     } else if (state->block == 111) { /* lilypads */
         int wx,wz,wy,rotation;
         long pr;
@@ -726,6 +730,8 @@ chunk_render(PyObject *self, PyObject *args) {
                         (state.block == 160) || (state.block == 95) ||
                         (state.block == 146) ||
                         (state.block == 1394) || (state.block == 1418) || /* Forestry Fences */
+                        (state.block == 459) || (state.block == 460) || /* Railcraft: Posts (= Fences) */
+                        (state.block == 461) || (state.block == 463) || /* Railcraft: Walls */
                         (state.block == 3465) || /* IC2: Iron Fence */
                         (state.block == 3130) || /* MFR Glass Panes */
                         is_stairs(state.block)) {

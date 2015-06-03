@@ -986,6 +986,124 @@ class Textures(object):
         elif wood_orientation == 8: # north-south orientation
             return self.build_full_block(side, None, None, side.rotate(270), top)
 
+    def build_wall(self, top, side, data):
+        wall_pole_top = top.copy()
+        wall_pole_side = side.copy()
+        wall_side_top = top.copy()
+        wall_side = side.copy()
+        # _full is used for walls without pole
+        wall_side_top_full = top.copy()
+        wall_side_full = side.copy()
+
+        # generate the textures of the wall
+        ImageDraw.Draw(wall_pole_top).rectangle((0,0,3,15),outline=(0,0,0,0),fill=(0,0,0,0))
+        ImageDraw.Draw(wall_pole_top).rectangle((12,0,15,15),outline=(0,0,0,0),fill=(0,0,0,0))
+        ImageDraw.Draw(wall_pole_top).rectangle((0,0,15,3),outline=(0,0,0,0),fill=(0,0,0,0))
+        ImageDraw.Draw(wall_pole_top).rectangle((0,12,15,15),outline=(0,0,0,0),fill=(0,0,0,0))
+
+        ImageDraw.Draw(wall_pole_side).rectangle((0,0,3,15),outline=(0,0,0,0),fill=(0,0,0,0))
+        ImageDraw.Draw(wall_pole_side).rectangle((12,0,15,15),outline=(0,0,0,0),fill=(0,0,0,0))
+
+        # Create the sides and the top of the pole
+        wall_pole_side = self.transform_image_side(wall_pole_side)
+        wall_pole_other_side = wall_pole_side.transpose(Image.FLIP_LEFT_RIGHT)
+        wall_pole_top = self.transform_image_top(wall_pole_top)
+
+        # Darken the sides slightly. These methods also affect the alpha layer,
+        # so save them first (we don't want to "darken" the alpha layer making
+        # the block transparent)
+        sidealpha = wall_pole_side.split()[3]
+        wall_pole_side = ImageEnhance.Brightness(wall_pole_side).enhance(0.8)
+        wall_pole_side.putalpha(sidealpha)
+        othersidealpha = wall_pole_other_side.split()[3]
+        wall_pole_other_side = ImageEnhance.Brightness(wall_pole_other_side).enhance(0.7)
+        wall_pole_other_side.putalpha(othersidealpha)
+
+        # Compose the wall pole
+        wall_pole = Image.new("RGBA", (24,24), self.bgcolor)
+        alpha_over(wall_pole,wall_pole_side, (3,4),wall_pole_side)
+        alpha_over(wall_pole,wall_pole_other_side, (9,4),wall_pole_other_side)
+        alpha_over(wall_pole,wall_pole_top, (0,0),wall_pole_top)
+
+        # create the sides and the top of a wall attached to a pole
+        ImageDraw.Draw(wall_side).rectangle((0,0,15,2),outline=(0,0,0,0),fill=(0,0,0,0))
+        ImageDraw.Draw(wall_side).rectangle((0,0,11,15),outline=(0,0,0,0),fill=(0,0,0,0))
+        ImageDraw.Draw(wall_side_top).rectangle((0,0,11,15),outline=(0,0,0,0),fill=(0,0,0,0))
+        ImageDraw.Draw(wall_side_top).rectangle((0,0,15,4),outline=(0,0,0,0),fill=(0,0,0,0))
+        ImageDraw.Draw(wall_side_top).rectangle((0,11,15,15),outline=(0,0,0,0),fill=(0,0,0,0))
+        # full version, without pole
+        ImageDraw.Draw(wall_side_full).rectangle((0,0,15,2),outline=(0,0,0,0),fill=(0,0,0,0))
+        ImageDraw.Draw(wall_side_top_full).rectangle((0,4,15,15),outline=(0,0,0,0),fill=(0,0,0,0))
+        ImageDraw.Draw(wall_side_top_full).rectangle((0,4,15,15),outline=(0,0,0,0),fill=(0,0,0,0))
+
+        # compose the sides of a wall atached to a pole
+        tmp = Image.new("RGBA", (24,24), self.bgcolor)
+        wall_side = self.transform_image_side(wall_side)
+        wall_side_top = self.transform_image_top(wall_side_top)
+
+        # Darken the sides slightly. These methods also affect the alpha layer,
+        # so save them first (we don't want to "darken" the alpha layer making
+        # the block transparent)
+        sidealpha = wall_side.split()[3]
+        wall_side = ImageEnhance.Brightness(wall_side).enhance(0.7)
+        wall_side.putalpha(sidealpha)
+
+        alpha_over(tmp,wall_side, (0,0),wall_side)
+        alpha_over(tmp,wall_side_top, (-5,3),wall_side_top)
+        wall_side = tmp
+        wall_other_side = wall_side.transpose(Image.FLIP_LEFT_RIGHT)
+
+        # compose the sides of the full wall
+        tmp = Image.new("RGBA", (24,24), self.bgcolor)
+        wall_side_full = self.transform_image_side(wall_side_full)
+        wall_side_top_full = self.transform_image_top(wall_side_top_full.rotate(90))
+
+        # Darken the sides slightly. These methods also affect the alpha layer,
+        # so save them first (we don't want to "darken" the alpha layer making
+        # the block transparent)
+        sidealpha = wall_side_full.split()[3]
+        wall_side_full = ImageEnhance.Brightness(wall_side_full).enhance(0.7)
+        wall_side_full.putalpha(sidealpha)
+
+        alpha_over(tmp,wall_side_full, (4,0),wall_side_full)
+        alpha_over(tmp,wall_side_top_full, (3,-4),wall_side_top_full)
+        wall_side_full = tmp
+        wall_other_side_full = wall_side_full.transpose(Image.FLIP_LEFT_RIGHT)
+
+        # Create img to compose the wall
+        img = Image.new("RGBA", (24,24), self.bgcolor)
+
+        # Position wall imgs around the wall bit stick
+        pos_top_left = (-5,-2)
+        pos_bottom_left = (-8,4)
+        pos_top_right = (5,-3)
+        pos_bottom_right = (7,4)
+
+        # +x axis points top right direction
+        # +y axis points bottom right direction
+        # There are two special cases for wall without pole.
+        # Normal case:
+        # First compose the walls in the back of the image,
+        # then the pole and then the walls in the front.
+        data = (data >> 4) & 0xF
+        if data == 0b1010:
+            alpha_over(img, wall_other_side_full, (0,2), wall_other_side_full)
+        elif data == 0b0101:
+            alpha_over(img, wall_side_full, (0,2), wall_side_full)
+        else:
+            if (data & 0x1) == 0x1:
+                alpha_over(img, wall_side, pos_top_left, wall_side)                # top left
+            if (data & 0x8) == 0x8:
+                alpha_over(img, wall_other_side, pos_top_right, wall_other_side)   # top right
+
+            alpha_over(img, wall_pole, (0,0), wall_pole)
+
+            if (data & 0x2) == 0x2:
+                alpha_over(img, wall_other_side, pos_bottom_left, wall_other_side) # bottom left
+            if (data & 0x4) == 0x4:
+                alpha_over(img, wall_side, pos_bottom_right, wall_side)            # bottom right
+        return img
+
 ##
 ## The other big one: @material and associated framework
 ##
@@ -4148,132 +4266,16 @@ def beacon(self, blockid, data):
 
 # cobblestone and mossy cobblestone walls
 # one additional bit of data value added for mossy and cobblestone
-@material(blockid=139, data=range(32), transparent=True, nospawn=True)
+@material(blockid=139, data=range(256), transparent=True, nospawn=True)
 def cobblestone_wall(self, blockid, data):
     # no rotation, uses pseudo data
-    if data & 0b10000 == 0:
-        # cobblestone
+    if (data & 0x1) == 0: # Cobblestone
         t = self.load_image_texture("assets/minecraft/textures/blocks/cobblestone.png").copy()
-    else:
-        # mossy cobblestone
+    elif (data & 0x1) == 1: # Mossy Cobblestone
         t = self.load_image_texture("assets/minecraft/textures/blocks/cobblestone_mossy.png").copy()
-
-    wall_pole_top = t.copy()
-    wall_pole_side = t.copy()
-    wall_side_top = t.copy()
-    wall_side = t.copy()
-    # _full is used for walls without pole
-    wall_side_top_full = t.copy()
-    wall_side_full = t.copy()
-
-    # generate the textures of the wall
-    ImageDraw.Draw(wall_pole_top).rectangle((0,0,3,15),outline=(0,0,0,0),fill=(0,0,0,0))
-    ImageDraw.Draw(wall_pole_top).rectangle((12,0,15,15),outline=(0,0,0,0),fill=(0,0,0,0))
-    ImageDraw.Draw(wall_pole_top).rectangle((0,0,15,3),outline=(0,0,0,0),fill=(0,0,0,0))
-    ImageDraw.Draw(wall_pole_top).rectangle((0,12,15,15),outline=(0,0,0,0),fill=(0,0,0,0))
-
-    ImageDraw.Draw(wall_pole_side).rectangle((0,0,3,15),outline=(0,0,0,0),fill=(0,0,0,0))
-    ImageDraw.Draw(wall_pole_side).rectangle((12,0,15,15),outline=(0,0,0,0),fill=(0,0,0,0))
-
-    # Create the sides and the top of the pole
-    wall_pole_side = self.transform_image_side(wall_pole_side)
-    wall_pole_other_side = wall_pole_side.transpose(Image.FLIP_LEFT_RIGHT)
-    wall_pole_top = self.transform_image_top(wall_pole_top)
-
-    # Darken the sides slightly. These methods also affect the alpha layer,
-    # so save them first (we don't want to "darken" the alpha layer making
-    # the block transparent)
-    sidealpha = wall_pole_side.split()[3]
-    wall_pole_side = ImageEnhance.Brightness(wall_pole_side).enhance(0.8)
-    wall_pole_side.putalpha(sidealpha)
-    othersidealpha = wall_pole_other_side.split()[3]
-    wall_pole_other_side = ImageEnhance.Brightness(wall_pole_other_side).enhance(0.7)
-    wall_pole_other_side.putalpha(othersidealpha)
-
-    # Compose the wall pole
-    wall_pole = Image.new("RGBA", (24,24), self.bgcolor)
-    alpha_over(wall_pole,wall_pole_side, (3,4),wall_pole_side)
-    alpha_over(wall_pole,wall_pole_other_side, (9,4),wall_pole_other_side)
-    alpha_over(wall_pole,wall_pole_top, (0,0),wall_pole_top)
-    
-    # create the sides and the top of a wall attached to a pole
-    ImageDraw.Draw(wall_side).rectangle((0,0,15,2),outline=(0,0,0,0),fill=(0,0,0,0))
-    ImageDraw.Draw(wall_side).rectangle((0,0,11,15),outline=(0,0,0,0),fill=(0,0,0,0))
-    ImageDraw.Draw(wall_side_top).rectangle((0,0,11,15),outline=(0,0,0,0),fill=(0,0,0,0))
-    ImageDraw.Draw(wall_side_top).rectangle((0,0,15,4),outline=(0,0,0,0),fill=(0,0,0,0))
-    ImageDraw.Draw(wall_side_top).rectangle((0,11,15,15),outline=(0,0,0,0),fill=(0,0,0,0))
-    # full version, without pole
-    ImageDraw.Draw(wall_side_full).rectangle((0,0,15,2),outline=(0,0,0,0),fill=(0,0,0,0))
-    ImageDraw.Draw(wall_side_top_full).rectangle((0,4,15,15),outline=(0,0,0,0),fill=(0,0,0,0))
-    ImageDraw.Draw(wall_side_top_full).rectangle((0,4,15,15),outline=(0,0,0,0),fill=(0,0,0,0))
-
-    # compose the sides of a wall atached to a pole
-    tmp = Image.new("RGBA", (24,24), self.bgcolor)
-    wall_side = self.transform_image_side(wall_side)
-    wall_side_top = self.transform_image_top(wall_side_top)
-
-    # Darken the sides slightly. These methods also affect the alpha layer,
-    # so save them first (we don't want to "darken" the alpha layer making
-    # the block transparent)
-    sidealpha = wall_side.split()[3]
-    wall_side = ImageEnhance.Brightness(wall_side).enhance(0.7)
-    wall_side.putalpha(sidealpha)
-
-    alpha_over(tmp,wall_side, (0,0),wall_side)
-    alpha_over(tmp,wall_side_top, (-5,3),wall_side_top)
-    wall_side = tmp
-    wall_other_side = wall_side.transpose(Image.FLIP_LEFT_RIGHT)
-
-    # compose the sides of the full wall
-    tmp = Image.new("RGBA", (24,24), self.bgcolor)
-    wall_side_full = self.transform_image_side(wall_side_full)
-    wall_side_top_full = self.transform_image_top(wall_side_top_full.rotate(90))
-
-    # Darken the sides slightly. These methods also affect the alpha layer,
-    # so save them first (we don't want to "darken" the alpha layer making
-    # the block transparent)
-    sidealpha = wall_side_full.split()[3]
-    wall_side_full = ImageEnhance.Brightness(wall_side_full).enhance(0.7)
-    wall_side_full.putalpha(sidealpha)
-
-    alpha_over(tmp,wall_side_full, (4,0),wall_side_full)
-    alpha_over(tmp,wall_side_top_full, (3,-4),wall_side_top_full)
-    wall_side_full = tmp
-    wall_other_side_full = wall_side_full.transpose(Image.FLIP_LEFT_RIGHT)
-
-    # Create img to compose the wall
-    img = Image.new("RGBA", (24,24), self.bgcolor)
-
-    # Position wall imgs around the wall bit stick
-    pos_top_left = (-5,-2)
-    pos_bottom_left = (-8,4)
-    pos_top_right = (5,-3)
-    pos_bottom_right = (7,4)
-    
-    # +x axis points top right direction
-    # +y axis points bottom right direction
-    # There are two special cases for wall without pole.
-    # Normal case: 
-    # First compose the walls in the back of the image, 
-    # then the pole and then the walls in the front.
-    if (data == 0b1010) or (data == 0b11010):
-        alpha_over(img, wall_other_side_full,(0,2), wall_other_side_full)
-    elif (data == 0b0101) or (data == 0b10101):
-        alpha_over(img, wall_side_full,(0,2), wall_side_full)
     else:
-        if (data & 0b0001) == 1:
-            alpha_over(img,wall_side, pos_top_left,wall_side)                # top left
-        if (data & 0b1000) == 8:
-            alpha_over(img,wall_other_side, pos_top_right,wall_other_side)    # top right
-
-        alpha_over(img,wall_pole,(0,0),wall_pole)
-            
-        if (data & 0b0010) == 2:
-            alpha_over(img,wall_other_side, pos_bottom_left,wall_other_side)      # bottom left    
-        if (data & 0b0100) == 4:
-            alpha_over(img,wall_side, pos_bottom_right,wall_side)                  # bottom right
-    
-    return img
+        return None
+    return self.build_wall(t, t, data)
 
 # carrots and potatoes
 @material(blockid=[141,142], data=range(8), transparent=True, nospawn=True)
@@ -5714,10 +5716,10 @@ def forestry_analyzer(self, blockid, data):
 block(blockid=3456, top_image="assets/ic2/textures/blocks/blockAlloy.png")
 
 # IC2: Iron Fence (I:blockFenceIron=3465)
-@material(blockid=3465, data=range(16), transparent=True, nospawn=True)
+@material(blockid=3465, data=range(0,256,16), transparent=True, nospawn=True)
 def forestry_fence(self, blockid, data):
     tex = self.load_image_texture("assets/minecraft/textures/blocks/iron_block.png")
-    return self.build_fence(tex, data) # The pseudo data for the adjacent blocks, see iterate.c
+    return self.build_fence(tex, data >> 4) # The pseudo data for the adjacent blocks is in the upper 4 bits, see iterate.c
 
 # IC2: Construction Foam (I:blockFoam=3467)
 block(blockid=3467, top_image="assets/ic2/textures/blocks/cf/blockFoam.png")
@@ -6202,6 +6204,251 @@ def mystcraft_inkmixer(self, blockid, data):
 # Mystcraft: Bookbinder (I:block.bookbinder.id=1285)
 block(blockid=1285, top_image="assets/mystcraft/textures/blocks/bookbinder_side.png")
 
+#################
+#   Railcraft   #
+#################
+
+# Railcraft: Machines 2 (I:block.machine.alpha=451)
+@material(blockid=451, data=[0,2,4,7,12], solid=True)
+def railcraft_machine2(self, blockid, data):
+    # This only includes some of the more common blocks:
+    if data == 0: # World Anchor
+        tex = self.load_image("assets/railcraft/textures/blocks/anchor.world.png")
+        top = tex.crop((0,0,16,16))
+        side = tex.crop((16,0,32,16))
+    elif data == 2: # Personal Anchor
+        tex = self.load_image("assets/railcraft/textures/blocks/anchor.personal.png")
+        top = tex.crop((0,0,16,16))
+        side = tex.crop((16,0,32,16))
+    elif data == 4: # Admin Anchor
+        tex = self.load_image("assets/railcraft/textures/blocks/anchor.admin.png")
+        top = tex.crop((0,0,16,16))
+        side = tex.crop((16,0,32,16))
+    elif data == 7: # Coke Oven Brick
+        tex = self.load_image("assets/railcraft/textures/blocks/coke.oven.png")
+        top = side = tex.crop((0,0,16,16))
+    elif data == 12: # Blast Furnace Brick
+        tex = self.load_image("assets/railcraft/textures/blocks/blast.furnace.png")
+        top = side = tex.crop((0,0,16,16))
+    return self.build_block(top, side)
+
+# Railcraft: Machines 3 (I:block.machine.beta=452)
+@material(blockid=452, data=range(16), solid=True)
+def railcraft_machine3(self, blockid, data):
+    if data == 0: # Iron Tank Wall
+        tex = self.load_image("assets/railcraft/textures/blocks/tank.iron.wall.png")
+    elif data == 1: # Iron Tank Gauge
+        tex = self.load_image("assets/railcraft/textures/blocks/tank.iron.gauge.png")
+    elif data == 2: # Iron Tank valve
+        tex = self.load_image("assets/railcraft/textures/blocks/tank.iron.valve.png")
+    elif data == 3: # Low Pressure Boiler Tank
+        tex = self.load_image("assets/railcraft/textures/blocks/boiler.tank.pressure.low.png")
+    elif data == 4: # High Pressure Boiler Tank
+        tex = self.load_image("assets/railcraft/textures/blocks/boiler.tank.pressure.high.png")
+    elif data == 13: # Steel Tank Wall
+        tex = self.load_image("assets/railcraft/textures/blocks/tank.steel.wall.png")
+    elif data == 14: # Steel Tank gauge
+        tex = self.load_image("assets/railcraft/textures/blocks/tank.steel.gauge.png")
+    elif data == 15: # Steel Tank Valve
+        tex = self.load_image("assets/railcraft/textures/blocks/tank.steel.valve.png")
+    else:
+        if data == 5: # Solid Fueled Firebox
+            tex = self.load_image("assets/railcraft/textures/blocks/boiler.firebox.solid.png")
+            top = tex.crop((0,0,16,16))
+            side = tex.crop((16,0,32,16))
+            return self.build_block(top, side)
+        elif data == 6: # Liquid Fueled Firebox
+            tex = self.load_image("assets/railcraft/textures/blocks/boiler.firebox.liquid.png")
+            top = tex.crop((0,0,16,16))
+            side = tex.crop((16,0,32,16))
+            return self.build_block(top, side)
+        elif data == 7: # Hobbyist's Steam Engine
+            tex = self.load_image_texture("assets/railcraft/textures/blocks/engine.steam.hobby.png")
+        elif data == 8: # Commercial Steam Engine
+            tex = self.load_image_texture("assets/railcraft/textures/blocks/engine.steam.low.png")
+        elif data == 9: # Industrial Steam Engine
+            tex = self.load_image_texture("assets/railcraft/textures/blocks/engine.steam.high.png")
+        else:
+            return None
+        return self.build_block(tex, tex)
+    top = side = tex.crop((0,0,16,16))
+    return self.build_block(top, side)
+
+# Railcraft: Blocks (I:block.cube=457)
+@material(blockid=457, data=[0,1,2,4,6,7,8], solid=True)
+def railcraft_blocks1(self, blockid, data):
+    if data == 0: # Block of Coal Coke
+        tex = self.load_image_texture("assets/railcraft/textures/blocks/cube.coke.png")
+    elif data == 1: # Block of Concrete
+        tex = self.load_image_texture("assets/railcraft/textures/blocks/concrete.png")
+    elif data == 2: # Block of Steel
+        tex = self.load_image_texture("assets/railcraft/textures/blocks/cube.steel.png")
+    elif data == 4: # Crushed Obsidian
+        tex = self.load_image_texture("assets/railcraft/textures/blocks/cube.crushed.obsidian.png")
+    elif data == 6: # Abyssal Stone
+        tex = self.load_image_texture("assets/railcraft/textures/blocks/cube.stone.abyssal.png")
+    elif data == 7: # Quarried Stone
+        tex = self.load_image_texture("assets/railcraft/textures/blocks/cube.stone.quarried.png")
+    elif data == 8: # Creosote Wood Block FIXME which texture is this really??
+        tex = self.load_image_texture("assets/railcraft/textures/blocks/post.wood.png")
+    return self.build_block(tex, tex)
+
+# Railcraft: Ores (I:block.ore=458)
+@material(blockid=458, data=range(6), solid=True)
+def railcraft_ores(self, blockid, data):
+    base = self.load_image_texture("assets/railcraft/textures/blocks/cube.stone.abyssal.png").copy()
+    if data == 0: # Sulfur Ore
+        base = self.load_image_texture("assets/minecraft/textures/blocks/stone.png").copy()
+        overlay = self.load_image_texture("assets/railcraft/textures/blocks/ore.sulfur.png")
+    elif data == 1: # Saltpeter Ore
+        base = self.load_image_texture("assets/minecraft/textures/blocks/sandstone_top.png").copy()
+        overlay = self.load_image_texture("assets/railcraft/textures/blocks/ore.saltpeter.png")
+    elif data == 2: # Dark Diamond Ore
+        overlay = self.load_image_texture("assets/railcraft/textures/blocks/ore.dark.diamond.png")
+    elif data == 3: # Dark Emerald Ore
+        overlay = self.load_image_texture("assets/railcraft/textures/blocks/ore.dark.emerald.png")
+    elif data == 4: # Dark Lapis Lazuli Ore
+        overlay = self.load_image_texture("assets/railcraft/textures/blocks/ore.dark.lapis.png")
+    elif data == 5: # Firestone Ore
+        base = self.load_image_texture("assets/minecraft/textures/blocks/netherrack.png").copy()
+        overlay = self.load_image_texture("assets/railcraft/textures/blocks/ore.firestone.png")
+    alpha_over(base, overlay, (0,0), overlay)
+    return self.build_block(base, base)
+
+# Railcraft: Fences (I:block.post=459)
+@material(blockid=459, data=range(256), solid=True, transparent=True)
+def railcraft_fence(self, blockid, data):
+    meta = data & 0xF
+    if meta == 0: # Wooden Post
+        tex = self.load_image_texture("assets/railcraft/textures/blocks/post.wood.png")
+    elif meta == 1: # Stone Post
+        tex = self.load_image_texture("assets/minecraft/textures/blocks/stone.png")
+    elif meta == 2: # Metal Post
+        tex = self.load_image_texture("assets/railcraft/textures/blocks/post.metal.png")
+    else:
+        return None
+    return self.build_fence(tex, data >> 4) # The pseudo data for the adjacent blocks is in the upper 4 bits, see iterate.c
+
+# Railcraft: Metal Posts (Fences) (I:block.post.metal=460)
+@material(blockid=460, data=range(256), solid=True, transparent=True)
+def railcraft_metal_post(self, blockid, data):
+    tex = self.load_image_texture("assets/railcraft/textures/blocks/post.metal.png").copy()
+    color = 15 - (data & 0xF)
+    colors = ['#ffffff', '#c88435', '#cc57dd', '#6ea5d1', '#dddd3a', '#8ad11c', '#dd92be', '#575757', '#9e9e9e', '#5792af', '#8442b9', '#3a57cc', '#6a4f35', '#75923a', '#9e3535', '#181818']
+    tex = self.tint_texture2(tex, colors[color])
+    return self.build_fence(tex, data >> 4) # The pseudo data for the adjacent blocks is in the upper 4 bits, see iterate.c
+
+# Railcraft: Walls (I:block.wall.alpha=461)
+@material(blockid=461, data=range(256), solid=True, transparent=True)
+def railcraft_walls1(self, blockid, data):
+    top = None
+    meta = data & 0xF
+    if meta == 0: # Infernal Brick Wall
+        side = self.load_image_texture("assets/railcraft/textures/blocks/cube.brick.infernal.png")
+    elif meta == 1: # Sandy Brick Wall
+        side = self.load_image_texture("assets/railcraft/textures/blocks/cube.brick.sandy.png")
+    elif meta == 2: # Concrete Wall
+        side = self.load_image_texture("assets/railcraft/textures/blocks/concrete.png")
+    elif meta == 3: # Snow Wall
+        side = self.load_image_texture("assets/minecraft/textures/blocks/snow.png")
+    elif meta == 4: # Ice Wall
+        side = self.load_image_texture("assets/minecraft/textures/blocks/ice.png")
+    elif meta == 5: # Stone Brick Wall
+        side = self.load_image_texture("assets/minecraft/textures/blocks/stonebrick.png")
+    elif meta == 6: # Mossy Stone Brick Wall
+        side = self.load_image_texture("assets/minecraft/textures/blocks/stonebrick_mossy.png")
+    elif meta == 7: # Cracked Stone Brick Wall
+        side = self.load_image_texture("assets/minecraft/textures/blocks/stonebrick_cracked.png")
+    elif meta == 8: # Chiseled Stone Brick Wall
+        side = self.load_image_texture("assets/minecraft/textures/blocks/stonebrick_carved.png")
+    elif meta == 9: # Nether Brick Wall
+        side = self.load_image_texture("assets/minecraft/textures/blocks/nether_brick.png")
+    elif meta == 10: # Brick Wall
+        side = self.load_image_texture("assets/minecraft/textures/blocks/brick.png")
+    elif meta == 11: # Sandstone Wall
+        side = self.load_image_texture("assets/minecraft/textures/blocks/sandstone_normal.png")
+        top = self.load_image_texture("assets/minecraft/textures/blocks/sandstone_top.png")
+    elif meta == 12: # Chiseled Sandstone Wall
+        side = self.load_image_texture("assets/minecraft/textures/blocks/sandstone_carved.png")
+        top = self.load_image_texture("assets/minecraft/textures/blocks/sandstone_top.png")
+    elif meta == 13: # Smooth Sandstone Wall
+        side = self.load_image_texture("assets/minecraft/textures/blocks/sandstone_smooth.png")
+        top = self.load_image_texture("assets/minecraft/textures/blocks/sandstone_top.png")
+    elif meta == 14: # Obsidian Wall
+        side = self.load_image_texture("assets/minecraft/textures/blocks/obsidian.png")
+    elif meta == 15: # Frost Bound Block Wall
+        side = self.load_image("assets/railcraft/textures/blocks/brick.frostbound.png").crop((0,0,16,16))
+    if not top:
+        top = side
+    return self.build_wall(top, side, data)
+
+# Railcraft: Saltpeter Ore Spawner (I:block.worldlogic=462)
+block(blockid=462, top_image="assets/minecraft/textures/blocks/bedrock.png")
+
+# Railcraft: Walls (I:block.wall.beta=463)
+@material(blockid=463, data=range(256), solid=True, transparent=True)
+def railcraft_walls2(self, blockid, data):
+    meta = data & 0xF
+    if meta == 0: # Quartz Wall
+        side = self.load_image_texture("assets/minecraft/textures/blocks/quartz_block_side.png")
+    elif meta == 1: # Chiseled Quartz Wall
+        side = self.load_image_texture("assets/minecraft/textures/blocks/quartz_block_chiseled.png")
+    elif meta == 2: # Iron Wall
+        side = self.load_image_texture("assets/minecraft/textures/blocks/iron_block.png")
+    elif meta == 3: # Gold Wall
+        side = self.load_image_texture("assets/minecraft/textures/blocks/gold_block.png")
+    elif meta == 4: # Diamond Wall
+        side = self.load_image_texture("assets/minecraft/textures/blocks/diamond_block.png")
+    elif meta == 5: # Abyssal Brick Wall
+        side = self.load_image("assets/railcraft/textures/blocks/brick.abyssal.png").crop((0,0,16,16))
+    elif meta == 6: # Quarried Brick Wall
+        side = self.load_image("assets/railcraft/textures/blocks/brick.quarried.png").crop((0,0,16,16))
+    elif meta == 7: # Blood Stained Brick Wall
+        side = self.load_image("assets/railcraft/textures/blocks/brick.bloodstained.png").crop((0,0,16,16))
+    elif meta == 8: # Bleached Bone Brick Wall
+        side = self.load_image("assets/railcraft/textures/blocks/brick.bleachedbone.png").crop((0,0,16,16))
+    else:
+        return None
+    return self.build_wall(side, side, data)
+
+# Railcraft: Decorative Blocks (I:block.brick.abyssal=466 & I:block.brick.infernal=467 & I:block.brick.bloodstained=468
+# & I:block.brick.sandy=469 & I:block.brick.bleachedbone=470 & I:block.brick.quarried=471 & I:block.brick.frostbound=472 & I:block.brick.nether=475)
+@material(blockid=[466,467,468,469,470,471,472,475], data=range(6), solid=True)
+def railcraft_decorative(self, blockid, data):
+    if blockid == 466: # Abyssal
+        tex = self.load_image("assets/railcraft/textures/blocks/brick.abyssal.png")
+    elif blockid == 467: # Infernal
+        tex = self.load_image("assets/railcraft/textures/blocks/brick.infernal.png")
+    elif blockid == 468: # Blood Stained
+        tex = self.load_image("assets/railcraft/textures/blocks/brick.bloodstained.png")
+    elif blockid == 469: # Sandy
+        tex = self.load_image("assets/railcraft/textures/blocks/brick.sandy.png")
+    elif blockid == 470: # Bleached Bone
+        tex = self.load_image("assets/railcraft/textures/blocks/brick.bleachedbone.png")
+    elif blockid == 471: # Quarried
+        tex = self.load_image("assets/railcraft/textures/blocks/brick.quarried.png")
+    elif blockid == 472: # Frost Bound
+        tex = self.load_image("assets/railcraft/textures/blocks/brick.frostbound.png")
+    elif blockid == 475: # Nether
+        tex = self.load_image("assets/railcraft/textures/blocks/brick.nether.png")
+
+    # data == 0: # x Brick
+    # data == 1: # Fitted x
+    # data == 2: # x Block
+    # data == 3: # Ornate x
+    # data == 4: # Etched x
+    # data == 5: # x Cobblestone
+
+    x_start = data * 16
+    x_end = x_start + 16
+    tex = tex.crop((x_start, 0, x_end, 16))
+    return self.build_block(tex, tex)
+
+# Railcraft: Strengthened Glass (I:block.glass=474)
+@material(blockid=474, nodata=True, solid=True, transparent=True)
+def railcraft_glass(self, blockid, data):
+    tex = self.load_image("assets/railcraft/textures/blocks/glass.png").crop((0,0,16,16))
+    return self.build_block(tex, tex)
 
 ##################
 #   Thaumcraft   #
