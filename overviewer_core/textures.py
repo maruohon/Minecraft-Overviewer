@@ -968,6 +968,24 @@ class Textures(object):
 
         return img
 
+    def build_wood_log(self, top, side, data):
+        # extract orientation from data bits
+        wood_orientation = data & 0xC
+        if self.rotation == 1:
+            if wood_orientation == 4: wood_orientation = 8
+            elif wood_orientation == 8: wood_orientation = 4
+        elif self.rotation == 3:
+            if wood_orientation == 4: wood_orientation = 8
+            elif wood_orientation == 8: wood_orientation = 4
+
+        # choose orientation and paste textures
+        if wood_orientation == 0:
+            return self.build_block(top, side)
+        elif wood_orientation == 4: # east-west orientation
+            return self.build_full_block(side.rotate(90), None, None, top, side.rotate(90))
+        elif wood_orientation == 8: # north-south orientation
+            return self.build_full_block(side, None, None, side.rotate(270), top)
+
 ##
 ## The other big one: @material and associated framework
 ##
@@ -5499,26 +5517,9 @@ def forestry_wood(self, blockid, data):
         name = names[(data & 0x3) + 24]
     else:
         return None
-
     top = self.load_image_texture("assets/forestry/textures/blocks/wood/heart.%s.png" % name)
     side = self.load_image_texture("assets/forestry/textures/blocks/wood/bark.%s.png" % name)
-
-    # extract orientation from data bits
-    wood_orientation = data & 12
-    if self.rotation == 1:
-        if wood_orientation == 4: wood_orientation = 8
-        elif wood_orientation == 8: wood_orientation = 4
-    elif self.rotation == 3:
-        if wood_orientation == 4: wood_orientation = 8
-        elif wood_orientation == 8: wood_orientation = 4
-
-    # choose orientation and paste textures
-    if wood_orientation == 0:
-        return self.build_block(top, side)
-    elif wood_orientation == 4: # east-west orientation
-        return self.build_full_block(side.rotate(90), None, None, top, side.rotate(90))
-    elif wood_orientation == 8: # north-south orientation
-        return self.build_full_block(side, None, None, side.rotate(270), top)
+    return self.build_wood_log(top, side, data)
 
 # Forestry: Fences (I:fences=1394 & I:fences2=1418)
 @material(blockid=[1394,1418], data=range(256), transparent=True, nospawn=True)
@@ -5943,23 +5944,7 @@ def mfr_conveyor(self, blockid, data):
 def mfr_rubber_wood(self, blockid, data):
     top = self.load_image_texture("assets/minefactoryreloaded/textures/blocks/tile.mfr.rubberwood.log.top.png")
     side = self.load_image_texture("assets/minefactoryreloaded/textures/blocks/tile.mfr.rubberwood.log.side.png")
-
-    # extract orientation from data bits
-    wood_orientation = data & 12
-    if self.rotation == 1:
-        if wood_orientation == 4: wood_orientation = 8
-        elif wood_orientation == 8: wood_orientation = 4
-    elif self.rotation == 3:
-        if wood_orientation == 4: wood_orientation = 8
-        elif wood_orientation == 8: wood_orientation = 4
-
-    # choose orientation and paste textures
-    if wood_orientation == 0:
-        return self.build_block(top, side)
-    elif wood_orientation == 4: # east-west orientation
-        return self.build_full_block(side.rotate(90), None, None, top, side.rotate(90))
-    elif wood_orientation == 8: # north-south orientation
-        return self.build_full_block(side, None, None, side.rotate(270), top)
+    return self.build_wood_log(top, side, data)
 
 # MFR: Rubber Leaves (I:ID.RubberLeaves=3123)
 @material(blockid=3123, data=range(2), solid=True, transparent=True)
@@ -6217,6 +6202,138 @@ def mystcraft_inkmixer(self, blockid, data):
 # Mystcraft: Bookbinder (I:block.bookbinder.id=1285)
 block(blockid=1285, top_image="assets/mystcraft/textures/blocks/bookbinder_side.png")
 
+
+##################
+#   Thaumcraft   #
+##################
+
+# Thaumcraft: Infused Stone/Ores (I:BlockCustomOre=2403)
+@material(blockid=2403, data=range(8), solid=True)
+def thaumcraft_ore(self, blockid, data):
+    if data == 0: # Cinnabar Ore
+        tex = self.load_image_texture("assets/thaumcraft/textures/blocks/cinnibar.png")
+    elif data == 7: # Amber Bearing Stone
+        tex = self.load_image_texture("assets/thaumcraft/textures/blocks/amberore.png")
+    else:
+        tex = self.load_image_texture("assets/thaumcraft/textures/blocks/infusedorestone.png")
+        inner = self.load_image("assets/thaumcraft/textures/blocks/infusedore.png").crop((0,0,32,32))
+        if data == 1: # Air Infused Stone
+            inner = self.tint_texture2(inner, '#ead52a')
+        elif data == 2: # Fire Infused Stone
+            inner = self.tint_texture2(inner, '#ca3f32')
+        elif data == 3: # Water Infused Stone
+            inner = self.tint_texture2(inner, '#132edf')
+        elif data == 4: # Earth Infused Stone
+            inner = self.tint_texture2(inner, '#269630')
+        elif data == 5: # Order Infused Stone
+            inner = self.tint_texture2(inner, '#e7cbd0')
+        elif data == 6: # Entropy Infused Stone
+            inner = self.tint_texture2(inner, '#8f6bb9')
+        alpha_over(tex, inner, (0,0), inner)
+    return self.build_block(tex, tex)
+
+# Thaumcraft: Saplings (I:BlockHole=2402)
+@material(blockid=2402, data=range(5), transparent=True)
+def thaumcraft_saplings(self, blockid, data):
+    if data == 0: # Greatwood Sapling
+        tex = self.load_image_texture("assets/thaumcraft/textures/blocks/greatwoodsapling.png")
+    elif data == 1: # Silverwood Sapling
+        tex = self.load_image_texture("assets/thaumcraft/textures/blocks/silverwoodsapling.png")
+    elif data == 2: # Shimmerleaf
+        tex = self.load_image_texture("assets/thaumcraft/textures/blocks/shimmerleaf.png")
+    elif data == 3: # Cinderpearl
+        tex = self.load_image_texture("assets/thaumcraft/textures/blocks/cinderpearl.png")
+    elif data == 4: # Ethereal Bloom; Note: Derpy approximation
+        tex = self.load_image_texture("assets/thaumcraft/textures/blocks/purifier_leaves.png")
+    return self.build_sprite(tex)
+
+# Thaumcraft: Wood (I:BlockMagicalLog=2405)
+@material(blockid=2405, data=range(16), solid=True)
+def thaumcraft_wood(self, blockid, data):
+    woodtype = data & 0x3
+    if woodtype == 0: # Greatwood Log
+        top = self.load_image_texture("assets/thaumcraft/textures/blocks/greatwoodtop.png")
+        side = self.load_image_texture("assets/thaumcraft/textures/blocks/greatwoodside.png")
+    elif woodtype == 1: # Silverwood Log
+        top = self.load_image_texture("assets/thaumcraft/textures/blocks/silverwoodtop.png")
+        side = self.load_image_texture("assets/thaumcraft/textures/blocks/silverwoodside.png")
+    else:
+        return None
+    return self.build_wood_log(top, side, data)
+
+# Thaumcraft: Leaves (I:BlockMagicalLeaves=2406)
+@material(blockid=2406, data=range(2), transparent=True)
+def thaumcraft_leaves(self, blockid, data):
+    if data == 0: # Greatwood Leaves
+        tex = self.load_image_texture("assets/thaumcraft/textures/blocks/greatwoodleaves.png")
+    elif data == 1: # Silverwood Leaves
+        tex = self.load_image_texture("assets/thaumcraft/textures/blocks/silverwoodleaves.png")
+    return self.build_block(tex, tex)
+
+# Thaumcraft: Devices (I:BlockMetalDevice=2408)
+@material(blockid=2408, data=range(16), solid=True)
+def thaumcraft_device(self, blockid, data):
+    if data == 0: # Crucible
+        top = self.load_image_texture("assets/thaumcraft/textures/blocks/crucible4.png")
+        side = self.load_image_texture("assets/thaumcraft/textures/blocks/crucible3.png")
+    #elif data == 15: # Arcane Worktable
+    #    top = side = self.load_image_texture("assets/thaumcraft/textures/blocks/amberbrick.png")
+    else:
+        return None
+    return self.build_block(top, side)
+
+# Thaumcraft: Planks (I:BlockWoodenDevice=2414)
+@material(blockid=2414, data=range(6,8), solid=True)
+def thaumcraft_planks(self, blockid, data):
+    if data == 6: # Greatwood Planks
+        tex = self.load_image_texture("assets/thaumcraft/textures/blocks/planks_greatwood.png")
+    elif data == 7: # Silverwood Planks
+        tex = self.load_image_texture("assets/thaumcraft/textures/blocks/planks_silverwood.png")
+    return self.build_block(tex, tex)
+
+# Thaumcraft: Amber Blocks (I:BlockCosmeticOpaque=2418)
+@material(blockid=2418, data=range(2), solid=True)
+def thaumcraft_amber(self, blockid, data):
+    if data == 0: # Amber Block
+        top = self.load_image_texture("assets/thaumcraft/textures/blocks/amberblock_top.png")
+        side = self.load_image_texture("assets/thaumcraft/textures/blocks/amberblock.png")
+    elif data == 1: # Amber Bricks
+        top = side = self.load_image_texture("assets/thaumcraft/textures/blocks/amberbrick.png")
+    return self.build_block(top, side)
+
+# Thaumcraft: Totems and blocks (I:BlockCosmeticSolid=2419)
+@material(blockid=2419, data=range(9), solid=True)
+def thaumcraft_blocks(self, blockid, data):
+    if data == 0: # Obsidian Totem
+        side = self.load_image_texture("assets/thaumcraft/textures/blocks/obsidiantotem1.png")
+    elif data == 1: # Obsidian Tile
+        side = self.load_image_texture("assets/thaumcraft/textures/blocks/obsidiantile.png")
+    elif data == 2: # Paving Stone of Travel
+        side = self.load_image_texture("assets/thaumcraft/textures/blocks/paving_stone_travel.png")
+    elif data == 3: # Paving Stone of Warding
+        side = self.load_image_texture("assets/thaumcraft/textures/blocks/paving_stone_warding.png")
+    elif data == 4: # Thaumium Block
+        side = self.load_image_texture("assets/thaumcraft/textures/blocks/thaumiumblock.png")
+    elif data == 5: # Tallow Block
+        side = self.load_image_texture("assets/thaumcraft/textures/blocks/tallowblock.png")
+    elif data == 6: # Arcane Stone Block
+        side = self.load_image_texture("assets/thaumcraft/textures/blocks/arcane_stone.png")
+    elif data == 7: # Arcane Stone Bricks
+        side = self.load_image_texture("assets/thaumcraft/textures/blocks/arcane_stone.png")
+    elif data == 8: # Charged Obsidian Totem
+        side = self.load_image_texture("assets/thaumcraft/textures/blocks/obsidiantotem2.png") # FIXME
+    return self.build_block(side, side)
+
+# Thaumcraft: Taint (I:BlockTaint=2421)
+@material(blockid=2421, data=range(3), solid=True)
+def thaumcraft_blocks(self, blockid, data):
+    if data == 0: # Crusted Taint
+        side = self.load_image_texture("assets/thaumcraft/textures/blocks/taint_crust.png")
+    elif data == 1: # Tainted Soil
+        side = self.load_image_texture("assets/thaumcraft/textures/blocks/taint_soil.png")
+    elif data == 2: # Block of Flesh
+        side = self.load_image_texture("assets/thaumcraft/textures/blocks/fleshblock.png")
+    return self.build_block(side, side)
 
 #########################
 #   Thermal Expansion   #

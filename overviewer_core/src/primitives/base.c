@@ -113,6 +113,8 @@ base_draw(void *data, RenderState *state, PyObject *src, PyObject *mask, PyObjec
         (state->block == 175 && below_block == 175 && (below_data == 2 || below_data == 3))
         || state->block == 3487 /* IC2: Rubber Tree Leaves */
         || state->block == 3148 /* MFR: Vine Scaffolding */
+        || (state->block == 2406 && (state->block_data & 0x3) == 0) /* Thaumcraft: Greatwood Leaves */
+        || (state->block == 2421 && (state->block_data & 0x3) == 1) /* Thaumcraft: Tainted Soil */
     )
     {
         /* do the biome stuff! */
@@ -134,6 +136,8 @@ base_draw(void *data, RenderState *state, PyObject *src, PyObject *mask, PyObjec
             case 161:
             case 3487: /* IC2: Rubber Tree Leaves */
             case 3148: /* MFR: Vine Scaffolding */
+            case 2406: /* Thaumcraft: Greatwood Leaves */
+            case 2421: /* Thaumcraft: Tainted Soil */
                 color_table = self->foliagecolor;
                 break;
             case 2: /* grass */
