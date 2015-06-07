@@ -1104,6 +1104,136 @@ class Textures(object):
                 alpha_over(img, wall_side, pos_bottom_right, wall_side)            # bottom right
         return img
 
+    def build_ladder(self, tex_in, data):
+        # first rotations
+        if self.rotation == 1:
+            if data == 2: data = 5
+            elif data == 3: data = 4
+            elif data == 4: data = 2
+            elif data == 5: data = 3
+        elif self.rotation == 2:
+            if data == 2: data = 3
+            elif data == 3: data = 2
+            elif data == 4: data = 5
+            elif data == 5: data = 4
+        elif self.rotation == 3:
+            if data == 2: data = 4
+            elif data == 3: data = 5
+            elif data == 4: data = 3
+            elif data == 5: data = 2
+
+        img = Image.new("RGBA", (24,24), self.bgcolor)
+
+        if data == 5:
+            # normally this ladder would be obsured by the block it's attached to
+            # but since ladders can apparently be placed on transparent blocks, we
+            # have to render this thing anyway.  same for data == 2
+            tex = self.transform_image_side(tex_in)
+            alpha_over(img, tex, (0,6), tex)
+        elif data == 2:
+            tex = self.transform_image_side(tex_in).transpose(Image.FLIP_LEFT_RIGHT)
+            alpha_over(img, tex, (12,6), tex)
+        elif data == 3:
+            tex = self.transform_image_side(tex_in).transpose(Image.FLIP_LEFT_RIGHT)
+            alpha_over(img, tex, (0,0), tex)
+        elif data == 4:
+            tex = self.transform_image_side(tex_in)
+            alpha_over(img, tex, (12,0), tex)
+        return img
+
+    def build_torch(self, tex, data):
+        # first, rotations
+        if self.rotation == 1:
+            if data == 1: data = 3
+            elif data == 2: data = 4
+            elif data == 3: data = 2
+            elif data == 4: data = 1
+        elif self.rotation == 2:
+            if data == 1: data = 2
+            elif data == 2: data = 1
+            elif data == 3: data = 4
+            elif data == 4: data = 3
+        elif self.rotation == 3:
+            if data == 1: data = 4
+            elif data == 2: data = 3
+            elif data == 3: data = 1
+            elif data == 4: data = 2
+
+        # compose a torch bigger than the normal
+        # (better for doing transformations)
+        torch = Image.new("RGBA", (16,16), self.bgcolor)
+        alpha_over(torch, tex, (-4,-3))
+        alpha_over(torch, tex, (-5,-2))
+        alpha_over(torch, tex, (-3,-2))
+
+        # angle of inclination of the texture
+        rotation = 15
+
+        if data == 1: # pointing south
+            torch = torch.rotate(-rotation, Image.NEAREST) # nearest filter is more nitid.
+            img = self.build_full_block(None, None, None, torch, None, None)
+        elif data == 2: # pointing north
+            torch = torch.rotate(rotation, Image.NEAREST)
+            img = self.build_full_block(None, None, torch, None, None, None)
+        elif data == 3: # pointing west
+            torch = torch.rotate(rotation, Image.NEAREST)
+            img = self.build_full_block(None, torch, None, None, None, None)
+        elif data == 4: # pointing east
+            torch = torch.rotate(-rotation, Image.NEAREST)
+            img = self.build_full_block(None, None, None, None, torch, None)
+        elif data == 5: # standing on the floor
+            # compose a "3d torch".
+            img = Image.new("RGBA", (24,24), self.bgcolor)
+            small_crop = tex.crop((2,2,14,14))
+            slice = small_crop.copy()
+            ImageDraw.Draw(slice).rectangle((6,0,12,12),outline=(0,0,0,0),fill=(0,0,0,0))
+            ImageDraw.Draw(slice).rectangle((0,0,4,12),outline=(0,0,0,0),fill=(0,0,0,0))
+            alpha_over(img, slice, (7,5))
+            alpha_over(img, small_crop, (6,6))
+            alpha_over(img, small_crop, (7,6))
+            alpha_over(img, slice, (7,7))
+        return img
+
+    def build_berry_bush(self, tex, data):
+        if data <= 7: # Stage 1 or 2, ie. smaller than a full block
+            if data <= 3: # Stage 1
+                size = 8
+                osl = 3 # offset left
+                oslt = 5
+                osr = 9 # offset right
+                ost = 3 # offset top
+            else: # <= 7, Stage 2
+                size = 12
+                osl = 2
+                oslt = 5
+                osr = 10
+                ost = 2
+
+            cut = (16 - size) / 2
+            ImageDraw.Draw(tex).rectangle((0,0,cut-1,15),outline=(0,0,0,0),fill=(0,0,0,0))
+            ImageDraw.Draw(tex).rectangle((16-cut,0,15,15),outline=(0,0,0,0),fill=(0,0,0,0))
+            ImageDraw.Draw(tex).rectangle((0,0,15,cut-1),outline=(0,0,0,0),fill=(0,0,0,0))
+            ImageDraw.Draw(tex).rectangle((0,16-cut,15,15),outline=(0,0,0,0),fill=(0,0,0,0))
+            top = tex.copy()
+
+            side = self.transform_image_side(tex)
+            side2 = side.transpose(Image.FLIP_LEFT_RIGHT)
+            top = self.transform_image_top(top)
+
+            img = Image.new("RGBA", (24,24), self.bgcolor)
+            alpha_over(img, side, (osl, oslt), side)
+            alpha_over(img, side2, (osr, oslt), side2)
+            alpha_over(img, top, (0, ost), top)
+
+            if data <= 3:
+                img.putpixel((18, 9), (0, 0, 0, 0)) # fix a horrible pixel
+            else:
+                img.putpixel((21, 8), (0, 0, 0, 0)) # fix a horrible pixel
+
+            return img
+
+        return self.build_block(tex, tex)
+
 ##
 ## The other big one: @material and associated framework
 ##
@@ -1959,72 +2089,13 @@ block(blockid=49, top_image="assets/minecraft/textures/blocks/obsidian.png")
 # torch, redstone torch (off), redstone torch(on)
 @material(blockid=[50, 75, 76], data=[1, 2, 3, 4, 5], transparent=True)
 def torches(self, blockid, data):
-    # first, rotations
-    if self.rotation == 1:
-        if data == 1: data = 3
-        elif data == 2: data = 4
-        elif data == 3: data = 2
-        elif data == 4: data = 1
-    elif self.rotation == 2:
-        if data == 1: data = 2
-        elif data == 2: data = 1
-        elif data == 3: data = 4
-        elif data == 4: data = 3
-    elif self.rotation == 3:
-        if data == 1: data = 4
-        elif data == 2: data = 3
-        elif data == 3: data = 1
-        elif data == 4: data = 2
-    
-    # choose the proper texture
     if blockid == 50: # torch
-        small = self.load_image_texture("assets/minecraft/textures/blocks/torch_on.png")
+        tex = self.load_image_texture("assets/minecraft/textures/blocks/torch_on.png")
     elif blockid == 75: # off redstone torch
-        small = self.load_image_texture("assets/minecraft/textures/blocks/redstone_torch_off.png")
+        tex = self.load_image_texture("assets/minecraft/textures/blocks/redstone_torch_off.png")
     else: # on redstone torch
-        small = self.load_image_texture("assets/minecraft/textures/blocks/redstone_torch_on.png")
-        
-    # compose a torch bigger than the normal
-    # (better for doing transformations)
-    torch = Image.new("RGBA", (16,16), self.bgcolor)
-    alpha_over(torch,small,(-4,-3))
-    alpha_over(torch,small,(-5,-2))
-    alpha_over(torch,small,(-3,-2))
-    
-    # angle of inclination of the texture
-    rotation = 15
-    
-    if data == 1: # pointing south
-        torch = torch.rotate(-rotation, Image.NEAREST) # nearest filter is more nitid.
-        img = self.build_full_block(None, None, None, torch, None, None)
-        
-    elif data == 2: # pointing north
-        torch = torch.rotate(rotation, Image.NEAREST)
-        img = self.build_full_block(None, None, torch, None, None, None)
-        
-    elif data == 3: # pointing west
-        torch = torch.rotate(rotation, Image.NEAREST)
-        img = self.build_full_block(None, torch, None, None, None, None)
-        
-    elif data == 4: # pointing east
-        torch = torch.rotate(-rotation, Image.NEAREST)
-        img = self.build_full_block(None, None, None, None, torch, None)
-        
-    elif data == 5: # standing on the floor
-        # compose a "3d torch".
-        img = Image.new("RGBA", (24,24), self.bgcolor)
-        
-        small_crop = small.crop((2,2,14,14))
-        slice = small_crop.copy()
-        ImageDraw.Draw(slice).rectangle((6,0,12,12),outline=(0,0,0,0),fill=(0,0,0,0))
-        ImageDraw.Draw(slice).rectangle((0,0,4,12),outline=(0,0,0,0),fill=(0,0,0,0))
-        
-        alpha_over(img, slice, (7,5))
-        alpha_over(img, small_crop, (6,6))
-        alpha_over(img, small_crop, (7,6))
-        alpha_over(img, slice, (7,7))
-        
-    return img
+        tex = self.load_image_texture("assets/minecraft/textures/blocks/redstone_torch_on.png")
+    return self.build_torch(tex, data)
 
 # fire
 @material(blockid=51, data=range(16), transparent=True)
@@ -2655,47 +2726,8 @@ def door(self, blockid, data):
 # ladder
 @material(blockid=65, data=[2, 3, 4, 5], transparent=True)
 def ladder(self, blockid, data):
-
-    # first rotations
-    if self.rotation == 1:
-        if data == 2: data = 5
-        elif data == 3: data = 4
-        elif data == 4: data = 2
-        elif data == 5: data = 3
-    elif self.rotation == 2:
-        if data == 2: data = 3
-        elif data == 3: data = 2
-        elif data == 4: data = 5
-        elif data == 5: data = 4
-    elif self.rotation == 3:
-        if data == 2: data = 4
-        elif data == 3: data = 5
-        elif data == 4: data = 3
-        elif data == 5: data = 2
-
-    img = Image.new("RGBA", (24,24), self.bgcolor)
-    raw_texture = self.load_image_texture("assets/minecraft/textures/blocks/ladder.png")
-
-    if data == 5:
-        # normally this ladder would be obsured by the block it's attached to
-        # but since ladders can apparently be placed on transparent blocks, we 
-        # have to render this thing anyway.  same for data == 2
-        tex = self.transform_image_side(raw_texture)
-        alpha_over(img, tex, (0,6), tex)
-        return img
-    if data == 2:
-        tex = self.transform_image_side(raw_texture).transpose(Image.FLIP_LEFT_RIGHT)
-        alpha_over(img, tex, (12,6), tex)
-        return img
-    if data == 3:
-        tex = self.transform_image_side(raw_texture).transpose(Image.FLIP_LEFT_RIGHT)
-        alpha_over(img, tex, (0,0), tex)
-        return img
-    if data == 4:
-        tex = self.transform_image_side(raw_texture)
-        alpha_over(img, tex, (12,0), tex)
-        return img
-
+    tex = self.load_image_texture("assets/minecraft/textures/blocks/ladder.png")
+    return self.build_ladder(tex, data)
 
 # wall signs
 @material(blockid=68, data=[2, 3, 4, 5], transparent=True)
@@ -3729,48 +3761,13 @@ def huge_mushroom(self, blockid, data):
 # at the moment is not used
 @material(blockid=[101,102, 160], data=range(256), transparent=True, nospawn=True)
 def panes(self, blockid, data):
-    # no rotation, uses pseudo data
-    if blockid == 101:
-        # iron bars
-        t = self.load_image_texture("assets/minecraft/textures/blocks/iron_bars.png")
-    elif blockid == 160:
-        t = self.load_image_texture("assets/minecraft/textures/blocks/glass_%s.png" % color_map[data & 0xf])
-    else:
-        # glass panes
-        t = self.load_image_texture("assets/minecraft/textures/blocks/glass.png")
-    left = t.copy()
-    right = t.copy()
-
-    # generate the four small pieces of the glass pane
-    ImageDraw.Draw(right).rectangle((0,0,7,15),outline=(0,0,0,0),fill=(0,0,0,0))
-    ImageDraw.Draw(left).rectangle((8,0,15,15),outline=(0,0,0,0),fill=(0,0,0,0))
-    
-    up_left = self.transform_image_side(left)
-    up_right = self.transform_image_side(right).transpose(Image.FLIP_TOP_BOTTOM)
-    dw_right = self.transform_image_side(right)
-    dw_left = self.transform_image_side(left).transpose(Image.FLIP_TOP_BOTTOM)
-
-    # Create img to compose the texture
-    img = Image.new("RGBA", (24,24), self.bgcolor)
-
-    # +x axis points top right direction
-    # +y axis points bottom right direction
-    # First compose things in the back of the image, 
-    # then things in the front.
-
-    # the lower 4 bits encode color, the upper 4 encode adjencies
-    data = data >> 4
-
-    if (data & 0b0001) == 1 or data == 0:
-        alpha_over(img,up_left, (6,3),up_left)    # top left
-    if (data & 0b1000) == 8 or data == 0:
-        alpha_over(img,up_right, (6,3),up_right)  # top right
-    if (data & 0b0010) == 2 or data == 0:
-        alpha_over(img,dw_left, (6,3),dw_left)    # bottom left    
-    if (data & 0b0100) == 4 or data == 0:
-        alpha_over(img,dw_right, (6,3),dw_right)  # bottom right
-
-    return img
+    if blockid == 101: # Iron Bars
+        tex = self.load_image_texture("assets/minecraft/textures/blocks/iron_bars.png")
+    elif blockid == 160: # Stained Glass Panes
+        tex = self.load_image_texture("assets/minecraft/textures/blocks/glass_%s.png" % color_map[data & 0xf])
+    else: # Glass Panes
+        tex = self.load_image_texture("assets/minecraft/textures/blocks/glass.png")
+    return self.build_glass_panes(tex, data)
 
 # melon
 block(blockid=103, top_image="assets/minecraft/textures/blocks/melon_top.png", side_image="assets/minecraft/textures/blocks/melon_side.png", solid=True)
@@ -5976,23 +5973,25 @@ def mfr_rails(self, blockid, data):
 # MFR: Stained Glass (I:ID.StainedGlass=3129)
 @material(blockid=3129, data=range(16), solid=True, transparent=True)
 def mfr_stained_glass(self, blockid, data):
-    tex = self.load_image("assets/minefactoryreloaded/textures/blocks/tile.mfr.stainedglass.png")
+    tex = self.load_image("assets/minefactoryreloaded/textures/blocks/tile.mfr.stainedglass.png").copy()
     overlay = tex.crop((112,112,128,128))
     tex = tex.crop((0,0,16,16))
     colors = ['#ffffff', '#c88435', '#cc57dd', '#6ea5d1', '#dddd3a', '#8ad11c', '#dd92be', '#575757', '#9e9e9e', '#5792af', '#8442b9', '#3a57cc', '#6a4f35', '#75923a', '#9e3535', '#181818']
     overlay = self.tint_texture2(overlay, colors[data])
     alpha_over(tex, overlay, (1,1,14,14), overlay)
+    tex = ImageEnhance.Brightness(tex).enhance(1.2)
     return self.build_block(tex, tex)
 
 # MFR: Stained Glass Panes (I:ID.StainedGlassPane=3130)
 @material(blockid=3130, data=range(256), transparent=True)
-def mfr_stained_glass(self, blockid, data):
-    tex = self.load_image("assets/minefactoryreloaded/textures/blocks/tile.mfr.stainedglass.png")
+def mfr_stained_glass_panes(self, blockid, data):
+    tex = self.load_image("assets/minefactoryreloaded/textures/blocks/tile.mfr.stainedglass.png").copy()
     overlay = tex.crop((112,112,128,128))
     tex = tex.crop((0,0,16,16))
     colors = ['#ffffff', '#c88435', '#cc57dd', '#6ea5d1', '#dddd3a', '#8ad11c', '#dd92be', '#575757', '#9e9e9e', '#5792af', '#8442b9', '#3a57cc', '#6a4f35', '#75923a', '#9e3535', '#181818']
     overlay = self.tint_texture2(overlay, colors[data & 0xF])
     alpha_over(tex, overlay, (1,1,14,14), overlay)
+    tex = ImageEnhance.Brightness(tex).enhance(1.2)
     return self.build_glass_panes(tex, data)
 
 # MFR: Machines 2 (I:ID.MachineBlock1=3131)
@@ -6792,3 +6791,562 @@ def te_fluids(self, blockid, data):
     else:
         return None
     return self.build_block(tex, tex)
+
+
+##########################
+#   Tinkers' Construct   #
+##########################
+
+# Tinkers' Construct: Fancy Bricks (I:"Multi Brick Fancy"=1467)
+@material(blockid=1467, data=range(16), solid=True)
+def tic_fancy_bricks(self, blockid, data):
+    if data == 0: # Fancy Obsidian Brick
+        tex = self.load_image_texture("assets/tinker/textures/blocks/bricks/fancybrick_obsidian.png")
+    elif data == 1: # Fancy Sandstone Brick
+        tex = self.load_image_texture("assets/tinker/textures/blocks/bricks/fancybrick_sandstone.png")
+    elif data == 2: # Fancy Netherrack Brick
+        tex = self.load_image_texture("assets/tinker/textures/blocks/bricks/fancybrick_netherrack.png")
+    elif data == 3: # Fancy Polished Stone Brick
+        tex = self.load_image_texture("assets/tinker/textures/blocks/bricks/fancybrick_stone_refined.png")
+    elif data == 4: # Fancy Iron Brick
+        tex = self.load_image_texture("assets/tinker/textures/blocks/bricks/fancybrick_iron.png")
+    elif data == 5: # Fancy Gold Brick
+        tex = self.load_image_texture("assets/tinker/textures/blocks/bricks/fancybrick_gold.png")
+    elif data == 6: # Fancy Lapis Brick
+        tex = self.load_image_texture("assets/tinker/textures/blocks/bricks/fancybrick_lapis.png")
+    elif data == 7: # Fancy Diamond Brick
+        tex = self.load_image_texture("assets/tinker/textures/blocks/bricks/fancybrick_diamond.png")
+    elif data == 8: # Fancy Redstone Brick
+        tex = self.load_image_texture("assets/tinker/textures/blocks/bricks/fancybrick_redstone.png")
+    elif data == 9: # Fancy Bone Brick
+        tex = self.load_image_texture("assets/tinker/textures/blocks/bricks/fancybrick_bone.png")
+    elif data == 10: # Fancy Slime Brick
+        tex = self.load_image_texture("assets/tinker/textures/blocks/bricks/fancybrick_slime.png")
+    elif data == 12: # Fancy Endstone Brick
+        tex = self.load_image_texture("assets/tinker/textures/blocks/bricks/fancybrick_endstone.png")
+    elif data == 14: # Fancy Stone Brick
+        tex = self.load_image_texture("assets/tinker/textures/blocks/bricks/fancybrick_stone.png")
+    elif data == 15: # Stone Road
+        tex = self.load_image_texture("assets/tinker/textures/blocks/bricks/road_stone.png")
+    else:
+        return None
+    return self.build_block(tex, tex)
+
+# Tinkers' Construct: Tool Forge (I:"Tool Forge"=1468)
+@material(blockid=1468, nodata=True, solid=True, transparent=True)
+def tic_tool_forge(self, blockid, data):
+    top = self.load_image_texture("assets/tinker/textures/blocks/toolforge_top.png")
+    side = self.load_image_texture("assets/tinker/textures/blocks/toolforge_iron.png")
+    ImageDraw.Draw(side).rectangle((4,4,12,16),outline=(0,0,0,0),fill=(0,0,0,0))
+    return self.build_block(top, side)
+
+# Tinkers' Construct: Tool Stations etc. (I:"Wood Tool Station"=1471)
+@material(blockid=1471, data=[0,1,5,10], solid=True, transparent=True)
+def tic_tool_station(self, blockid, data):
+    if data == 0: # Tool Station
+        top = self.load_image_texture("assets/tinker/textures/blocks/toolstation_top.png")
+        side = self.load_image_texture("assets/tinker/textures/blocks/toolstation_side.png")
+    elif data == 1: # Part Builder
+        top = self.load_image_texture("assets/tinker/textures/blocks/partbuilder_oak_top.png")
+        side = self.load_image_texture("assets/tinker/textures/blocks/partbuilder_oak_side.png")
+    elif data == 5: # Pattern Chest
+        top = self.load_image_texture("assets/tinker/textures/blocks/patternchest_top.png")
+        side = self.load_image_texture("assets/tinker/textures/blocks/patternchest_side.png")
+        return self.build_full_block((top, 2), side, side, side, side, None)
+    elif data == 10: # Stencil Table
+        top = self.load_image_texture("assets/tinker/textures/blocks/stenciltable_oak_top.png")
+        side = self.load_image_texture("assets/tinker/textures/blocks/stenciltable_oak_side.png")
+    ImageDraw.Draw(side).rectangle((4,4,12,16),outline=(0,0,0,0),fill=(0,0,0,0))
+    return self.build_block(top, side)
+
+# Tinkers' Construct: Seared Tank, Glass, Window (I:"Lava Tank"=1473)
+@material(blockid=1473, data=range(3), solid=True, transparent=True)
+def tic_seared_tank(self, blockid, data):
+    if data == 0: # Seared Tank
+        top = self.load_image_texture("assets/tinker/textures/blocks/lavatank_top.png")
+        side = self.load_image_texture("assets/tinker/textures/blocks/lavatank_side.png")
+    elif data == 1: # Seared Glass
+        top = self.load_image_texture("assets/tinker/textures/blocks/searedgague_top.png")
+        side = self.load_image_texture("assets/tinker/textures/blocks/searedgague_side.png")
+    elif data == 2: # Seared Window
+        top = self.load_image_texture("assets/tinker/textures/blocks/searedwindow_top.png")
+        side = self.load_image_texture("assets/tinker/textures/blocks/searedwindow_side.png")
+    return self.build_block(top, side)
+
+# Tinkers' Construct: Smeltery stuff (I:Smeltery=1474)
+@material(blockid=1474, data=range(11), solid=True)
+def tic_smeltery(self, blockid, data):
+    if data == 0: # Smeltery Controller
+        top = self.load_image_texture("assets/tinker/textures/blocks/searedbrick.png")
+        side = self.load_image_texture("assets/tinker/textures/blocks/smeltery_active.png")
+    elif data == 1: # Smeltery Drain
+        top = self.load_image_texture("assets/tinker/textures/blocks/searedbrick.png")
+        side = self.load_image_texture("assets/tinker/textures/blocks/drain_basin.png")
+    elif data == 2: # Seared Bricks
+        top = side = self.load_image_texture("assets/tinker/textures/blocks/searedbrick.png")
+    elif data == 4: # Seared Stone
+        top = side = self.load_image_texture("assets/tinker/textures/blocks/searedstone.png")
+    elif data == 5: # Seared Cobblestone
+        top = side = self.load_image_texture("assets/tinker/textures/blocks/searedcobble.png")
+    elif data == 6: # Seared Paver
+        top = side = self.load_image_texture("assets/tinker/textures/blocks/searedpaver.png")
+    elif data == 7: # Cracked Seared Bricks
+        top = side = self.load_image_texture("assets/tinker/textures/blocks/searedbrickcracked.png")
+    elif data == 8: # Seared Road
+        top = side = self.load_image_texture("assets/tinker/textures/blocks/searedroad.png")
+    elif data == 9: # Fancy Seared Bricks
+        top = side = self.load_image_texture("assets/tinker/textures/blocks/searedbrickfancy.png")
+    elif data == 10: # Chiseled Seared Bricks
+        top = side = self.load_image_texture("assets/tinker/textures/blocks/searedbricksquare.png")
+    else:
+        return None
+    return self.build_block(top, side)
+
+# Tinkers' Construct: Ores (I:"Ores Slag"=1475)
+@material(blockid=1475, data=range(1,6), solid=True)
+def tic_ores(self, blockid, data):
+    if data == 1: # Cobalt Ore
+        tex = self.load_image_texture("assets/tinker/textures/blocks/nether_cobalt.png")
+    elif data == 2: # Ardite Ore
+        tex = self.load_image_texture("assets/tinker/textures/blocks/nether_ardite.png")
+    elif data == 3: # Copper Ore
+        tex = self.load_image_texture("assets/tinker/textures/blocks/ore_copper.png")
+    elif data == 4: # Tin Ore
+        tex = self.load_image_texture("assets/tinker/textures/blocks/ore_tin.png")
+    elif data == 5: # Aluminum Ore
+        tex = self.load_image_texture("assets/tinker/textures/blocks/ore_aluminum.png")
+    return self.build_block(tex, tex)
+
+# Tinkers' Construct: Soils (I:"Special Soil"=1476)
+@material(blockid=1476, data=range(7), solid=True)
+def tic_soil(self, blockid, data):
+    if data == 0: # Slimy Mud
+        tex = self.load_image_texture("assets/tinker/textures/blocks/slimesand.png")
+    elif data == 1: # Grout
+        tex = self.load_image_texture("assets/tinker/textures/blocks/grout.png")
+    elif data == 3: # Graveyard Soil
+        tex = self.load_image_texture("assets/tinker/textures/blocks/graveyardsoil.png")
+    elif data == 4: # Consecrated SOil
+        tex = self.load_image_texture("assets/tinker/textures/blocks/consecratedsoil.png")
+    elif data == 5: # Blue Slimedirt
+        tex = self.load_image_texture("assets/tinker/textures/blocks/slimedirt_blue.png")
+    elif data == 6: # block.slime.soil.dirt.name
+        tex = self.load_image_texture("assets/tinker/textures/blocks/nether_grout.png")
+    else:
+        return None
+    return self.build_block(tex, tex)
+
+# Tinkers' Construct: Casting stuff (I:"Seared Table"=1477)
+@material(blockid=1477, data=[0,2], solid=True, transparent=True)
+def tic_casting(self, blockid, data):
+    if data == 0: # Casting Table
+        top = self.load_image_texture("assets/tinker/textures/blocks/castingtable_top.png")
+        side = self.load_image_texture("assets/tinker/textures/blocks/castingtable_side.png")
+    #elif data == 1: # Seared Faucet
+    #    tex = self.load_image_texture("assets/tinker/textures/blocks/faucet.png")
+    elif data == 2: # Casting Basin
+        top = self.load_image_texture("assets/tinker/textures/blocks/blank.png")
+        side = self.load_image_texture("assets/tinker/textures/blocks/blockcast_side.png")
+        return self.build_full_block(top, side, side, side, side, None)
+    return self.build_block(top, side)
+
+# Tinkers' Construct: Metal Blocks (I:"Metal Storage"=1478)
+@material(blockid=1478, data=range(11), solid=True)
+def tic_metal_blocks(self, blockid, data):
+    if data == 0: # Block of Cobalt
+        tex = self.load_image_texture("assets/tinker/textures/blocks/compressed_cobalt.png")
+    elif data == 1: # Block of Ardite
+        tex = self.load_image_texture("assets/tinker/textures/blocks/compressed_ardite.png")
+    elif data == 2: # Block of Manyullyn
+        tex = self.load_image_texture("assets/tinker/textures/blocks/compressed_manyullyn.png")
+    elif data == 3: # Block of Copper
+        tex = self.load_image_texture("assets/tinker/textures/blocks/compressed_copper.png")
+    elif data == 4: # Block of Bronze
+        tex = self.load_image_texture("assets/tinker/textures/blocks/compressed_bronze.png")
+    elif data == 5: # Block of Tin
+        tex = self.load_image_texture("assets/tinker/textures/blocks/compressed_tin.png")
+    elif data == 6: # Block of Aluminum
+        tex = self.load_image_texture("assets/tinker/textures/blocks/compressed_aluminum.png")
+    elif data == 7: # Block of Aluminum Brass
+        tex = self.load_image_texture("assets/tinker/textures/blocks/compressed_alubrass.png")
+    elif data == 8: # Block of Alumite
+        tex = self.load_image_texture("assets/tinker/textures/blocks/compressed_alumite.png")
+    elif data == 9: # Block of Steel
+        tex = self.load_image_texture("assets/tinker/textures/blocks/compressed_steel.png")
+    elif data == 10: # Block of Solid Ender
+        tex = self.load_image_texture("assets/tinker/textures/blocks/compressed_ender.png")
+    return self.build_block(tex, tex)
+
+# Tinkers' Construct: Ladder (I:"Stone Ladder"=1479)
+@material(blockid=1479, data=[2,3,4,5], transparent=True)
+def tic_ladder(self, blockid, data):
+    tex = self.load_image_texture("assets/tinker/textures/blocks/ladder_stone.png")
+    return self.build_ladder(tex, data)
+
+# Tinkers' Construct: Decorative Bricks (I:"Multi Brick"=1481)
+@material(blockid=1481, data=range(13), solid=True)
+def tic_bricks(self, blockid, data):
+    if data == 0: # Obsidian Brick
+        tex = self.load_image_texture("assets/tinker/textures/blocks/bricks/brick_obsidian.png")
+    elif data == 1: # Sandstone Brick
+        tex = self.load_image_texture("assets/tinker/textures/blocks/bricks/brick_sandstone.png")
+    elif data == 2: # Netherrack Brick
+        tex = self.load_image_texture("assets/tinker/textures/blocks/bricks/brick_netherrack.png")
+    elif data == 3: # Polished Stone Brick
+        tex = self.load_image_texture("assets/tinker/textures/blocks/bricks/brick_stone_refined.png")
+    elif data == 4: # Iron Brick
+        tex = self.load_image_texture("assets/tinker/textures/blocks/bricks/brick_iron.png")
+    elif data == 5: # Gold Brick
+        tex = self.load_image_texture("assets/tinker/textures/blocks/bricks/brick_gold.png")
+    elif data == 6: # Lapis Brick
+        tex = self.load_image_texture("assets/tinker/textures/blocks/bricks/brick_lapis.png")
+    elif data == 7: # Diamond Brick
+        tex = self.load_image_texture("assets/tinker/textures/blocks/bricks/brick_diamond.png")
+    elif data == 8: # Redstone Brick
+        tex = self.load_image_texture("assets/tinker/textures/blocks/bricks/brick_redstone.png")
+    elif data == 9: # Bone Brick
+        tex = self.load_image_texture("assets/tinker/textures/blocks/bricks/brick_bone.png")
+    elif data == 10: # Slime Brick
+        tex = self.load_image_texture("assets/tinker/textures/blocks/bricks/brick_slime.png")
+    elif data == 12: # Endstone Brick
+        tex = self.load_image_texture("assets/tinker/textures/blocks/bricks/brick_endstone.png")
+    else:
+        return None
+    return self.build_block(tex, tex)
+
+# Tinkers' Construct: Stone Torch (I:"Stone Torch"=1484)
+@material(blockid=1484, data=range(1,6), transparent=True)
+def tic_torch(self, blockid, data):
+    tex = self.load_image_texture("assets/tinker/textures/blocks/torch_stone.png")
+    return self.build_torch(tex, data)
+
+# Tinkers' Construct: Ore Berries 1 (I:"Ore Berry One"=1485)
+@material(blockid=1485, data=range(16), solid=True, transparent=True)
+def tic_oreberry1(self, blockid, data):
+    if data == 0: # Iron Oreberry Bush (stage 1)
+        tex = self.load_image_texture("assets/tinker/textures/blocks/crops/berry_iron_fast.png")
+    elif data == 1: # Gold Oreberry Bush (stage 1)
+        tex = self.load_image_texture("assets/tinker/textures/blocks/crops/berry_gold_fast.png")
+    elif data == 2: # Copper Oreberry Bush (stage 1)
+        tex = self.load_image_texture("assets/tinker/textures/blocks/crops/berry_copper_fast.png")
+    elif data == 3: # Tin Oreberry Bush (stage 1)
+        tex = self.load_image_texture("assets/tinker/textures/blocks/crops/berry_tin_fast.png")
+    elif data == 4: # Iron Oreberry Bush (stage 2)
+        tex = self.load_image_texture("assets/tinker/textures/blocks/crops/berry_iron_fast.png")
+    elif data == 5: # Gold Oreberry Bush (stage 2)
+        tex = self.load_image_texture("assets/tinker/textures/blocks/crops/berry_gold_fast.png")
+    elif data == 6: # Copper Oreberry Bush (stage 2)
+        tex = self.load_image_texture("assets/tinker/textures/blocks/crops/berry_copper_fast.png")
+    elif data == 7: # Tin Oreberry Bush (stage 2)
+        tex = self.load_image_texture("assets/tinker/textures/blocks/crops/berry_tin_fast.png")
+    elif data == 8: # Iron Oreberry Bush (full size)
+        tex = self.load_image_texture("assets/tinker/textures/blocks/crops/berry_iron_fast.png")
+    elif data == 9: # Gold Oreberry Bush (full size)
+        tex = self.load_image_texture("assets/tinker/textures/blocks/crops/berry_gold_fast.png")
+    elif data == 10: # Copper Oreberry Bush (full size)
+        tex = self.load_image_texture("assets/tinker/textures/blocks/crops/berry_copper_fast.png")
+    elif data == 11: # Tin Oreberry Bush (full size)
+        tex = self.load_image_texture("assets/tinker/textures/blocks/crops/berry_tin_fast.png")
+    elif data == 12: # Iron Oreberry Bush (ripe)
+        tex = self.load_image_texture("assets/tinker/textures/blocks/crops/berry_iron_ripe_fast.png")
+    elif data == 13: # Gold Oreberry Bush (ripe)
+        tex = self.load_image_texture("assets/tinker/textures/blocks/crops/berry_gold_ripe_fast.png")
+    elif data == 14: # Copper Oreberry Bush (ripe)
+        tex = self.load_image_texture("assets/tinker/textures/blocks/crops/berry_copper_ripe_fast.png")
+    elif data == 15: # Tin Oreberry Bush (ripe)
+        tex = self.load_image_texture("assets/tinker/textures/blocks/crops/berry_tin_ripe_fast.png")
+    return self.build_berry_bush(tex, data)
+
+# Tinkers' Construct: Ore Berries 2 (I:"Ore Berry Two"=1486)
+@material(blockid=1486, data=range(16), solid=True, transparent=True)
+def tic_oreberry2(self, blockid, data):
+    if data == 0: # Aluminum Oreberry Bush (stage 1)
+        tex = self.load_image_texture("assets/tinker/textures/blocks/crops/berry_aluminum_fancy.png")
+    elif data == 1: # Essence Oreberry Bush (stage 1)
+        tex = self.load_image_texture("assets/tinker/textures/blocks/crops/berry_essence_fancy.png")
+    elif data == 4: # Aluminum Oreberry Bush (stage 2)
+        tex = self.load_image_texture("assets/tinker/textures/blocks/crops/berry_aluminum_fancy.png")
+    elif data == 5: # Essence Oreberry Bush (stage 2)
+        tex = self.load_image_texture("assets/tinker/textures/blocks/crops/berry_essence_fancy.png")
+    elif data == 8: # Aluminum Oreberry Bush (full size)
+        tex = self.load_image_texture("assets/tinker/textures/blocks/crops/berry_aluminum_fancy.png")
+    elif data == 9: # Essence Oreberry Bush (full size)
+        tex = self.load_image_texture("assets/tinker/textures/blocks/crops/berry_essence_fancy.png")
+    elif data == 12: # Aluminum Oreberry Bush (ripe)
+        tex = self.load_image_texture("assets/tinker/textures/blocks/crops/berry_aluminum_ripe_fancy.png")
+    elif data == 13: # Essence Oreberry Bush (ripe)
+        tex = self.load_image_texture("assets/tinker/textures/blocks/crops/berry_essence_ripe_fancy.png")
+    else:
+        return None
+    return self.build_berry_bush(tex, data)
+
+# Tinkers' Construct: Gravel Ores (I:"Ores Gravel"=1488)
+@material(blockid=1488, data=range(6), solid=True)
+def tic_gravel_ores(self, blockid, data):
+    if data == 0: # Iron Gravel Ore
+        tex = self.load_image_texture("assets/tinker/textures/blocks/ore_iron_gravel.png")
+    elif data == 1: # Gold Gravel Ore
+        tex = self.load_image_texture("assets/tinker/textures/blocks/ore_gold_gravel.png")
+    elif data == 2: # Copper Gravel Ore
+        tex = self.load_image_texture("assets/tinker/textures/blocks/ore_copper_gravel.png")
+    elif data == 3: # Tin Gravel Ore
+        tex = self.load_image_texture("assets/tinker/textures/blocks/ore_tin_gravel.png")
+    elif data == 4: # Aluminum Gravel Ore
+        tex = self.load_image_texture("assets/tinker/textures/blocks/ore_aluminum_gravel.png")
+    elif data == 5: # Cobalt Gravel Ore
+        tex = self.load_image_texture("assets/tinker/textures/blocks/ore_cobalt_gravel.png")
+    return self.build_block(tex, tex)
+
+# Tinkers' Construct: Brownstone (I:"Speed Block"=1489)
+@material(blockid=1489, data=[0,1,2,3,5,6], solid=True)
+def tic_brownstone(self, blockid, data):
+    if data == 0: # Rough Brownstone
+        tex = self.load_image_texture("assets/tinker/textures/blocks/brownstone_rough.png")
+    elif data == 1: # Brownstone Road
+        tex = self.load_image_texture("assets/tinker/textures/blocks/brownstone_rough_road.png")
+    elif data == 2: # Brownstone
+        tex = self.load_image_texture("assets/tinker/textures/blocks/brownstone_smooth.png")
+    elif data == 3: # Brownstone Brick
+        tex = self.load_image_texture("assets/tinker/textures/blocks/brownstone_smooth_brick.png")
+    elif data == 5: # Fancy Brownstone
+        tex = self.load_image_texture("assets/tinker/textures/blocks/brownstone_smooth_fancy.png")
+    elif data == 6: # Chiseled Brownstone
+        tex = self.load_image_texture("assets/tinker/textures/blocks/brownstone_smooth_chiseled.png")
+    return self.build_block(tex, tex)
+
+# Tinkers' Construct: Nether Seared Tank, Glass, Window (I:"Nether Lava Tank"=3186)
+@material(blockid=3186, data=range(3), solid=True, transparent=True)
+def tic_nether_seared_tank(self, blockid, data):
+    if data == 0: # Seared Tank
+        top = self.load_image_texture("assets/tinker/textures/blocks/nether_lavatank_top.png")
+        side = self.load_image_texture("assets/tinker/textures/blocks/nether_lavatank_side.png")
+    elif data == 1: # Seared Glass
+        top = self.load_image_texture("assets/tinker/textures/blocks/nether_searedgague_top.png")
+        side = self.load_image_texture("assets/tinker/textures/blocks/nether_searedgague_side.png")
+    elif data == 2: # Seared Window
+        top = self.load_image_texture("assets/tinker/textures/blocks/nether_searedwindow_top.png")
+        side = self.load_image_texture("assets/tinker/textures/blocks/nether_searedwindow_side.png")
+    return self.build_block(top, side)
+
+# Tinkers' Construct: Nether Smeltery stuff (I:"Nether Smeltery"=3187)
+@material(blockid=3187, data=range(11), solid=True)
+def tic_nether_smeltery(self, blockid, data):
+    if data == 0: # Smeltery Controller
+        top = self.load_image_texture("assets/tinker/textures/blocks/nether_searedbrick.png")
+        side = self.load_image_texture("assets/tinker/textures/blocks/nether_smeltery_active.png")
+    elif data == 1: # Smeltery Drain
+        top = self.load_image_texture("assets/tinker/textures/blocks/nether_searedbrick.png")
+        side = self.load_image_texture("assets/tinker/textures/blocks/nether_drain_basin.png")
+    elif data == 2: # Seared Bricks
+        top = side = self.load_image_texture("assets/tinker/textures/blocks/nether_searedbrick.png")
+    elif data == 4: # Seared Stone
+        top = side = self.load_image_texture("assets/tinker/textures/blocks/nether_searedstone.png")
+    elif data == 5: # Seared Cobblestone
+        top = side = self.load_image_texture("assets/tinker/textures/blocks/nether_searedcobble.png")
+    elif data == 6: # Seared Paver
+        top = side = self.load_image_texture("assets/tinker/textures/blocks/nether_searedpaver.png")
+    elif data == 7: # Cracked Seared Bricks
+        top = side = self.load_image_texture("assets/tinker/textures/blocks/nether_searedbrickcracked.png")
+    elif data == 8: # Seared Road
+        top = side = self.load_image_texture("assets/tinker/textures/blocks/nether_searedroad.png")
+    elif data == 9: # Fancy Seared Bricks
+        top = side = self.load_image_texture("assets/tinker/textures/blocks/nether_searedbrickfancy.png")
+    elif data == 10: # Chiseled Seared Bricks
+        top = side = self.load_image_texture("assets/tinker/textures/blocks/nether_searedbricksquare.png")
+    else:
+        return None
+    return self.build_block(top, side)
+
+# Tinkers' Construct: Nether Casting stuff (I:"Nether Seared Block"=3188)
+@material(blockid=3188, data=[0,2], solid=True, transparent=True)
+def tic_nether_casting(self, blockid, data):
+    if data == 0: # Casting Table
+        top = self.load_image_texture("assets/tinker/textures/blocks/nether_castingtable_top.png")
+        side = self.load_image_texture("assets/tinker/textures/blocks/nether_castingtable_side.png")
+    #elif data == 1: # Seared Faucet
+    #    tex = self.load_image_texture("assets/tinker/textures/blocks/nether_faucet.png")
+    elif data == 2: # Casting Basin
+        top = self.load_image_texture("assets/tinker/textures/blocks/blank.png")
+        side = self.load_image_texture("assets/tinker/textures/blocks/nether_blockcast_side.png")
+        return self.build_full_block(top, side, side, side, side, None)
+    return self.build_block(top, side)
+
+# Tinkers' Construct: Half block stuff (I:"Blood Channel"=3189 & I:"Slime Channel"=3190 & I:"Slime Pad"=3191 & I:"Furnace Slab"=3192)
+@material(blockid=[3189,3190,3191,3192], nodata=True, solid=True, transparent=True)
+def tic_half_blocks_1(self, blockid, data):
+    # FIXME: Only Slab Furnace can be in the upper part of the blockspace, but the data for it might be in the TE??
+    if blockid == 3189: # Blood Channel
+        tex = self.load_image("assets/tinker/textures/blocks/liquid_cow.png").crop((0,0,16,16))
+    elif blockid == 3190: # Slime Channel
+        tex = self.load_image("assets/tinker/textures/blocks/greencurrent.png").crop((0,0,16,16))
+    elif blockid == 3191: # Bounce Pad
+        tex = self.load_image("assets/tinker/textures/blocks/greencurrent.png").crop((0,0,16,16))
+    elif blockid == 3192: # Slab Furnace
+        top = self.load_image_texture("assets/minecraft/textures/blocks/furnace_top.png")
+        side = self.load_image_texture("assets/tinker/textures/blocks/furnaceslab_front.png")
+        return self.build_slab(top, side, 0)
+    return self.build_slab(tex, tex, 0)
+
+# Tinkers' Construct: Fluids:
+# I:"Molten Silver"=3195 & I:"Molten Lead"=3196 & I:"Molten Nickel"=3197 & I:"Molten Platinum"=3198
+# I:"Molten Invar"=3199 & I:"Molten Electrum"=3200 & I:"Molten Iron"=3201 & I:"Molten Gold"=3202
+# I:"Molten Copper"=3203 & I:"Molten Tin"=3204 & I:"Molten Aluminum"=3205 & I:"Molten Cobalt"=3206
+# I:"Molten Ardite"=3207 & I:"Molten Bronze"=3208 & I:"Molten Aluminum Brass"=3209 & I:"Molten Manyullyn"=3210
+# I:"Molten Alumite"=3211 & I:"Molten Obsidian"=3212 & I:"Molten Steel"=3213 & I:"Molten Glass"=3214
+# I:"Molten Stone"=3215 & I:"Molten Emerald"=3216 & I:"Liquid Cow"=3217 & I:"Molten Ender"=3218
+@material(blockid=range(3195,3219), nodata=True, fluid=True, transparent=True, nospawn=True)
+def tic_fluids(self, blockid, data):
+    names = ["silver", "lead", "ferrous", "shiny", "invar", "electrum", "iron", "gold", "copper", "tin", "aluminum", "cobalt", "ardite", "bronze", "alubrass", "manyullyn", "alumite", "obsidian", "steel", "glass", "stone", "villager", "cow", "ender"]
+    tex = self.load_image("assets/tinker/textures/blocks/liquid_%s.png" % names[blockid - 3195]).crop((0,0,16,16))
+    return self.build_block(tex, tex)
+
+# Tinkers' Construct: Glue Block (I:"Glue Block"=3219)
+block(blockid=3219, top_image="assets/tinker/textures/blocks/glue.png")
+
+# Tinkers' Construct: Clear Glass (I:"Clear Glass"=3223)
+block(blockid=3223, top_image="assets/tinker/textures/blocks/glass/glass_clear.png", transparent=True)
+
+# Tinkers' Construct: Stained Glass & Clear Glass Pane & Stained Glass Pane (I:"Clear Stained Glass"=3225 & I:"Glass Pane"=3228 & I:"Clear Stained Glass Pane"=3229)
+@material(blockid=[3225,3228,3229], data=range(256), solid=True, transparent=True)
+def tic_glass(self, blockid, data):
+    colors = ["white", "orange", "magenta", "lightblue", "yellow", "lime", "pink", "gray",
+                 "lightgray", "cyan", "purple", "blue", "brown", "green", "red", "black"]
+    if blockid == 3228: # Clear Glass Pane
+        tex = self.load_image_texture("assets/tinker/textures/blocks/glass/glass_clear.png")
+    else:
+        tex = self.load_image_texture("assets/tinker/textures/blocks/glass/stainedglass_%s.png" % colors[data & 0xF])
+        if blockid == 3225: # Clear Stained Glass
+            return self.build_block(tex, tex)
+        #else: # Clear Stained Glass Panes
+    return self.build_glass_panes(tex, data)
+
+# Tinkers' Construct: Seared Slabs (I:"Seared Slab"=3230)
+@material(blockid=3230, data=range(16), solid=True, transparent=True)
+def tic_seared_slabs(self, blockid, data):
+    blocktype = data & 0x7
+    if blocktype == 0: # Seared Brick Slab
+        tex = self.load_image_texture("assets/tinker/textures/blocks/searedbrick.png")
+    elif blocktype == 1: # Seared Stone Slab
+        tex = self.load_image_texture("assets/tinker/textures/blocks/searedstone.png")
+    elif blocktype == 2: # Seared Cobblestone Slab
+        tex = self.load_image_texture("assets/tinker/textures/blocks/searedcobble.png")
+    elif blocktype == 3: # Seared Paver Slab
+        tex = self.load_image_texture("assets/tinker/textures/blocks/searedpaver.png")
+    elif blocktype == 4: # Seared Road Slab
+        tex = self.load_image_texture("assets/tinker/textures/blocks/searedroad.png")
+    elif blocktype == 5: # Fancy Seared Slab
+        tex = self.load_image_texture("assets/tinker/textures/blocks/searedbrickfancy.png")
+    elif blocktype == 6: # Chiseled Seared Slab
+        tex = self.load_image_texture("assets/tinker/textures/blocks/searedbricksquare.png")
+    else:
+        return None
+    return self.build_slab(tex, tex, data)
+
+# Tinkers' Construct: Brownstone Slabs (I:"Speed Slab"=3231)
+@material(blockid=3231, data=range(16), solid=True, transparent=True)
+def tic_brownstone_slabs(self, blockid, data):
+    blocktype = data & 0x7
+    if blocktype == 0: # Rough Brownstone Slab
+        tex = self.load_image_texture("assets/tinker/textures/blocks/brownstone_rough.png")
+    elif blocktype == 1: # Brownstone Road Slab
+        tex = self.load_image_texture("assets/tinker/textures/blocks/brownstone_rough_road.png")
+    elif blocktype == 2: # Brownstone Slab
+        tex = self.load_image_texture("assets/tinker/textures/blocks/brownstone_smooth.png")
+    elif blocktype == 3: # Brownstone Brick Slab
+        tex = self.load_image_texture("assets/tinker/textures/blocks/brownstone_smooth_brick.png")
+    elif blocktype == 5: # Fancy Brownstone Slab
+        tex = self.load_image_texture("assets/tinker/textures/blocks/brownstone_smooth_fancy.png")
+    elif blocktype == 6: # Chiseled Brownstone Slab
+        tex = self.load_image_texture("assets/tinker/textures/blocks/brownstone_smooth_chiseled.png")
+    else:
+        return None
+    return self.build_slab(tex, tex, data)
+
+# Tinkers' Construct: Crafting Station (I:"Crafting Station"=3233)
+@material(blockid=3233, nodata=True, solid=True, transparent=True)
+def tic_tool_forge(self, blockid, data):
+    top = self.load_image_texture("assets/tinker/textures/blocks/craftingstation_top.png")
+    side = self.load_image_texture("assets/tinker/textures/blocks/craftingstation_side.png")
+    ImageDraw.Draw(side).rectangle((4,4,12,16),outline=(0,0,0,0),fill=(0,0,0,0))
+    return self.build_block(top, side)
+
+# Tinkers' Construct: Liquified Slime (I:"Liquid Blue Slime"=3235)
+@material(blockid=3235, nodata=True, fluid=True, transparent=True, nospawn=True)
+def tic_liquid_slime(self, blockid, data):
+    tex = self.load_image("assets/tinker/textures/blocks/slime_blue.png").crop((0,0,16,16))
+    return self.build_block(tex, tex)
+
+# Tinkers' Construct: Congealed Slime (I:"Congealed Slime"=3237)
+@material(blockid=3237, data=range(2), solid=True)
+def tic_congealed_slime(self, blockid, data):
+    if data == 0: # Congealed Blue Slime
+        tex = self.load_image("assets/tinker/textures/blocks/slimeblock_blue.png")
+    elif data == 1: # Congealed Green Slime
+        tex = self.load_image("assets/tinker/textures/blocks/slimeblock_green.png")
+    return self.build_block(tex, tex)
+
+# Tinkers' Construct: Slimy Grass (I:"Slime Grass"=3238)
+@material(blockid=3238, nodata=True, solid=True)
+def tic_slimy_grass(self, blockid, data):
+    top = self.load_image_texture("assets/tinker/textures/blocks/slimegrass_green_top.png")
+    side = self.load_image_texture("assets/tinker/textures/blocks/slimegrass_green_blue_side.png")
+    return self.build_block(top, side)
+
+# Tinkers' Construct: Slimy Grass (tall grass) (I:"Slime Tall Grass"=3239)
+billboard(blockid=3239, imagename="assets/tinker/textures/blocks/slimegrass_blue_tall.png")
+
+# Tinkers' Construct: Slimy Leaves (I:"Slime Grass Leaves"=3240)
+@material(blockid=3240, nodata=True, solid=True, transparent=True)
+def tic_slimy_leaves(self, blockid, data):
+    tex = self.load_image("assets/tinker/textures/blocks/slimeleaves_blue_fancy.png")
+    return self.build_block(tex, tex)
+
+# Tinkers' Construct: Slimy Sapling (I:"Slime Tree Sapling"=3241)
+billboard(blockid=3241, imagename="assets/tinker/textures/blocks/slimesapling_blue.png")
+
+# Tinkers' Construct: Hambone (I:"Meat Block"=3242)
+@material(blockid=3242, data=[0,4,8], solid=True)
+def tic_hambone(self, blockid, data):
+    top = self.load_image_texture("assets/tinker/textures/blocks/ham_bone.png")
+    side = self.load_image_texture("assets/tinker/textures/blocks/ham_skin.png")
+    return self.build_wood_log(top, side, data)
+
+# Tinkers' Construct: Half block stuff (I:"Crafting Slab"=3243)
+@material(blockid=3243, data=range(6), solid=True, transparent=True)
+def tic_half_blocks_2(self, blockid, data):
+    # FIXME: Upper half data = ??
+    if data == 0: # Crafting Station
+        top = self.load_image_texture("assets/tinker/textures/blocks/craftingstation_top.png")
+        side = self.load_image_texture("assets/tinker/textures/blocks/craftingstation_slab_side.png")
+    elif data == 1: # Tool Station
+        top = self.load_image_texture("assets/tinker/textures/blocks/toolstation_top.png")
+        side = self.load_image_texture("assets/tinker/textures/blocks/toolstation_slab_side.png")
+    elif data == 2: # Part Builder
+        top = self.load_image_texture("assets/tinker/textures/blocks/partbuilder_oak_top.png")
+        side = self.load_image_texture("assets/tinker/textures/blocks/partbuilder_slab_side.png")
+    elif data == 3: # Stencil Table
+        top = self.load_image_texture("assets/tinker/textures/blocks/stenciltable_oak_top.png")
+        side = self.load_image_texture("assets/tinker/textures/blocks/stenciltable_slab_side.png")
+    elif data == 4: # Pattern Chest
+        top = self.load_image_texture("assets/tinker/textures/blocks/patternchest_top.png")
+        side = self.load_image_texture("assets/tinker/textures/blocks/patternchest_slab_side.png")
+    elif data == 5: # Tool Forge
+        top = self.load_image_texture("assets/tinker/textures/blocks/toolforge_top.png")
+        side = self.load_image_texture("assets/tinker/textures/blocks/toolforge_slab_side.png")
+    return self.build_slab(top, side, data)
+
+# Tinkers' Construct: Wool Slabs (I:"Wool Slab 1"=3244 & I:"Wool Slab 2"=3245)
+@material(blockid=[3244,3245], data=range(16), solid=True, transparent=True)
+def tic_wool_slabs(self, blockid, data):
+    if blockid == 3244:
+        tex = self.load_image_texture("assets/minecraft/textures/blocks/wool_colored_%s.png" % color_map[data & 0x7])
+    else:
+        tex = self.load_image_texture("assets/minecraft/textures/blocks/wool_colored_%s.png" % color_map[(data & 0x7) + 8])
+    return self.build_slab(tex, tex, data)
+
+# Tinkers' Construct: SDX (I:SDX=3247)
+@material(blockid=3247, nodata=True, solid=True)
+def tic_sdx(self, blockid, data):
+    top = self.load_image_texture("assets/tinker/textures/blocks/sdx_top_green.png")
+    side = self.load_image_texture("assets/tinker/textures/blocks/sdx_side_green.png")
+    return self.build_block(top, side)

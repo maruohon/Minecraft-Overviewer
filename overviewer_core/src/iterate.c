@@ -409,12 +409,13 @@ generate_pseudo_data(RenderState *state, unsigned short ancilData) {
 
     } else if ((state->block == 101) || (state->block == 102) || (state->block == 160)
             || (state->block == 3130) /* MFR Glass Panes */
+            || (state->block == 3228) || (state->block == 3229) /* Tinkers' Construct: Clear Glass Panes & Stained Glass Panes */
             ) {
         /* iron bars and glass panes:
          * they seem to stick to almost everything but air,
          * not sure yet! Still a TODO! */
         /* return check adjacent blocks with air, bit inverted */
-        // shift up 4 bits because the lower 4 bits encode color
+        /* shift up 4 bits because the lower 4 bits encode color */
         data = (check_adjacent_blocks(state, x, y, z, 0) ^ 0x0f);
         return (data << 4) | (ancilData & 0xf);
 
@@ -734,6 +735,7 @@ chunk_render(PyObject *self, PyObject *args) {
                         (state.block == 461) || (state.block == 463) || /* Railcraft: Walls */
                         (state.block == 3465) || /* IC2: Iron Fence */
                         (state.block == 3130) || /* MFR Glass Panes */
+                        (state.block == 3228) || (state.block == 3229) || /* Tinkers' Construct: Clear Glass Panes & Stained Glass Panes */
                         is_stairs(state.block)) {
                         ancilData = generate_pseudo_data(&state, ancilData);
                         state.block_pdata = ancilData;
