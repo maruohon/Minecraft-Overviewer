@@ -771,6 +771,18 @@ class Textures(object):
 
         return Image.merge(*merge_args).point(luts)
 
+    def pure_pil_alpha_to_color_v2(self, img_in, color=(255, 255, 255)):
+        """Alpha composite an RGBA Image with a specified color.
+        Source: http://stackoverflow.com/a/9459208/284318
+        Keyword Arguments:
+        image -- PIL RGBA Image object
+        color -- Tuple r, g, b (default 255, 255, 255)
+        """
+        img_in.load()  # needed for split()
+        img = Image.new('RGB', img_in.size, color)
+        img.paste(img_in, mask=img_in.split()[3])  # 3 is the alpha channel
+        return img
+
     def generate_texture_tuple(self, img):
         """ This takes an image and returns the needed tuple for the
         blockmap array."""
@@ -915,6 +927,7 @@ class Textures(object):
     def build_pressure_plate(self, tex, pressed):
         # cut out the outside border, pressure plates are smaller
         # than a normal block
+        tex = tex.copy()
         ImageDraw.Draw(tex).rectangle((0,0,15,15),outline=(0,0,0,0))
 
         # create the textures and a darker version to make a 3d by
@@ -1486,6 +1499,97 @@ class Textures(object):
 
         return img
 
+    def build_rail(self, straight, corner, data, has_corners):
+        # first, do rotation
+        # Masked to not clobber powered rail on/off info
+        # Ascending and flat straight
+        if self.rotation == 1:
+            if (data & 0b0111) == 0: data = data & 0b1000 | 1
+            elif (data & 0b0111) == 1: data = data & 0b1000 | 0
+            elif (data & 0b0111) == 2: data = data & 0b1000 | 5
+            elif (data & 0b0111) == 3: data = data & 0b1000 | 4
+            elif (data & 0b0111) == 4: data = data & 0b1000 | 2
+            elif (data & 0b0111) == 5: data = data & 0b1000 | 3
+        elif self.rotation == 2:
+            if (data & 0b0111) == 2: data = data & 0b1000 | 3
+            elif (data & 0b0111) == 3: data = data & 0b1000 | 2
+            elif (data & 0b0111) == 4: data = data & 0b1000 | 5
+            elif (data & 0b0111) == 5: data = data & 0b1000 | 4
+        elif self.rotation == 3:
+            if (data & 0b0111) == 0: data = data & 0b1000 | 1
+            elif (data & 0b0111) == 1: data = data & 0b1000 | 0
+            elif (data & 0b0111) == 2: data = data & 0b1000 | 4
+            elif (data & 0b0111) == 3: data = data & 0b1000 | 5
+            elif (data & 0b0111) == 4: data = data & 0b1000 | 3
+            elif (data & 0b0111) == 5: data = data & 0b1000 | 2
+
+        if has_corners == True:
+            if self.rotation == 1:
+                if data == 6: data = 7
+                elif data == 7: data = 8
+                elif data == 8: data = 6
+                elif data == 9: data = 9
+            elif self.rotation == 2:
+                if data == 6: data = 8
+                elif data == 7: data = 9
+                elif data == 8: data = 6
+                elif data == 9: data = 7
+            elif self.rotation == 3:
+                if data == 6: data = 9
+                elif data == 7: data = 6
+                elif data == 8: data = 8
+                elif data == 9: data = 7
+        else: # Powered, activator and detector rails, which don't have corners
+            data = data & 0x7 # Filter the powered bit
+
+        img = Image.new("RGBA", (24,24), self.bgcolor)
+        raw_straight = straight
+        raw_corner = corner
+
+        ## use transform_image to scale and shear
+        if data == 0:
+            track = self.transform_image_top(raw_straight)
+            alpha_over(img, track, (0,12), track)
+        elif data == 6:
+            track = self.transform_image_top(raw_corner)
+            alpha_over(img, track, (0,12), track)
+        elif data == 7:
+            track = self.transform_image_top(raw_corner.rotate(270))
+            alpha_over(img, track, (0,12), track)
+        elif data == 8:
+            # flip
+            track = self.transform_image_top(raw_corner.transpose(Image.FLIP_TOP_BOTTOM).rotate(90))
+            alpha_over(img, track, (0,12), track)
+        elif data == 9:
+            track = self.transform_image_top(raw_corner.transpose(Image.FLIP_TOP_BOTTOM))
+            alpha_over(img, track, (0,12), track)
+        elif data == 1:
+            track = self.transform_image_top(raw_straight.rotate(90))
+            alpha_over(img, track, (0,12), track)
+
+        #slopes
+        elif data == 2: # slope going up in +x direction
+            track = self.transform_image_slope(raw_straight)
+            track = track.transpose(Image.FLIP_LEFT_RIGHT)
+            alpha_over(img, track, (2,0), track)
+            # the 2 pixels move is needed to fit with the adjacent tracks
+
+        elif data == 3: # slope going up in -x direction
+            # tracks are sprites, in this case we are seeing the "side" of
+            # the sprite, so draw a line to make it beautiful.
+            ImageDraw.Draw(img).line([(11,11),(23,17)],fill=(164,164,164))
+            # grey from track texture (exterior grey).
+            # the track doesn't start from image corners, be carefull drawing the line!
+        elif data == 4: # slope going up in -y direction
+            track = self.transform_image_slope(raw_straight)
+            alpha_over(img, track, (0,0), track)
+
+        elif data == 5: # slope going up in +y direction
+            # same as "data == 3"
+            ImageDraw.Draw(img).line([(1,17),(12,11)],fill=(164,164,164))
+
+        return img
+
 ##
 ## The other big one: @material and associated framework
 ##
@@ -1939,120 +2043,25 @@ def bed(self, blockid, data):
 # powered, detector, activator and normal rails
 @material(blockid=[27, 28, 66, 157], data=range(14), transparent=True)
 def rails(self, blockid, data):
-    # first, do rotation
-    # Masked to not clobber powered rail on/off info
-    # Ascending and flat straight
-    if self.rotation == 1:
-        if (data & 0b0111) == 0: data = data & 0b1000 | 1
-        elif (data & 0b0111) == 1: data = data & 0b1000 | 0
-        elif (data & 0b0111) == 2: data = data & 0b1000 | 5
-        elif (data & 0b0111) == 3: data = data & 0b1000 | 4
-        elif (data & 0b0111) == 4: data = data & 0b1000 | 2
-        elif (data & 0b0111) == 5: data = data & 0b1000 | 3
-    elif self.rotation == 2:
-        if (data & 0b0111) == 2: data = data & 0b1000 | 3
-        elif (data & 0b0111) == 3: data = data & 0b1000 | 2
-        elif (data & 0b0111) == 4: data = data & 0b1000 | 5
-        elif (data & 0b0111) == 5: data = data & 0b1000 | 4
-    elif self.rotation == 3:
-        if (data & 0b0111) == 0: data = data & 0b1000 | 1
-        elif (data & 0b0111) == 1: data = data & 0b1000 | 0
-        elif (data & 0b0111) == 2: data = data & 0b1000 | 4
-        elif (data & 0b0111) == 3: data = data & 0b1000 | 5
-        elif (data & 0b0111) == 4: data = data & 0b1000 | 3
-        elif (data & 0b0111) == 5: data = data & 0b1000 | 2
-    if blockid == 66: # normal minetrack only
-        #Corners
-        if self.rotation == 1:
-            if data == 6: data = 7
-            elif data == 7: data = 8
-            elif data == 8: data = 6
-            elif data == 9: data = 9
-        elif self.rotation == 2:
-            if data == 6: data = 8
-            elif data == 7: data = 9
-            elif data == 8: data = 6
-            elif data == 9: data = 7
-        elif self.rotation == 3:
-            if data == 6: data = 9
-            elif data == 7: data = 6
-            elif data == 8: data = 8
-            elif data == 9: data = 7
-    img = Image.new("RGBA", (24,24), self.bgcolor)
-    
+    corner = self.load_image_texture("assets/minecraft/textures/blocks/rail_normal_turned.png")
+    has_corners = False
+
     if blockid == 27: # powered rail
         if data & 0x8 == 0: # unpowered
-            raw_straight = self.load_image_texture("assets/minecraft/textures/blocks/rail_golden.png")
-            raw_corner = self.load_image_texture("assets/minecraft/textures/blocks/rail_normal_turned.png")    # they don't exist but make the code
-                                                # much simplier
+            straight = self.load_image_texture("assets/minecraft/textures/blocks/rail_golden.png")
         elif data & 0x8 == 0x8: # powered
-            raw_straight = self.load_image_texture("assets/minecraft/textures/blocks/rail_golden_powered.png")
-            raw_corner = self.load_image_texture("assets/minecraft/textures/blocks/rail_normal_turned.png")    # leave corners for code simplicity
-        # filter the 'powered' bit
-        data = data & 0x7
-            
+            straight = self.load_image_texture("assets/minecraft/textures/blocks/rail_golden_powered.png")
     elif blockid == 28: # detector rail
-        raw_straight = self.load_image_texture("assets/minecraft/textures/blocks/rail_detector.png")
-        raw_corner = self.load_image_texture("assets/minecraft/textures/blocks/rail_normal_turned.png")    # leave corners for code simplicity
-        
+        straight = self.load_image_texture("assets/minecraft/textures/blocks/rail_detector.png")
     elif blockid == 66: # normal rail
-        raw_straight = self.load_image_texture("assets/minecraft/textures/blocks/rail_normal.png")
-        raw_corner = self.load_image_texture("assets/minecraft/textures/blocks/rail_normal_turned.png")
-
+        straight = self.load_image_texture("assets/minecraft/textures/blocks/rail_normal.png")
+        has_corners = True
     elif blockid == 157: # activator rail
         if data & 0x8 == 0: # unpowered
-            raw_straight = self.load_image_texture("assets/minecraft/textures/blocks/rail_activator.png")
-            raw_corner = self.load_image_texture("assets/minecraft/textures/blocks/rail_normal_turned.png")    # they don't exist but make the code
-                                                # much simplier
+            straight = self.load_image_texture("assets/minecraft/textures/blocks/rail_activator.png")
         elif data & 0x8 == 0x8: # powered
-            raw_straight = self.load_image_texture("assets/minecraft/textures/blocks/rail_activator_powered.png")
-            raw_corner = self.load_image_texture("assets/minecraft/textures/blocks/rail_normal_turned.png")    # leave corners for code simplicity
-        # filter the 'powered' bit
-        data = data & 0x7
-        
-    ## use transform_image to scale and shear
-    if data == 0:
-        track = self.transform_image_top(raw_straight)
-        alpha_over(img, track, (0,12), track)
-    elif data == 6:
-        track = self.transform_image_top(raw_corner)
-        alpha_over(img, track, (0,12), track)
-    elif data == 7:
-        track = self.transform_image_top(raw_corner.rotate(270))
-        alpha_over(img, track, (0,12), track)
-    elif data == 8:
-        # flip
-        track = self.transform_image_top(raw_corner.transpose(Image.FLIP_TOP_BOTTOM).rotate(90))
-        alpha_over(img, track, (0,12), track)
-    elif data == 9:
-        track = self.transform_image_top(raw_corner.transpose(Image.FLIP_TOP_BOTTOM))
-        alpha_over(img, track, (0,12), track)
-    elif data == 1:
-        track = self.transform_image_top(raw_straight.rotate(90))
-        alpha_over(img, track, (0,12), track)
-        
-    #slopes
-    elif data == 2: # slope going up in +x direction
-        track = self.transform_image_slope(raw_straight)
-        track = track.transpose(Image.FLIP_LEFT_RIGHT)
-        alpha_over(img, track, (2,0), track)
-        # the 2 pixels move is needed to fit with the adjacent tracks
-        
-    elif data == 3: # slope going up in -x direction
-        # tracks are sprites, in this case we are seeing the "side" of 
-        # the sprite, so draw a line to make it beautiful.
-        ImageDraw.Draw(img).line([(11,11),(23,17)],fill=(164,164,164))
-        # grey from track texture (exterior grey).
-        # the track doesn't start from image corners, be carefull drawing the line!
-    elif data == 4: # slope going up in -y direction
-        track = self.transform_image_slope(raw_straight)
-        alpha_over(img, track, (0,0), track)
-        
-    elif data == 5: # slope going up in +y direction
-        # same as "data == 3"
-        ImageDraw.Draw(img).line([(1,17),(12,11)],fill=(164,164,164))
-        
-    return img
+            straight = self.load_image_texture("assets/minecraft/textures/blocks/rail_activator_powered.png")
+    return self.build_rail(straight, corner, data, has_corners)
 
 # sticky and normal piston body
 @material(blockid=[29, 33], data=[0,1,2,3,4,5,8,9,10,11,12,13], transparent=True, solid=True, nospawn=True)
@@ -4586,7 +4595,7 @@ def ae_multi1(self, blockid, data):
     return self.build_block(top, side)
 
 # Applied Energistics: More machines etc. (I:appeng.blockMulti2=852)
-@material(blockid=852, data=range(16), solid=True)
+@material(blockid=852, data=range(16), solid=False, transparent=False)
 def ae_multi2(self, blockid, data):
     # FIXME All of the blocks are rendered either with no face, or the face on every side,
     # because the orientation and other spesific information is stored in the tile entity data
@@ -4631,7 +4640,7 @@ def ae_multi2(self, blockid, data):
     return self.build_block(top, side)
 
 # Applied Energistics: More machines etc. (I:appeng.blockMulti3=853)
-@material(blockid=853, data=[4,5,6,7,8,9], solid=True)
+@material(blockid=853, data=[4,5,6,7,8,9], solid=False, transparent=False)
 def ae_multi3(self, blockid, data):
     # FIXME All of the blocks are rendered either with no face, or the face on every side,
     # because the orientation and other spesific information is stored in the tile entity data
@@ -4660,7 +4669,7 @@ def ae_multi3(self, blockid, data):
     return self.build_block(side, side)
 
 # Applied Energistics: Ore, Glass, etc. (I:appeng.blockWorld=854)
-@material(blockid=854, data=range(10), solid=False)
+@material(blockid=854, data=range(10), solid=False, transparent=False)
 def ae_world(self, blockid, data):
     if data == 0: # Certus Quartz Ore
         side = self.load_image_texture("assets/appeng/textures/blocks/BlockQuartz.png")
@@ -5963,17 +5972,18 @@ def mfr_rubber_leaves(self, blockid, data):
 sprite(blockid=3124, imagename="assets/minefactoryreloaded/textures/blocks/tile.mfr.rubberwood.sapling.png")
 
 # MFR: Rails (I:ID.CargoRailDropoffBlock=3125 & I:ID.CargoRailPickupBlock=3126 & I:ID.PassengerRailDropoffBlock=3127 & I:ID.PassengerRailPickupBlock=3128)
-@material(blockid=[3125,3126,3127,3128], nodata=True, transparent=True)
+@material(blockid=[3125,3126,3127,3128], data=range(2), transparent=True)
 def mfr_rails(self, blockid, data):
     if blockid == 3125: # Cargo Dropoff Rail
-        tex = self.load_image_texture("assets/minefactoryreloaded/textures/blocks/tile.mfr.rail.cargo.dropoff.png")
+        straight = self.load_image_texture("assets/minefactoryreloaded/textures/blocks/tile.mfr.rail.cargo.dropoff.png")
     elif blockid == 3126: # Cargo Pickup Rail
-        tex = self.load_image_texture("assets/minefactoryreloaded/textures/blocks/tile.mfr.rail.cargo.pickup.png")
+        straight = self.load_image_texture("assets/minefactoryreloaded/textures/blocks/tile.mfr.rail.cargo.pickup.png")
     elif blockid == 3127: # Passenger Dropoff Rail
-        tex = self.load_image_texture("assets/minefactoryreloaded/textures/blocks/tile.mfr.rail.passenger.dropoff.png")
+        straight = self.load_image_texture("assets/minefactoryreloaded/textures/blocks/tile.mfr.rail.passenger.dropoff.png")
     elif blockid == 3128: # Passenger Pickup Rail
-        tex = self.load_image_texture("assets/minefactoryreloaded/textures/blocks/tile.mfr.rail.passenger.pickup.png")
-    return self.build_pressure_plate(tex, False) # Approximation
+        straight = self.load_image_texture("assets/minefactoryreloaded/textures/blocks/tile.mfr.rail.passenger.pickup.png")
+    corner = self.load_image_texture("assets/minecraft/textures/blocks/rail_normal_turned.png")
+    return self.build_rail(straight, corner, data, False)
 
 # MFR: Stained Glass (I:ID.StainedGlass=3129)
 @material(blockid=3129, data=range(16), solid=True, transparent=True)
@@ -6208,11 +6218,14 @@ def natura_cloud(self, blockid, data):
     return self.build_block(tex, tex)
 
 # Natura: Saguaro Cactus (I:"Saguaro Cactus"=3254)
-@material(blockid=3254, nodata=True, solid=True)
+@material(blockid=3254, data=range(2), solid=True)
 def natura_saguaro_cactus(self, blockid, data):
-    top = self.load_image_texture("assets/natura/textures/blocks/saguaro_top.png")
-    side = self.load_image_texture("assets/natura/textures/blocks/saguaro_side.png")
-    return self.build_block(top, side)
+    if data == 0: # Cactus
+        top = self.load_image_texture("assets/natura/textures/blocks/saguaro_top.png")
+        side = self.load_image_texture("assets/natura/textures/blocks/saguaro_side.png")
+        return self.build_block(top, side)
+    else: # Fruit TODO Not sure about the orientation/meta values
+        return None
 
 # Natura: Nether Berry Bushes (I:"Nether Berry Bush"=3255)
 @material(blockid=3255, data=range(16), transparent=True, solid=True)
@@ -6312,30 +6325,29 @@ def natura_berrybushes(self, blockid, data):
 # Natura: Leaves (I:"Sakura Leaves"=3258)
 @material(blockid=3258, data=range(16), transparent=True, solid=True)
 def natura_leaves1(self, blockid, data):
-    # The highest bit indicates non-decaying leaves
-    data = data & 7
-    if data == 0: # Sakura Leaves
+    data = data & 7 # The highest bit indicates non-decaying leaves(?)
+    if data == 4: # Sakura Leaves
         tex = self.load_image_texture("assets/natura/textures/blocks/sakura_leaves_fancy.png")
-    elif data == 1: # Ghostwood Leaves
+    elif data == 5: # Ghostwood Leaves
         tex = self.load_image_texture("assets/natura/textures/blocks/ghostwood_leaves_fancy.png")
-    elif data == 2: # Bloodleaves
+    elif data == 6: # Bloodleaves
         tex = self.load_image_texture("assets/natura/textures/blocks/bloodwood_leaves_fancy.png")
-    elif data == 3: # Willow leaves
+    elif data == 7: # Willow leaves
         tex = self.load_image_texture("assets/natura/textures/blocks/willow_leaves_fancy.png")
     else:
         return None
     return self.build_block(tex, tex)
 
 # Natura: Leaves (I:"Flora Leaves"=3259)
-@material(blockid=3259, data=range(16), transparent=True, solid=True)
+@material(blockid=3259, data=range(16), solid=False, transparent=False)
 def natura_leaves2(self, blockid, data):
-    # The highest bit indicates non-decaying leaves
-    data = data & 7
-    if data == 0: # Redwood Leaves NOTE: needs biome coloring
+    # NOTE: Can't be marked as transparent, because the Redwood leaves will turn black, since they block light
+    data = data & 7 # The highest bit indicates non-decaying leaves(?)
+    if data == 4: # Redwood Leaves NOTE: needs biome coloring
         tex = self.load_image_texture("assets/natura/textures/blocks/redwood_leaves_fancy.png")
-    elif data == 1: # Eucalyptus Leaves NOTE: needs biome coloring
+    elif data == 5: # Eucalyptus Leaves NOTE: needs biome coloring
         tex = self.load_image_texture("assets/natura/textures/blocks/eucalyptus_leaves_fancy.png")
-    elif data == 2: # Hopseed Leaves TODO does this need biome coloring?
+    elif data == 6: # Hopseed Leaves TODO does this need biome coloring?
         tex = self.load_image_texture("assets/natura/textures/blocks/hopseed_leaves_fancy.png")
     else:
         return None
@@ -6379,9 +6391,9 @@ def natura_planks1(self, blockid, data):
     return self.build_block(tex, tex)
 
 # Natura: Wood 3 (I:"Bloodwood Block"=3263)
-@material(blockid=3263, data=[0,4,8], solid=True)
+@material(blockid=3263, data=range(16), solid=True)
 def natura_wood3(self, blockid, data):
-    # data: 0: Bloodwood
+    # FIXME has four different meta values, since it's a 2x2 tree with a cutout texture, plus 3 orientations
     top = self.load_image_texture("assets/natura/textures/blocks/bloodwood_heart_small.png")
     side = self.load_image_texture("assets/natura/textures/blocks/bloodwood_bark.png")
     return self.build_wood_log(top, side, data)
@@ -6410,13 +6422,13 @@ def natura_wood4(self, blockid, data):
 @material(blockid=3272, data=range(16), transparent=True, solid=True)
 def natura_leaves3(self, blockid, data):
     data = data & 7 # The highest bit indicates non-decaying leaves
-    if data == 0: # Darkwood Leaves, empty
+    if data == 4: # Darkwood Leaves, empty
         tex = self.load_image_texture("assets/natura/textures/blocks/darkwood_leaves_fancy.png")
-    elif data == 1: # Darkwood Leaves, flowering
+    elif data == 5: # Darkwood Leaves, flowering
         tex = self.load_image_texture("assets/natura/textures/blocks/darkwood_flowering_leaves_fancy.png")
-    elif data == 2: # Darkwood Leaves, fruit
+    elif data == 6: # Darkwood Leaves, fruit
         tex = self.load_image_texture("assets/natura/textures/blocks/darkwood_fruit_leaves_fancy.png")
-    elif data == 3: # Fusewood Leaves
+    elif data == 7: # Fusewood Leaves
         tex = self.load_image_texture("assets/natura/textures/blocks/fusewood_leaves_fancy.png")
     else:
         return None
@@ -6444,13 +6456,13 @@ def natura_wood5(self, blockid, data):
 @material(blockid=3278, data=range(16), transparent=True)
 def natura_leaves4(self, blockid, data):
     data = data & 7 # The highest bit indicates non-decaying leaves
-    if data == 0: # Maple Leaves NOTE: needs biome coloring FIXME does it?
+    if data == 0: # Maple Leaves NOTE: needs biome coloring
         tex = self.load_image_texture("assets/natura/textures/blocks/maple_leaves_fancy.png")
-    elif data == 1: # Silverbell Leaves
+    elif data == 1: # Silverbell Leaves NO biome coloring!
         tex = self.load_image_texture("assets/natura/textures/blocks/silverbell_leaves_fancy.png")
-    elif data == 2: # Amaranth Leaves FIXME does this need biome coloring?
+    elif data == 2: # Amaranth Leaves NOTE: Needs biome coloring
         tex = self.load_image_texture("assets/natura/textures/blocks/purpleheart_leaves_fancy.png")
-    elif data == 3: # Tigerwood Leaves
+    elif data == 3: # Tigerwood Leaves NOTE: Needs biome coloring
         tex = self.load_image_texture("assets/natura/textures/blocks/tiger_leaves_fancy.png")
     else:
         return None
@@ -6525,17 +6537,35 @@ def natura_fence(self, blockid, data):
 def natura_topiarygrass(self, blockid, data):
     # FIXME: I didn't find the right textures, is this the one, but it just gets colored?
     tex = self.load_image_texture("assets/natura/textures/blocks/grass_top.png")
-    #if data == 0: # Topiary Grass
-    #elif data == 1: # Bluegrass
-    #elif data == 2: # Autumnal Grass
-    return self.build_block(tex, tex)
+    if data == 0: # Topiary Grass
+        tex = self.tint_texture2(tex, '#6c8d42')
+    elif data == 1: # Bluegrass
+        tex = self.tint_texture2(tex, '#007d94')
+    elif data == 2: # Autumnal Grass
+        tex = self.tint_texture2(tex, '#924700')
+    tex = ImageEnhance.Brightness(tex).enhance(0.7)
+    tex = self.pure_pil_alpha_to_color_v2(tex)
+    img = Image.new("RGBA", (16,16), self.bgcolor)
+    img.paste(tex, (0,0))
+    return self.build_block(img, img)
 
 # Natura: Topiary Grass Slabs (I:"Topiary Grass Slab"=3287)
-@material(blockid=3287, data=range(16), solid=True, transparent=True)
+@material(blockid=3287, data=[0,1,2,8,9,10], solid=True, transparent=True)
 def natura_topiarygrass_slab(self, blockid, data):
     # FIXME: I didn't find the right textures, is this the one, but it just gets colored?
     tex = self.load_image_texture("assets/natura/textures/blocks/grass_top.png")
-    return self.build_slab(tex, tex, data)
+    blocktype = data & 0x7
+    if blocktype == 0: # Topiary Grass
+        tex = self.tint_texture2(tex, '#6c8d42')
+    elif blocktype == 1: # Bluegrass
+        tex = self.tint_texture2(tex, '#007d94')
+    elif blocktype == 2: # Autumnal Grass
+        tex = self.tint_texture2(tex, '#924700')
+    tex = ImageEnhance.Brightness(tex).enhance(0.7)
+    tex = self.pure_pil_alpha_to_color_v2(tex)
+    img = Image.new("RGBA", (16,16), self.bgcolor)
+    img.paste(tex, (0,0))
+    return self.build_slab(img, img, data)
 
 # Natura: Slabs 1 (I:"Plank Slab One"=3288)
 @material(blockid=3288, data=range(16), solid=True, transparent=True)
@@ -6587,22 +6617,38 @@ def natura_fencegate(self, blockid, data):
     tex = self.load_image_texture("assets/natura/textures/blocks/%s_planks.png" % names[blockid - 3343])
     return self.build_fence_gate(tex, data)
 
-# Natura: Blaze Rails (I:"Blaze Rail"=3356 & I:"Powered Blaze Rail"=3357 & I:"Detector Blaze Rail"=3358 & I:"Activator Blaze Rail"=3359)
-@material(blockid=[3356,3357,3358,3359], data=range(2), transparent=True)
+# Natura: Blaze Rails (I:"Blaze Rail"=3356)
+@material(blockid=3356, data=range(10), transparent=True)
 def natura_blaze_rails(self, blockid, data):
-    if blockid == 3356: # Blaze Rail
-        tex = self.load_image_texture("assets/natura/textures/blocks/brail_normal.png")
-        #tex = self.load_image_texture("assets/natura/textures/blocks/brail_normal_turned.png")
-    elif blockid == 3357: # Powered Blaze Rail
-        tex = self.load_image_texture("assets/natura/textures/blocks/brail_golden.png")
-        #tex = self.load_image_texture("assets/natura/textures/blocks/brail_golden_powered.png")
+    # 0x1: east-west
+    # 0: normal north-south, 1: normal east-west
+    # 2: rising east, 3: rising west, 4: rising north, 5: rising south
+    # 6: south-east corner, 7: south-west corner, 8: north-west corner, 9: north-east corner
+    straight = self.load_image_texture("assets/natura/textures/blocks/brail_normal.png")
+    corner = self.load_image_texture("assets/natura/textures/blocks/brail_normal_turned.png")
+    return self.build_rail(straight, corner, data, True)
+
+# Natura: Blaze Rails (I:"Powered Blaze Rail"=3357 & I:"Detector Blaze Rail"=3358 & I:"Activator Blaze Rail"=3359)
+@material(blockid=[3357,3358,3359], data=range(16), transparent=True)
+def natura_blaze_rails(self, blockid, data):
+    # 0x8: Powered
+    # 0: normal north-south, 1: normal east-west
+    # 2: rising east, 3: rising west, 4: rising north, 5: rising south
+    if (data & 0x8) == 0x8:
+        str = "_powered"
+    else:
+        str = ""
+
+    # This is left in for code simplicity
+    corner = self.load_image_texture("assets/natura/textures/blocks/brail_normal_turned.png")
+
+    if blockid == 3357: # Powered Blaze Rail
+        straight = self.load_image_texture("assets/natura/textures/blocks/brail_golden%s.png" % str)
     elif blockid == 3358: # Detector Blaze Rail
-        tex = self.load_image_texture("assets/natura/textures/blocks/brail_detector.png")
-        #tex = self.load_image_texture("assets/natura/textures/blocks/brail_detector_powered.png")
+        straight = self.load_image_texture("assets/natura/textures/blocks/brail_detector%s.png" % str)
     elif blockid == 3359: # Activator Blaze Rail
-        tex = self.load_image_texture("assets/natura/textures/blocks/brail_activator.png")
-        #tex = self.load_image_texture("assets/natura/textures/blocks/brail_activator_powered.png")
-    return self.build_pressure_plate(tex, False) # FIXME Add a proper build_rail() method
+        straight = self.load_image_texture("assets/natura/textures/blocks/brail_activator%s.png" % str)
+    return self.build_rail(straight, corner, data, False)
 
 # Natura: Nether Furnace (I:"Netherrack Furnace"=3360)
 @material(blockid=3360, nodata=True, solid=True)
@@ -7020,6 +7066,13 @@ def thaumcraft_planks(self, blockid, data):
     elif data == 7: # Silverwood Planks
         tex = self.load_image_texture("assets/thaumcraft/textures/blocks/planks_silverwood.png")
     return self.build_block(tex, tex)
+
+# Thaumcraft: Arcane Levitator (I:BlockLifter=2415)
+@material(blockid=2415, nodata=True, solid=True)
+def thaumcraft_arcanelevitator(self, blockid, data):
+    top = self.load_image_texture("assets/thaumcraft/textures/blocks/liftertop.png")
+    side = self.load_image_texture("assets/thaumcraft/textures/blocks/lifterside.png")
+    return self.build_block(top, side)
 
 # Thaumcraft: Amber Blocks (I:BlockCosmeticOpaque=2418)
 @material(blockid=2418, data=range(2), solid=True)
