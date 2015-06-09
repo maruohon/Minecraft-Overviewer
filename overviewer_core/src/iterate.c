@@ -262,6 +262,7 @@ is_stairs(int block) {
         case 156: /* quartz stairs */
         case 163: /* acacia wood stairs */
         case 164: /* dark wood stairs */
+        case 1396: /* Forestry: Stairs */
         case 1222: /* Natura: Stairs (start) */
         case 3291:
         case 3292:

@@ -5565,7 +5565,11 @@ def forestry_farm(self, blockid, data):
     return self.build_block(tex, tex)
 
 # Forestry: Stairs (I:stairs=1396)
-# FIXME TODO
+@material(blockid=1396, data=range(128), solid=False, transparent=False, nospawn=True)
+def forestry_stairs(self, blockid, data):
+    # NOTE: The wood type is in the TE data
+    tex = self.load_image_texture("assets/forestry/textures/blocks/wood/planks.lime.png")
+    return self.build_stairs(tex, tex, data)
 
 # Forestry: Farm Humus & Bog Earth (I:soil=1397)
 @material(blockid=1397, data=range(3), solid=True)
@@ -7169,7 +7173,9 @@ def te_machines1(self, blockid, data):
 @material(blockid=2003, data=[0,2,3,4], solid=True)
 def te_machines2(self, blockid, data):
     if data == 0: # Machinist's Workbench
+        top = self.load_image_texture("assets/thermalexpansion/textures/blocks/device/Device_Top_Workbench.png")
         front = self.load_image_texture("assets/thermalexpansion/textures/blocks/device/Device_Side_Workbench.png")
+        return self.build_block(top, front)
     elif data == 2: # Autonomous Activator
         front = self.load_image_texture("assets/thermalexpansion/textures/blocks/device/Device_Face_Activator.png")
     elif data == 3: # Terrain Smasher
