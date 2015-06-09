@@ -262,6 +262,19 @@ is_stairs(int block) {
         case 156: /* quartz stairs */
         case 163: /* acacia wood stairs */
         case 164: /* dark wood stairs */
+        case 1222: /* Natura: Stairs (start) */
+        case 3291:
+        case 3292:
+        case 3293:
+        case 3294:
+        case 3295:
+        case 3296:
+        case 3297:
+        case 3298:
+        case 3299:
+        case 3301:
+        case 3302:
+        case 3303: /* Natura: Stairs (end) */
             return 1;
     }
     return 0;
@@ -320,6 +333,7 @@ generate_pseudo_data(RenderState *state, unsigned short ancilData) {
             || state->block == 461 || state->block == 463 /* Railcraft: Walls */
             || state->block == 1394 || state->block == 1418 /* Forestry Fences */
             || state->block == 3465 /* IC2: Iron Fence */
+            || state->block == 3285 /* Natura: Fences */
             ) {
 
         /* check for adjacent connectable blocks */
@@ -329,6 +343,7 @@ generate_pseudo_data(RenderState *state, unsigned short ancilData) {
                 | check_adjacent_blocks(state, x, y, z, 461) | check_adjacent_blocks(state, x, y, z, 463) /* Railcraft: Walls */
                 | check_adjacent_blocks(state, x, y, z, 1394) | check_adjacent_blocks(state, x, y, z, 1418) /* Forestry Fences */
                 | check_adjacent_blocks(state, x, y, z, 3465) /* IC2: Iron Fence */
+                | check_adjacent_blocks(state, x, y, z, 3285) /* Natura: Fences */
             ;
 
         /* Blocks that have metadata need to have the pseudo data shifted by 4 bits */
@@ -733,9 +748,10 @@ chunk_render(PyObject *self, PyObject *args) {
                         (state.block == 1394) || (state.block == 1418) || /* Forestry Fences */
                         (state.block == 459) || (state.block == 460) || /* Railcraft: Posts (= Fences) */
                         (state.block == 461) || (state.block == 463) || /* Railcraft: Walls */
-                        (state.block == 3465) || /* IC2: Iron Fence */
                         (state.block == 3130) || /* MFR Glass Panes */
                         (state.block == 3228) || (state.block == 3229) || /* Tinkers' Construct: Clear Glass Panes & Stained Glass Panes */
+                        (state.block == 3285) || /* Natura: Fences */
+                        (state.block == 3465) || /* IC2: Iron Fence */
                         is_stairs(state.block)) {
                         ancilData = generate_pseudo_data(&state, ancilData);
                         state.block_pdata = ancilData;

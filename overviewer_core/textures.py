@@ -1194,6 +1194,89 @@ class Textures(object):
             alpha_over(img, slice, (7,7))
         return img
 
+    def build_stairs(self, top, side, data):
+        # preserve the upside-down bit
+        upside_down = data & 0x4
+
+        # find solid quarters within the top or bottom half of the block
+        #                   NW           NE           SE           SW
+        quarters = [data & 0x8, data & 0x10, data & 0x20, data & 0x40]
+
+        # rotate the quarters so we can pretend northdirection is always upper-left
+        numpy.roll(quarters, [0,1,3,2][self.rotation])
+        nw,ne,se,sw = quarters
+
+        outside_l = side.copy()
+        outside_r = side.copy()
+        inside_l = side.copy()
+        inside_r = side.copy()
+        slab_top = top.copy()
+        texture = top.copy()
+
+        push = 8 if upside_down else 0
+
+        def rect(tex,coords):
+            ImageDraw.Draw(tex).rectangle(coords,outline=(0,0,0,0),fill=(0,0,0,0))
+
+        # cut out top or bottom half from inner surfaces
+        rect(inside_l, (0, 8 - push, 15, 15 - push))
+        rect(inside_r, (0, 8 - push, 15, 15 - push))
+
+        # cut out missing or obstructed quarters from each surface
+        if not nw:
+            rect(outside_l, (0, push, 7, 7 + push))
+            rect(texture, (0,0,7,7))
+        if not nw or sw:
+            rect(inside_r, (8, push, 15, 7 + push)) # will be flipped
+        if not ne:
+            rect(texture, (8,0,15,7))
+        if not ne or nw:
+            rect(inside_l, (0, push, 7, 7 + push))
+        if not ne or se:
+            rect(inside_r, (0, push, 7, 7 + push)) # will be flipped
+        if not se:
+            rect(outside_r, (0, push, 7, 7 + push)) # will be flipped
+            rect(texture, (8,8,15,15))
+        if not se or sw:
+            rect(inside_l, (8, push, 15, 7 + push))
+        if not sw:
+            rect(outside_l, (8, push, 15, 7 + push))
+            rect(outside_r, (8, push, 15, 7 + push)) # will be flipped
+            rect(texture, (0,8,7,15))
+
+        img = Image.new("RGBA", (24,24), self.bgcolor)
+
+        if upside_down:
+            # top should have no cut-outs after all
+            texture = slab_top
+        else:
+            # render the slab-level surface
+            slab_top = self.transform_image_top(slab_top)
+            alpha_over(img, slab_top, (0,6))
+
+        # render inner left surface
+        inside_l = self.transform_image_side(inside_l)
+        # Darken the vertical part of the second step
+        sidealpha = inside_l.split()[3]
+        # darken it a bit more than usual, looks better
+        inside_l = ImageEnhance.Brightness(inside_l).enhance(0.8)
+        inside_l.putalpha(sidealpha)
+        alpha_over(img, inside_l, (6,3))
+
+        # render inner right surface
+        inside_r = self.transform_image_side(inside_r).transpose(Image.FLIP_LEFT_RIGHT)
+        # Darken the vertical part of the second step
+        sidealpha = inside_r.split()[3]
+        # darken it a bit more than usual, looks better
+        inside_r = ImageEnhance.Brightness(inside_r).enhance(0.7)
+        inside_r.putalpha(sidealpha)
+        alpha_over(img, inside_r, (6,3))
+
+        # render outer surfaces
+        alpha_over(img, self.build_full_block(texture, None, None, outside_l, outside_r))
+
+        return img
+
     def build_berry_bush(self, tex, data):
         if data <= 7: # Stage 1 or 2, ie. smaller than a full block
             if data <= 3: # Stage 1
@@ -1233,6 +1316,175 @@ class Textures(object):
             return img
 
         return self.build_block(tex, tex)
+
+    def build_vines(self, tex, data):
+        # rotation
+        # vines data is bit coded. decode it first.
+        # NOTE: the directions used in this function are the new ones used
+        # in minecraft 1.0.0, no the ones used by overviewer
+        # (i.e. north is top-left by defalut)
+
+        # rotate the data by bitwise shift
+        shifts = 0
+        if self.rotation == 1:
+            shifts = 1
+        elif self.rotation == 2:
+            shifts = 2
+        elif self.rotation == 3:
+            shifts = 3
+
+        for i in range(shifts):
+            data = data * 2
+            if data & 16:
+                data = (data - 16) | 1
+
+        # decode data and prepare textures
+        s = w = n = e = None
+
+        if data & 1: # south
+            s = tex
+        if data & 2: # west
+            w = tex
+        if data & 4: # north
+            n = tex
+        if data & 8: # east
+            e = tex
+
+        img = self.build_full_block(None, n, e, w, s)
+
+        return img
+
+    def build_trapdoor(self, tex, data):
+        # Rotation; masked to not clobber opened/closed info
+        if self.rotation == 1:
+            if (data & 0b0011) == 0: data = data & 0b1100 | 3
+            elif (data & 0b0011) == 1: data = data & 0b1100 | 2
+            elif (data & 0b0011) == 2: data = data & 0b1100 | 0
+            elif (data & 0b0011) == 3: data = data & 0b1100 | 1
+        elif self.rotation == 2:
+            if (data & 0b0011) == 0: data = data & 0b1100 | 1
+            elif (data & 0b0011) == 1: data = data & 0b1100 | 0
+            elif (data & 0b0011) == 2: data = data & 0b1100 | 3
+            elif (data & 0b0011) == 3: data = data & 0b1100 | 2
+        elif self.rotation == 3:
+            if (data & 0b0011) == 0: data = data & 0b1100 | 2
+            elif (data & 0b0011) == 1: data = data & 0b1100 | 3
+            elif (data & 0b0011) == 2: data = data & 0b1100 | 1
+            elif (data & 0b0011) == 3: data = data & 0b1100 | 0
+
+        if data & 0x4 == 0x4: # opened trapdoor
+            if data & 0x3 == 0: # west
+                img = self.build_full_block(None, None, None, None, tex)
+            if data & 0x3 == 1: # east
+                img = self.build_full_block(None, tex, None, None, None)
+            if data & 0x3 == 2: # south
+                img = self.build_full_block(None, None, tex, None, None)
+            if data & 0x3 == 3: # north
+                img = self.build_full_block(None, None, None, tex, None)
+        elif data & 0x4 == 0: # closed trapdoor
+            if data & 0x8 == 0x8: # is a top trapdoor
+                img = Image.new("RGBA", (24,24), self.bgcolor)
+                t = self.build_full_block((tex, 12), None, None, tex, tex)
+                alpha_over(img, t, (0,-9),t)
+            else: # is a bottom trapdoor
+                img = self.build_full_block((tex, 12), None, None, tex, tex)
+        return img
+
+    def build_fence_gate(self, tex, data):
+        opened = False
+        if data & 0x4:
+            data = data & 0x3
+            opened = True
+        if self.rotation == 1:
+            if data == 0: data = 1
+            elif data == 1: data = 2
+            elif data == 2: data = 3
+            elif data == 3: data = 0
+        elif self.rotation == 2:
+            if data == 0: data = 2
+            elif data == 1: data = 3
+            elif data == 2: data = 0
+            elif data == 3: data = 1
+        elif self.rotation == 3:
+            if data == 0: data = 3
+            elif data == 1: data = 0
+            elif data == 2: data = 1
+            elif data == 3: data = 2
+        if opened:
+            data = data | 0x4
+
+        # create the closed gate side
+        gate_side = tex.copy()
+        gate_side_draw = ImageDraw.Draw(gate_side)
+        gate_side_draw.rectangle((7,0,15,0),outline=(0,0,0,0),fill=(0,0,0,0))
+        gate_side_draw.rectangle((7,4,9,6),outline=(0,0,0,0),fill=(0,0,0,0))
+        gate_side_draw.rectangle((7,10,15,16),outline=(0,0,0,0),fill=(0,0,0,0))
+        gate_side_draw.rectangle((0,12,15,16),outline=(0,0,0,0),fill=(0,0,0,0))
+        gate_side_draw.rectangle((0,0,4,15),outline=(0,0,0,0),fill=(0,0,0,0))
+        gate_side_draw.rectangle((14,0,15,15),outline=(0,0,0,0),fill=(0,0,0,0))
+
+        # darken the sides slightly, as with the fences
+        sidealpha = gate_side.split()[3]
+        gate_side = ImageEnhance.Brightness(gate_side).enhance(0.9)
+        gate_side.putalpha(sidealpha)
+
+        # create the other sides
+        mirror_gate_side = self.transform_image_side(gate_side.transpose(Image.FLIP_LEFT_RIGHT))
+        gate_side = self.transform_image_side(gate_side)
+        gate_other_side = gate_side.transpose(Image.FLIP_LEFT_RIGHT)
+        mirror_gate_other_side = mirror_gate_side.transpose(Image.FLIP_LEFT_RIGHT)
+
+        # Create img to compose the fence gate
+        img = Image.new("RGBA", (24,24), self.bgcolor)
+
+        if data & 0x4: # open
+            data = data & 0x3
+            if data == 0:
+                alpha_over(img, gate_side, (2,8), gate_side)
+                alpha_over(img, gate_side, (13,3), gate_side)
+            elif data == 1:
+                alpha_over(img, gate_other_side, (-1,3), gate_other_side)
+                alpha_over(img, gate_other_side, (10,8), gate_other_side)
+            elif data == 2:
+                alpha_over(img, mirror_gate_side, (-1,7), mirror_gate_side)
+                alpha_over(img, mirror_gate_side, (10,2), mirror_gate_side)
+            elif data == 3:
+                alpha_over(img, mirror_gate_other_side, (2,1), mirror_gate_other_side)
+                alpha_over(img, mirror_gate_other_side, (13,7), mirror_gate_other_side)
+        else: # closed
+            # positions for pasting the fence sides, as with fences
+            pos_top_left = (2,3)
+            pos_top_right = (10,3)
+            pos_bottom_right = (10,7)
+            pos_bottom_left = (2,7)
+
+            if data == 0 or data == 2:
+                alpha_over(img, gate_other_side, pos_top_right, gate_other_side)
+                alpha_over(img, mirror_gate_other_side, pos_bottom_left, mirror_gate_other_side)
+            elif data == 1 or data == 3:
+                alpha_over(img, gate_side, pos_top_left, gate_side)
+                alpha_over(img, mirror_gate_side, pos_bottom_right, mirror_gate_side)
+
+        return img
+
+    def build_hopper(self, top, side, bottom):
+        #build the top
+        hop_top = self.build_full_block((top,10), side, side, side, side, side)
+
+        #build a solid block for mid/top
+        hop_mid = self.build_full_block((top,5), side, side, side, side, side)
+        hop_bot = self.build_block(side,side)
+
+        hop_mid = hop_mid.resize((17,17),Image.ANTIALIAS)
+        hop_bot = hop_bot.resize((10,10),Image.ANTIALIAS)
+
+        #compose the final block
+        img = Image.new("RGBA", (24,24), self.bgcolor)
+        alpha_over(img, hop_bot, (7,14), hop_bot)
+        alpha_over(img, hop_mid, (3,3), hop_mid)
+        alpha_over(img, hop_top, (0,-6), hop_top)
+
+        return img
 
 ##
 ## The other big one: @material and associated framework
@@ -2120,118 +2372,38 @@ block(blockid=52, top_image="assets/minecraft/textures/blocks/mob_spawner.png", 
 # wooden, cobblestone, red brick, stone brick, netherbrick, sandstone, spruce, birch, jungle and quartz stairs.
 @material(blockid=[53,67,108,109,114,128,134,135,136,156,163,164], data=range(128), transparent=True, solid=True, nospawn=True)
 def stairs(self, blockid, data):
-    # preserve the upside-down bit
-    upside_down = data & 0x4
-
-    # find solid quarters within the top or bottom half of the block
-    #                   NW           NE           SE           SW
-    quarters = [data & 0x8, data & 0x10, data & 0x20, data & 0x40]
-
-    # rotate the quarters so we can pretend northdirection is always upper-left
-    numpy.roll(quarters, [0,1,3,2][self.rotation])
-    nw,ne,se,sw = quarters
-
     if blockid == 53: # wooden
-        texture = self.load_image_texture("assets/minecraft/textures/blocks/planks_oak.png").copy()
+        top = side = self.load_image_texture("assets/minecraft/textures/blocks/planks_oak.png")
     elif blockid == 67: # cobblestone
-        texture = self.load_image_texture("assets/minecraft/textures/blocks/cobblestone.png").copy()
+        top = side = self.load_image_texture("assets/minecraft/textures/blocks/cobblestone.png")
     elif blockid == 108: # red brick stairs
-        texture = self.load_image_texture("assets/minecraft/textures/blocks/brick.png").copy()
+        top = side = self.load_image_texture("assets/minecraft/textures/blocks/brick.png")
     elif blockid == 109: # stone brick stairs
-        texture = self.load_image_texture("assets/minecraft/textures/blocks/stonebrick.png").copy()
+        top = side = self.load_image_texture("assets/minecraft/textures/blocks/stonebrick.png")
     elif blockid == 114: # netherbrick stairs
-        texture = self.load_image_texture("assets/minecraft/textures/blocks/nether_brick.png").copy()
+        top = side = self.load_image_texture("assets/minecraft/textures/blocks/nether_brick.png")
     elif blockid == 128: # sandstone stairs
-        texture = self.load_image_texture("assets/minecraft/textures/blocks/sandstone_normal.png").copy()
+        side = self.load_image_texture("assets/minecraft/textures/blocks/sandstone_normal.png")
     elif blockid == 134: # spruce wood stairs
-        texture = self.load_image_texture("assets/minecraft/textures/blocks/planks_spruce.png").copy()
+        top = side = self.load_image_texture("assets/minecraft/textures/blocks/planks_spruce.png")
     elif blockid == 135: # birch wood  stairs
-        texture = self.load_image_texture("assets/minecraft/textures/blocks/planks_birch.png").copy()
+        top = side = self.load_image_texture("assets/minecraft/textures/blocks/planks_birch.png")
     elif blockid == 136: # jungle good stairs
-        texture = self.load_image_texture("assets/minecraft/textures/blocks/planks_jungle.png").copy()
+        top = side = self.load_image_texture("assets/minecraft/textures/blocks/planks_jungle.png")
     elif blockid == 156: # quartz block stairs
-        texture = self.load_image_texture("assets/minecraft/textures/blocks/quartz_block_side.png").copy()
+        side = self.load_image_texture("assets/minecraft/textures/blocks/quartz_block_side.png")
     elif blockid == 163: # acacia wood stairs
-        texture = self.load_image_texture("assets/minecraft/textures/blocks/planks_acacia.png").copy()
+        top = side = self.load_image_texture("assets/minecraft/textures/blocks/planks_acacia.png")
     elif blockid == 164: # dark oak stairs
-        texture = self.load_image_texture("assets/minecraft/textures/blocks/planks_big_oak.png").copy()
-
-    outside_l = texture.copy()
-    outside_r = texture.copy()
-    inside_l = texture.copy()
-    inside_r = texture.copy()
+        top = side = self.load_image_texture("assets/minecraft/textures/blocks/planks_big_oak.png")
 
     # sandstone & quartz stairs have special top texture
     if blockid == 128:
-        texture = self.load_image_texture("assets/minecraft/textures/blocks/sandstone_top.png").copy()
+        top = self.load_image_texture("assets/minecraft/textures/blocks/sandstone_top.png")
     elif blockid == 156:
-        texture = self.load_image_texture("assets/minecraft/textures/blocks/quartz_block_top.png").copy()
+        top = self.load_image_texture("assets/minecraft/textures/blocks/quartz_block_top.png")
 
-    slab_top = texture.copy()
-
-    push = 8 if upside_down else 0
-
-    def rect(tex,coords):
-        ImageDraw.Draw(tex).rectangle(coords,outline=(0,0,0,0),fill=(0,0,0,0))
-
-    # cut out top or bottom half from inner surfaces
-    rect(inside_l, (0,8-push,15,15-push))
-    rect(inside_r, (0,8-push,15,15-push))
-
-    # cut out missing or obstructed quarters from each surface
-    if not nw:
-        rect(outside_l, (0,push,7,7+push))
-        rect(texture, (0,0,7,7))
-    if not nw or sw:
-        rect(inside_r, (8,push,15,7+push)) # will be flipped
-    if not ne:
-        rect(texture, (8,0,15,7))
-    if not ne or nw:
-        rect(inside_l, (0,push,7,7+push))
-    if not ne or se:
-        rect(inside_r, (0,push,7,7+push)) # will be flipped
-    if not se:
-        rect(outside_r, (0,push,7,7+push)) # will be flipped
-        rect(texture, (8,8,15,15))
-    if not se or sw:
-        rect(inside_l, (8,push,15,7+push))
-    if not sw:
-        rect(outside_l, (8,push,15,7+push))
-        rect(outside_r, (8,push,15,7+push)) # will be flipped
-        rect(texture, (0,8,7,15))
-
-    img = Image.new("RGBA", (24,24), self.bgcolor)
-
-    if upside_down:
-        # top should have no cut-outs after all
-        texture = slab_top
-    else:
-        # render the slab-level surface
-        slab_top = self.transform_image_top(slab_top)
-        alpha_over(img, slab_top, (0,6))
-
-    # render inner left surface
-    inside_l = self.transform_image_side(inside_l)
-    # Darken the vertical part of the second step
-    sidealpha = inside_l.split()[3]
-    # darken it a bit more than usual, looks better
-    inside_l = ImageEnhance.Brightness(inside_l).enhance(0.8)
-    inside_l.putalpha(sidealpha)
-    alpha_over(img, inside_l, (6,3))
-
-    # render inner right surface
-    inside_r = self.transform_image_side(inside_r).transpose(Image.FLIP_LEFT_RIGHT)
-    # Darken the vertical part of the second step
-    sidealpha = inside_r.split()[3]
-    # darken it a bit more than usual, looks better
-    inside_r = ImageEnhance.Brightness(inside_r).enhance(0.7)
-    inside_r.putalpha(sidealpha)
-    alpha_over(img, inside_r, (6,3))
-
-    # render outer surfaces
-    alpha_over(img, self.build_full_block(texture, None, None, outside_l, outside_r))
-
-    return img
+    return self.build_stairs(top, side, data)
 
 # normal, locked (used in april's fool day), ender and trapped chest
 # NOTE:  locked chest used to be id95 (which is now stained glass)
@@ -3603,46 +3775,8 @@ def comparator(self, blockid, data):
 # the trapdoor is looks like a sprite when opened, that's not good
 @material(blockid=96, data=range(16), transparent=True, nospawn=True)
 def trapdoor(self, blockid, data):
-
-    # rotation
-    # Masked to not clobber opened/closed info
-    if self.rotation == 1:
-        if (data & 0b0011) == 0: data = data & 0b1100 | 3
-        elif (data & 0b0011) == 1: data = data & 0b1100 | 2
-        elif (data & 0b0011) == 2: data = data & 0b1100 | 0
-        elif (data & 0b0011) == 3: data = data & 0b1100 | 1
-    elif self.rotation == 2:
-        if (data & 0b0011) == 0: data = data & 0b1100 | 1
-        elif (data & 0b0011) == 1: data = data & 0b1100 | 0
-        elif (data & 0b0011) == 2: data = data & 0b1100 | 3
-        elif (data & 0b0011) == 3: data = data & 0b1100 | 2
-    elif self.rotation == 3:
-        if (data & 0b0011) == 0: data = data & 0b1100 | 2
-        elif (data & 0b0011) == 1: data = data & 0b1100 | 3
-        elif (data & 0b0011) == 2: data = data & 0b1100 | 1
-        elif (data & 0b0011) == 3: data = data & 0b1100 | 0
-
-    # texture generation
-    texture = self.load_image_texture("assets/minecraft/textures/blocks/trapdoor.png")
-    if data & 0x4 == 0x4: # opened trapdoor
-        if data & 0x3 == 0: # west
-            img = self.build_full_block(None, None, None, None, texture)
-        if data & 0x3 == 1: # east
-            img = self.build_full_block(None, texture, None, None, None)
-        if data & 0x3 == 2: # south
-            img = self.build_full_block(None, None, texture, None, None)
-        if data & 0x3 == 3: # north
-            img = self.build_full_block(None, None, None, texture, None)
-        
-    elif data & 0x4 == 0: # closed trapdoor
-        if data & 0x8 == 0x8: # is a top trapdoor
-            img = Image.new("RGBA", (24,24), self.bgcolor)
-            t = self.build_full_block((texture, 12), None, None, texture, texture)
-            alpha_over(img, t, (0,-9),t)
-        else: # is a bottom trapdoor
-            img = self.build_full_block((texture, 12), None, None, texture, texture)
-    
-    return img
+    tex = self.load_image_texture("assets/minecraft/textures/blocks/trapdoor.png")
+    return self.build_trapdoor(tex, data)
 
 # block with hidden silverfish (stone, cobblestone and stone brick)
 @material(blockid=97, data=range(3), solid=True)
@@ -3798,127 +3932,14 @@ def stem(self, blockid, data):
 # vines
 @material(blockid=106, data=range(16), transparent=True)
 def vines(self, blockid, data):
-    # rotation
-    # vines data is bit coded. decode it first.
-    # NOTE: the directions used in this function are the new ones used
-    # in minecraft 1.0.0, no the ones used by overviewer 
-    # (i.e. north is top-left by defalut)
-
-    # rotate the data by bitwise shift
-    shifts = 0
-    if self.rotation == 1:
-        shifts = 1
-    elif self.rotation == 2:
-        shifts = 2
-    elif self.rotation == 3:
-        shifts = 3
-    
-    for i in range(shifts):
-        data = data * 2
-        if data & 16:
-            data = (data - 16) | 1
-
-    # decode data and prepare textures
-    raw_texture = self.load_image_texture("assets/minecraft/textures/blocks/vine.png")
-    s = w = n = e = None
-
-    if data & 1: # south
-        s = raw_texture
-    if data & 2: # west
-        w = raw_texture
-    if data & 4: # north
-        n = raw_texture
-    if data & 8: # east
-        e = raw_texture
-
-    # texture generation
-    img = self.build_full_block(None, n, e, w, s)
-
-    return img
+    tex = self.load_image_texture("assets/minecraft/textures/blocks/vine.png")
+    return self.build_vines(tex, data)
 
 # fence gates
 @material(blockid=107, data=range(8), transparent=True, nospawn=True)
 def fence_gate(self, blockid, data):
-
-    # rotation
-    opened = False
-    if data & 0x4:
-        data = data & 0x3
-        opened = True
-    if self.rotation == 1:
-        if data == 0: data = 1
-        elif data == 1: data = 2
-        elif data == 2: data = 3
-        elif data == 3: data = 0
-    elif self.rotation == 2:
-        if data == 0: data = 2
-        elif data == 1: data = 3
-        elif data == 2: data = 0
-        elif data == 3: data = 1
-    elif self.rotation == 3:
-        if data == 0: data = 3
-        elif data == 1: data = 0
-        elif data == 2: data = 1
-        elif data == 3: data = 2
-    if opened:
-        data = data | 0x4
-
-    # create the closed gate side
-    gate_side = self.load_image_texture("assets/minecraft/textures/blocks/planks_oak.png").copy()
-    gate_side_draw = ImageDraw.Draw(gate_side)
-    gate_side_draw.rectangle((7,0,15,0),outline=(0,0,0,0),fill=(0,0,0,0))
-    gate_side_draw.rectangle((7,4,9,6),outline=(0,0,0,0),fill=(0,0,0,0))
-    gate_side_draw.rectangle((7,10,15,16),outline=(0,0,0,0),fill=(0,0,0,0))
-    gate_side_draw.rectangle((0,12,15,16),outline=(0,0,0,0),fill=(0,0,0,0))
-    gate_side_draw.rectangle((0,0,4,15),outline=(0,0,0,0),fill=(0,0,0,0))
-    gate_side_draw.rectangle((14,0,15,15),outline=(0,0,0,0),fill=(0,0,0,0))
-    
-    # darken the sides slightly, as with the fences
-    sidealpha = gate_side.split()[3]
-    gate_side = ImageEnhance.Brightness(gate_side).enhance(0.9)
-    gate_side.putalpha(sidealpha)
-    
-    # create the other sides
-    mirror_gate_side = self.transform_image_side(gate_side.transpose(Image.FLIP_LEFT_RIGHT))
-    gate_side = self.transform_image_side(gate_side)
-    gate_other_side = gate_side.transpose(Image.FLIP_LEFT_RIGHT)
-    mirror_gate_other_side = mirror_gate_side.transpose(Image.FLIP_LEFT_RIGHT)
-    
-    # Create img to compose the fence gate
-    img = Image.new("RGBA", (24,24), self.bgcolor)
-    
-    if data & 0x4:
-        # opened
-        data = data & 0x3
-        if data == 0:
-            alpha_over(img, gate_side, (2,8), gate_side)
-            alpha_over(img, gate_side, (13,3), gate_side)
-        elif data == 1:
-            alpha_over(img, gate_other_side, (-1,3), gate_other_side)
-            alpha_over(img, gate_other_side, (10,8), gate_other_side)
-        elif data == 2:
-            alpha_over(img, mirror_gate_side, (-1,7), mirror_gate_side)
-            alpha_over(img, mirror_gate_side, (10,2), mirror_gate_side)
-        elif data == 3:
-            alpha_over(img, mirror_gate_other_side, (2,1), mirror_gate_other_side)
-            alpha_over(img, mirror_gate_other_side, (13,7), mirror_gate_other_side)
-    else:
-        # closed
-        
-        # positions for pasting the fence sides, as with fences
-        pos_top_left = (2,3)
-        pos_top_right = (10,3)
-        pos_bottom_right = (10,7)
-        pos_bottom_left = (2,7)
-        
-        if data == 0 or data == 2:
-            alpha_over(img, gate_other_side, pos_top_right, gate_other_side)
-            alpha_over(img, mirror_gate_other_side, pos_bottom_left, mirror_gate_other_side)
-        elif data == 1 or data == 3:
-            alpha_over(img, gate_side, pos_top_left, gate_side)
-            alpha_over(img, mirror_gate_side, pos_bottom_right, mirror_gate_side)
-    
-    return img
+    tex = self.load_image_texture("assets/minecraft/textures/blocks/planks_oak.png")
+    return self.build_fence_gate(tex, data)
 
 # mycelium
 block(blockid=110, top_image="assets/minecraft/textures/blocks/mycelium_top.png", side_image="assets/minecraft/textures/blocks/mycelium_side.png")
@@ -4418,26 +4439,10 @@ def quartz_block(self, blockid, data):
 # hopper
 @material(blockid=154, data=range(4), transparent=True)
 def hopper(self, blockid, data):
-    #build the top
-    side = self.load_image_texture("assets/minecraft/textures/blocks/hopper_outside.png")
     top = self.load_image_texture("assets/minecraft/textures/blocks/hopper_top.png")
+    side = self.load_image_texture("assets/minecraft/textures/blocks/hopper_outside.png")
     bottom = self.load_image_texture("assets/minecraft/textures/blocks/hopper_inside.png")
-    hop_top = self.build_full_block((top,10), side, side, side, side, side)
-
-    #build a solid block for mid/top
-    hop_mid = self.build_full_block((top,5), side, side, side, side, side)
-    hop_bot = self.build_block(side,side)
-
-    hop_mid = hop_mid.resize((17,17),Image.ANTIALIAS)
-    hop_bot = hop_bot.resize((10,10),Image.ANTIALIAS)
-    
-    #compose the final block
-    img = Image.new("RGBA", (24,24), self.bgcolor)
-    alpha_over(img, hop_bot, (7,14), hop_bot)
-    alpha_over(img, hop_mid, (3,3), hop_mid)
-    alpha_over(img, hop_top, (0,-6), hop_top)
-
-    return img
+    return self.build_hopper(top, side, bottom)
 
 # hay block
 @material(blockid=170, data=range(9), solid=True)
@@ -6158,6 +6163,485 @@ def mfr_vine_scaffold(self, blockid, data):
     top = self.load_image_texture("assets/minefactoryreloaded/textures/blocks/tile.mfr.vinescaffold.top.png")
     side = self.load_image_texture("assets/minefactoryreloaded/textures/blocks/tile.mfr.vinescaffold.side.png")
     return self.build_block(top, side)
+
+
+##############
+#   Natura   #
+##############
+
+# Natura: Heat Sand (I:"Heat Sand"=189)
+block(blockid=189, top_image="assets/natura/textures/blocks/heatsand.png")
+
+# Natura: Tainted Soil (I:"Tainted Soil"=190)
+block(blockid=190, top_image="assets/natura/textures/blocks/tainted_soil.png")
+
+# Natura: Stairs (I:"Tigerwood Stairs"=1222 & I:"Amaranth Stairs"=3298 & I:"Bloodwood Stairs"=3295 & I:"Darkwood Stairs"=3302 &
+# I:"Eucalyputus Stairs"=3291 & I:"Fusewood Stairs"=3303 & I:"Ghostwood Stairs"=3293 & I:"Hopseed Stairs"=3296 & I:"Maple Stairs"=3297 &
+# I:"Redwood Stairs"=3294 & I:"Sakura Stairs"=3292 & I:"Silverbell Stairs"=3299 & I:"Willow Stairs"=3301)
+@material(blockid=[1222,3291,3292,3293,3294,3295,3296,3297,3298,3299,3301,3302,3303], data=range(128), solid=True, transparent=True, nospawn=True)
+def natura_stairs(self, blockid, data):
+    names = ["eucalyptus", "sakura", "ghostwood", "redwood", "bloodwood", "hopseed", "maple",
+            "purpleheart", "silverbell", "darkwood", "fusewood", "willow"]
+    if blockid == 1222: # Tigerwood Stairs
+        tex = self.load_image_texture("assets/natura/textures/blocks/tiger_planks.png")
+    elif blockid >= 3291 and blockid <= 3299: # Eucalyptus, Sakura, Ghostwood, Redwood, Blood, Hopseed, Maple, Amaranth, Silverbell Stairs
+        tex = self.load_image_texture("assets/natura/textures/blocks/%s_planks.png" % names[blockid - 3291])
+    elif blockid >= 3301 and blockid <= 3303: # Darkwood, Fusewood, Willow Stairs
+        tex = self.load_image_texture("assets/natura/textures/blocks/%s_planks.png" % names[blockid - 3301 + 9])
+    return self.build_stairs(tex, tex, data)
+
+# Natura: Wood 1 (I:"Wood Block"=3251)
+@material(blockid=3251, data=range(16), solid=True)
+def natura_wood1(self, blockid, data):
+    # data: 0: Eucalyptus, 1: Sakura, 2: Ghostwood, 3: Hopseed
+    names = ["eucalyptus", "sakura", "ghostwood", "hopseed"]
+    top = self.load_image_texture("assets/natura/textures/blocks/%s_heart.png" % names[data & 0x3])
+    side = self.load_image_texture("assets/natura/textures/blocks/%s_bark.png" % names[data & 0x3])
+    return self.build_wood_log(top, side, data)
+
+# Natura: Cloud (I:"Cloud Block"=3253)
+@material(blockid=3253, data=range(4), solid=True, transparent=True)
+def natura_cloud(self, blockid, data):
+    # 0: Cloud, 1: Dark Cloud, 2: Ash Cloud, 3: Sulfur Cloud
+    names = ["white", "dark", "gray", "sulfur"]
+    tex = self.load_image_texture("assets/natura/textures/blocks/cloud_%s.png" % names[data])
+    return self.build_block(tex, tex)
+
+# Natura: Saguaro Cactus (I:"Saguaro Cactus"=3254)
+@material(blockid=3254, nodata=True, solid=True)
+def natura_saguaro_cactus(self, blockid, data):
+    top = self.load_image_texture("assets/natura/textures/blocks/saguaro_top.png")
+    side = self.load_image_texture("assets/natura/textures/blocks/saguaro_side.png")
+    return self.build_block(top, side)
+
+# Natura: Nether Berry Bushes (I:"Nether Berry Bush"=3255)
+@material(blockid=3255, data=range(16), transparent=True, solid=True)
+def natura_netherberrybushes(self, blockid, data):
+    if data == 0: # Blightberry Bush (stage 1)
+        tex = self.load_image_texture("assets/natura/textures/blocks/blightberry_fast.png").copy()
+    elif data == 1: # Duskberry Bush (stage 1)
+        tex = self.load_image_texture("assets/natura/textures/blocks/duskberry_fast.png").copy()
+    elif data == 2: # Skyberry Bush (stage 1)
+        tex = self.load_image_texture("assets/natura/textures/blocks/skyberry_fast.png").copy()
+    elif data == 3: # Stingberry Bush (stage 1)
+        tex = self.load_image_texture("assets/natura/textures/blocks/stingberry_fast.png").copy()
+    elif data == 4: # Blightberry Bush (stage 2)
+        tex = self.load_image_texture("assets/natura/textures/blocks/blightberry_fast.png").copy()
+    elif data == 5: # Duskberry Bush (stage 2)
+        tex = self.load_image_texture("assets/natura/textures/blocks/duskberry_fast.png").copy()
+    elif data == 6: # Skyberry Bush (stage 2)
+        tex = self.load_image_texture("assets/natura/textures/blocks/skyberry_fast.png").copy()
+    elif data == 7: # Stingberry Bush (stage 2)
+        tex = self.load_image_texture("assets/natura/textures/blocks/stingberry_fast.png").copy()
+    elif data == 8: # Blightberry Bush (stage 3)
+        tex = self.load_image_texture("assets/natura/textures/blocks/blightberry_fast.png").copy()
+    elif data == 9: # Duskberry Bush (stage 3)
+        tex = self.load_image_texture("assets/natura/textures/blocks/duskberry_fast.png").copy()
+    elif data == 10: # Skyberry Bush (stage 3)
+        tex = self.load_image_texture("assets/natura/textures/blocks/skyberry_fast.png").copy()
+    elif data == 11: # Stingberry Bush (stage 3)
+        tex = self.load_image_texture("assets/natura/textures/blocks/stingberry_fast.png").copy()
+    elif data == 12: # Blightberry Bush (ripe)
+        tex = self.load_image_texture("assets/natura/textures/blocks/blightberry_ripe_fast.png")
+    elif data == 13: # Duskberry Bush (ripe)
+        tex = self.load_image_texture("assets/natura/textures/blocks/duskberry_ripe_fast.png")
+    elif data == 14: # Skyberry Bush (ripe)
+        tex = self.load_image_texture("assets/natura/textures/blocks/skyberry_ripe_fast.png")
+    elif data == 15: # Stingberry Bush (ripe)
+        tex = self.load_image_texture("assets/natura/textures/blocks/stingberry_ripe_fast.png")
+    return self.build_berry_bush(tex, data)
+
+# Natura: Saplings (I:Sapling=3256)
+@material(blockid=3256, data=range(8), transparent=True)
+def natura_saplings1(self, blockid, data):
+    if data == 0: # Redwood Sapling
+        tex = self.load_image_texture("assets/natura/textures/blocks/redwood_sapling.png")
+    elif data == 1: # Eucalyptus Sapling
+        tex = self.load_image_texture("assets/natura/textures/blocks/eucalyptus_sapling.png")
+    elif data == 2: # Hopseed Sapling
+        tex = self.load_image_texture("assets/natura/textures/blocks/hopseed_sapling.png")
+    elif data == 3: # Sakura Sapling
+        tex = self.load_image_texture("assets/natura/textures/blocks/sakura_sapling.png")
+    elif data == 4: # Ghostwood Sapling
+        tex = self.load_image_texture("assets/natura/textures/blocks/ghostwood_sapling.png")
+    elif data == 5: # Blood Sapling
+        tex = self.load_image_texture("assets/natura/textures/blocks/bloodwood_sapling.png")
+    elif data == 6: # Darkwood Sapling
+        tex = self.load_image_texture("assets/natura/textures/blocks/darkwood_sapling.png")
+    elif data == 7: # Fusewood Sapling
+        tex = self.load_image_texture("assets/natura/textures/blocks/fusewood_sapling.png")
+    return self.build_sprite(tex)
+
+# Natura: Berry Bushes (I:Berry_Bush=3257)
+@material(blockid=3257, data=range(16), solid=True, transparent=True)
+def natura_berrybushes(self, blockid, data):
+    if data == 0: # Raspberry Bush (stage 1)
+        tex = self.load_image_texture("assets/natura/textures/blocks/raspberry_fast.png").copy()
+    elif data == 1: # Blueberry Bush (stage 1)
+        tex = self.load_image_texture("assets/natura/textures/blocks/blueberry_fast.png").copy()
+    elif data == 2: # Blackberry Bush (stage 1)
+        tex = self.load_image_texture("assets/natura/textures/blocks/blackberry_fast.png").copy()
+    elif data == 3: # Maloberry Bush (stage 1)
+        tex = self.load_image_texture("assets/natura/textures/blocks/geoberry_fast.png").copy()
+    elif data == 4: # Raspberry Bush (stage 2)
+        tex = self.load_image_texture("assets/natura/textures/blocks/raspberry_fast.png").copy()
+    elif data == 5: # Blueberry Bush (stage 2)
+        tex = self.load_image_texture("assets/natura/textures/blocks/blueberry_fast.png").copy()
+    elif data == 6: # Blackberry Bush (stage 2)
+        tex = self.load_image_texture("assets/natura/textures/blocks/blackberry_fast.png").copy()
+    elif data == 7: # Maloberry Bush (stage 2)
+        tex = self.load_image_texture("assets/natura/textures/blocks/geoberry_fast.png").copy()
+    elif data == 8: # Raspberry Bush (stage 3)
+        tex = self.load_image_texture("assets/natura/textures/blocks/raspberry_fast.png").copy()
+    elif data == 9: # Blueberry Bush (stage 3)
+        tex = self.load_image_texture("assets/natura/textures/blocks/blueberry_fast.png").copy()
+    elif data == 10: # Blackberry Bush (stage 3)
+        tex = self.load_image_texture("assets/natura/textures/blocks/blackberry_fast.png").copy()
+    elif data == 11: # Maloberry Bush (stage 3)
+        tex = self.load_image_texture("assets/natura/textures/blocks/geoberry_fast.png").copy()
+    elif data == 12: # Raspberry Bush (ripe)
+        tex = self.load_image_texture("assets/natura/textures/blocks/raspberry_ripe_fast.png")
+    elif data == 13: # Blueberry Bush (ripe)
+        tex = self.load_image_texture("assets/natura/textures/blocks/blueberry_ripe_fast.png")
+    elif data == 14: # Blackberry Bush (ripe)
+        tex = self.load_image_texture("assets/natura/textures/blocks/blackberry_ripe_fast.png")
+    elif data == 15: # Maloberry Bush (ripe)
+        tex = self.load_image_texture("assets/natura/textures/blocks/geoberry_ripe_fast.png")
+    return self.build_berry_bush(tex, data)
+
+# Natura: Leaves (I:"Sakura Leaves"=3258)
+@material(blockid=3258, data=range(16), transparent=True, solid=True)
+def natura_leaves1(self, blockid, data):
+    # The highest bit indicates non-decaying leaves
+    data = data & 7
+    if data == 0: # Sakura Leaves
+        tex = self.load_image_texture("assets/natura/textures/blocks/sakura_leaves_fancy.png")
+    elif data == 1: # Ghostwood Leaves
+        tex = self.load_image_texture("assets/natura/textures/blocks/ghostwood_leaves_fancy.png")
+    elif data == 2: # Bloodleaves
+        tex = self.load_image_texture("assets/natura/textures/blocks/bloodwood_leaves_fancy.png")
+    elif data == 3: # Willow leaves
+        tex = self.load_image_texture("assets/natura/textures/blocks/willow_leaves_fancy.png")
+    else:
+        return None
+    return self.build_block(tex, tex)
+
+# Natura: Leaves (I:"Flora Leaves"=3259)
+@material(blockid=3259, data=range(16), transparent=True, solid=True)
+def natura_leaves2(self, blockid, data):
+    # The highest bit indicates non-decaying leaves
+    data = data & 7
+    if data == 0: # Redwood Leaves NOTE: needs biome coloring
+        tex = self.load_image_texture("assets/natura/textures/blocks/redwood_leaves_fancy.png")
+    elif data == 1: # Eucalyptus Leaves NOTE: needs biome coloring
+        tex = self.load_image_texture("assets/natura/textures/blocks/eucalyptus_leaves_fancy.png")
+    elif data == 2: # Hopseed Leaves TODO does this need biome coloring?
+        tex = self.load_image_texture("assets/natura/textures/blocks/hopseed_leaves_fancy.png")
+    else:
+        return None
+    return self.build_block(tex, tex)
+
+# Natura: Crops (Barley and Cotton) (I:Crops=3260)
+@material(blockid=3260, data=range(9), transparent=True)
+def natura_crops(self, blockid, data):
+    if data <= 3: # 0..3 Barley, 4 different growth stages
+        raw_crop = self.load_image_texture("assets/natura/textures/blocks/barley_%d.png" % (data + 1))
+    elif data <= 8: # 4..8 Cotton, 3 different growth stages and 2 different maturity stages
+        tex = self.load_image_texture("assets/natura/textures/blocks/cotton_%d.png" % (data - 3))
+        return self.build_sprite(tex)
+
+    # Barley rendering is the same as vanilla crops
+    crop1 = self.transform_image_top(raw_crop)
+    crop2 = self.transform_image_side(raw_crop)
+    crop3 = crop2.transpose(Image.FLIP_LEFT_RIGHT)
+
+    img = Image.new("RGBA", (24,24), self.bgcolor)
+    alpha_over(img, crop1, (0,12), crop1)
+    alpha_over(img, crop2, (6,3), crop2)
+    alpha_over(img, crop3, (6,3), crop3)
+    return img
+
+# Natura: Redwood Wood (I:"Redwood Block"=3261)
+@material(blockid=3261, data=range(3), solid=True)
+def natura_wood2(self, blockid, data):
+    # data: 0: Redwood Bark, 1: Redwood, 2: Redwood Root
+    names = ["bark", "heart", "root"]
+    tex = self.load_image_texture("assets/natura/textures/blocks/redwood_%s.png" % names[data & 0x3])
+    return self.build_block(tex, tex)
+
+# Natura: Planks (I:"Planks Block"=3262)
+@material(blockid=3262, data=range(13), solid=True)
+def natura_planks1(self, blockid, data):
+    # 0: Eucalyptus, 1: Sakura, 2: Ghostwood, 3: Redwood, 4: Bloodwood, 5: Hopseed, 6: Maple, 7: Silverbell, 8: Amaranth, 9: Tigerwood, 10: Willow, 11: Darkwood, 12: Fusewood
+    names = ["eucalyptus", "sakura", "ghostwood", "redwood", "bloodwood", "hopseed", "maple", "silverbell",
+    "purpleheart", "tiger", "willow", "darkwood", "fusewood"]
+    tex = self.load_image_texture("assets/natura/textures/blocks/%s_planks.png" % names[data])
+    return self.build_block(tex, tex)
+
+# Natura: Wood 3 (I:"Bloodwood Block"=3263)
+@material(blockid=3263, data=[0,4,8], solid=True)
+def natura_wood3(self, blockid, data):
+    # data: 0: Bloodwood
+    top = self.load_image_texture("assets/natura/textures/blocks/bloodwood_heart_small.png")
+    side = self.load_image_texture("assets/natura/textures/blocks/bloodwood_bark.png")
+    return self.build_wood_log(top, side, data)
+
+# Natura: Glowshrooms (I:"Glowing Mushroom"=3270)
+@material(blockid=3270, data=range(3), transparent=True)
+def natura_glowshrooms(self, blockid, data):
+    if data == 0: # Green Glowshroom
+        tex = self.load_image_texture("assets/natura/textures/blocks/mushroom_green.png")
+    elif data == 1: # Purple Glowshroom
+        tex = self.load_image_texture("assets/natura/textures/blocks/mushroom_purple.png")
+    elif data == 2: # Blue Glowshroom
+        tex = self.load_image_texture("assets/natura/textures/blocks/mushroom_blue.png")
+    return self.build_sprite(tex)
+
+# Natura: Wood 4 (I:"Darkwood Log"=3271)
+@material(blockid=3271, data=[0,4,8,1,5,9], solid=True)
+def natura_wood4(self, blockid, data):
+    # data: 0: Darkwood, 1: Fusewood
+    names = ["darkwood", "fusewood"]
+    top = self.load_image_texture("assets/natura/textures/blocks/%s_heart.png" % names[data & 0x3])
+    side = self.load_image_texture("assets/natura/textures/blocks/%s_bark.png" % names[data & 0x3])
+    return self.build_wood_log(top, side, data)
+
+# Natura: Darkwood & Fusewood Leaves (I:"Darkwood Leaves"=3272)
+@material(blockid=3272, data=range(16), transparent=True, solid=True)
+def natura_leaves3(self, blockid, data):
+    data = data & 7 # The highest bit indicates non-decaying leaves
+    if data == 0: # Darkwood Leaves, empty
+        tex = self.load_image_texture("assets/natura/textures/blocks/darkwood_leaves_fancy.png")
+    elif data == 1: # Darkwood Leaves, flowering
+        tex = self.load_image_texture("assets/natura/textures/blocks/darkwood_flowering_leaves_fancy.png")
+    elif data == 2: # Darkwood Leaves, fruit
+        tex = self.load_image_texture("assets/natura/textures/blocks/darkwood_fruit_leaves_fancy.png")
+    elif data == 3: # Fusewood Leaves
+        tex = self.load_image_texture("assets/natura/textures/blocks/fusewood_leaves_fancy.png")
+    else:
+        return None
+    return self.build_block(tex, tex)
+
+# Natura: Blue Glowshroom (I:"Blue Glowshroom"=3273)
+block(blockid=3273, top_image="assets/natura/textures/blocks/mushroom_inside_blue.png", transparent=True)
+
+# Natura: Green Glowshroom (I:"Green Glowshroom"=3274)
+block(blockid=3274, top_image="assets/natura/textures/blocks/mushroom_inside_green.png", transparent=True)
+
+# Natura: Purple Glowshroom (I:"Purple Glowshroom"=3275)
+block(blockid=3275, top_image="assets/natura/textures/blocks/mushroom_inside_purple.png", transparent=True)
+
+# Natura: Wood 5 (I:"Rare Log"=3277)
+@material(blockid=3277, data=range(16), solid=True)
+def natura_wood5(self, blockid, data):
+    # data: 0: Maple, 1: Silverbell, 2: Amaranth, 3: Tiger
+    names = ["maple", "silverbell", "purpleheart", "tiger"]
+    top = self.load_image_texture("assets/natura/textures/blocks/%s_heart.png" % names[data & 0x3])
+    side = self.load_image_texture("assets/natura/textures/blocks/%s_bark.png" % names[data & 0x3])
+    return self.build_wood_log(top, side, data)
+
+# Natura: Leaves (I:"Rare Leaves"=3278)
+@material(blockid=3278, data=range(16), transparent=True)
+def natura_leaves4(self, blockid, data):
+    data = data & 7 # The highest bit indicates non-decaying leaves
+    if data == 0: # Maple Leaves NOTE: needs biome coloring FIXME does it?
+        tex = self.load_image_texture("assets/natura/textures/blocks/maple_leaves_fancy.png")
+    elif data == 1: # Silverbell Leaves
+        tex = self.load_image_texture("assets/natura/textures/blocks/silverbell_leaves_fancy.png")
+    elif data == 2: # Amaranth Leaves FIXME does this need biome coloring?
+        tex = self.load_image_texture("assets/natura/textures/blocks/purpleheart_leaves_fancy.png")
+    elif data == 3: # Tigerwood Leaves
+        tex = self.load_image_texture("assets/natura/textures/blocks/tiger_leaves_fancy.png")
+    else:
+        return None
+    return self.build_block(tex, tex)
+
+# Natura: Saplings (I:"Rare Sapling"=3279)
+@material(blockid=3279, data=range(5), transparent=True)
+def natura_sapling2(self, blockid, data):
+    if data == 0: # Maple sapling
+        tex = self.load_image_texture("assets/natura/textures/blocks/maple_sapling.png")
+    elif data == 1: # Silverbell sapling
+        tex = self.load_image_texture("assets/natura/textures/blocks/silverbell_sapling.png")
+    elif data == 2: # Amaranth sapling
+        tex = self.load_image_texture("assets/natura/textures/blocks/purpleheart_sapling.png")
+    elif data == 3: # Tigerwood sapling
+        tex = self.load_image_texture("assets/natura/textures/blocks/tiger_sapling.png")
+    elif data == 4: # Willow sapling
+        tex = self.load_image_texture("assets/natura/textures/blocks/willow_sapling.png")
+    return self.build_sprite(tex)
+
+# Natura: Wood 6 (I:"Willow Log"=3280)
+@material(blockid=3280, data=[0,4,8], solid=True)
+def natura_wood6(self, blockid, data):
+    # data: 0: Willow
+    top = self.load_image_texture("assets/natura/textures/blocks/willow_heart.png")
+    side = self.load_image_texture("assets/natura/textures/blocks/willow_bark.png")
+    return self.build_wood_log(top, side, data)
+
+# Natura: Bluebells (I:Flower=3281)
+sprite(blockid=3281, imagename="assets/natura/textures/blocks/flower_bluebells.png")
+
+# Natura: Thornvines (I:Thornvines=3282)
+@material(blockid=3282, data=range(16), transparent=True)
+def natura_thornvines(self, blockid, data):
+    tex = self.load_image_texture("assets/natura/textures/blocks/thornvine.png")
+    return self.build_vines(tex, data)
+
+# Natura: Crafting Table (I:"Crafting Table"=3283)
+@material(blockid=3283, data=range(13), solid=True)
+def natura_craftingtable(self, blockid, data):
+    # TODO: These have not been verified, since they don't show up in NEI, except the Eucalyptus one
+    names = ["eucalyptus", "sakura", "ghostwood", "redwood", "bloodwood", "hopseed", "maple", "silverbell", "purpleheart",
+    "tiger", "willow", "darkwood", "fusewood"]
+    side3 = self.load_image_texture("assets/natura/textures/blocks/%s_workbench_side.png" % names[data])
+    side4 = self.load_image_texture("assets/natura/textures/blocks/%s_workbench_face.png" % names[data])
+    top = self.load_image_texture("assets/natura/textures/blocks/%s_workbench_top.png" % names[data])
+    return self.build_full_block(top, None, None, side3, side4, None)
+
+# Natura: Bookshelf (I:Bookshelf=3284)
+@material(blockid=3284, data=range(13), solid=True)
+def natura_bookshelf(self, blockid, data):
+    names = ["eucalyptus", "sakura", "ghostwood", "redwood", "bloodwood", "hopseed", "maple", "silverbell", "purpleheart",
+    "tiger", "willow", "darkwood", "fusewood"]
+    top = self.load_image_texture("assets/natura/textures/blocks/%s_planks.png" % names[data])
+    side = self.load_image_texture("assets/natura/textures/blocks/%s_bookshelf.png" % names[data])
+    return self.build_block(top, side)
+
+# Natura: Fences (I:Fence=3285)
+@material(blockid=3285, data=range(256), transparent=True, nospawn=True)
+def natura_fence(self, blockid, data):
+    names = ["eucalyptus", "sakura", "ghostwood", "redwood", "bloodwood", "hopseed", "maple", "silverbell", "purpleheart",
+    "tiger", "willow", "darkwood", "fusewood"]
+    index = data & 0xF
+    if index <= 12:
+        tex = self.load_image_texture("assets/natura/textures/blocks/%s_planks.png" % names[index])
+    else:
+        return None
+    return self.build_fence(tex, data >> 4) # The pseudo data for the adjacent blocks is in the upper 4 bits, see iterate.c
+
+# Natura: Topiary Grass (I:"Topiary Grass Block"=3286)
+@material(blockid=3286, data=range(3), solid=True)
+def natura_topiarygrass(self, blockid, data):
+    # FIXME: I didn't find the right textures, is this the one, but it just gets colored?
+    tex = self.load_image_texture("assets/natura/textures/blocks/grass_top.png")
+    #if data == 0: # Topiary Grass
+    #elif data == 1: # Bluegrass
+    #elif data == 2: # Autumnal Grass
+    return self.build_block(tex, tex)
+
+# Natura: Topiary Grass Slabs (I:"Topiary Grass Slab"=3287)
+@material(blockid=3287, data=range(16), solid=True, transparent=True)
+def natura_topiarygrass_slab(self, blockid, data):
+    # FIXME: I didn't find the right textures, is this the one, but it just gets colored?
+    tex = self.load_image_texture("assets/natura/textures/blocks/grass_top.png")
+    return self.build_slab(tex, tex, data)
+
+# Natura: Slabs 1 (I:"Plank Slab One"=3288)
+@material(blockid=3288, data=range(16), solid=True, transparent=True)
+def natura_slab1(self, blockid, data):
+    names = ["eucalyptus", "sakura", "ghostwood", "redwood", "bloodwood", "hopseed", "maple", "silverbell"]
+    tex = self.load_image_texture("assets/natura/textures/blocks/%s_planks.png" % names[data & 0x7])
+    return self.build_slab(tex, tex, data)
+
+# Natura: Slabs 2 (I:"Plank Slab Two"=3289)
+@material(blockid=3289, data=range(16), solid=True, transparent=True)
+def natura_slab2(self, blockid, data):
+    if data & 0x7 >= 5:
+        return None
+    names = ["purpleheart", "tiger", "willow", "darkwood", "fusewood"]
+    tex = self.load_image_texture("assets/natura/textures/blocks/%s_planks.png" % names[data & 0x7])
+    return self.build_slab(tex, tex, data)
+
+# Natura: Pressure plates (I:"Eucalyputus Pressure Plate"=3304 & I:"Sakura Pressure Plate"=3305 &
+# I:"Ghostwood Pressure Plate"=3306 & I:"Redwood Pressure Plate"=3307 & I:"Bloodwood Pressure Plate"=3308 &
+# I:"Hopseed Pressure Plate"=3309 & I:"Maple Pressure Plate"=3310 & I:"Amaranth Pressure Plate"=3311 &
+# I:"Silverbell Pressure Plate"=3312 & I:"Tigerwood Pressure Plate"=3313 & I:"Willow Pressure Plate"=3314 &
+# I:"Darkwood Pressure Plate"=3315 & I:"Fusewood Pressure Plate"=3316)
+@material(blockid=range(3304, 3317), data=range(2), transparent=True)
+def natura_pressure_plate(self, blockid, data):
+    names = ["eucalyptus", "sakura", "ghostwood", "redwood", "bloodwood", "hopseed", "maple", "purpleheart", "silverbell",
+    "tiger", "willow", "darkwood", "fusewood"]
+    tex = self.load_image_texture("assets/natura/textures/blocks/%s_planks.png" % names[blockid - 3304])
+    return self.build_pressure_plate(tex, data == 1)
+
+# Natura: Trapdoors (I:"Eucalyputus Trapdoor"=3317 & I:"Sakura Trapdoor"=3318 & I:"Ghostwood Trapdoor"=3319 &
+# I:"Redwood Trapdoor"=3320 & I:"Bloodwood Trapdoor"=3321 & I:"Hopseed Trapdoor"=3322 & I:"Maple Trapdoor"=3323 &
+# I:"Amaranth Trapdoor"=3324 & I:"Silverbell Trapdoor"=3325 & I:"Tigerwood Trapdoor"=3326 & I:"Willow Trapdoor"=3327 &
+# I:"Darkwood Trapdoor"=3328 & I:"Fusewood Trapdoor"=3329)
+@material(blockid=range(3317, 3330), data=range(16), transparent=True, nospawn=True)
+def natura_trapdoor(self, blockid, data):
+    names = ["eucalyptus", "sakura", "ghostwood", "redwood", "bloodwood", "hopseed", "maple", "purpleheart", "silverbell",
+    "tiger", "willow", "darkwood", "fusewood"]
+    tex = self.load_image_texture("assets/natura/textures/blocks/%s_planks.png" % names[blockid - 3317])
+    return self.build_trapdoor(tex, data)
+
+# Natura: Fence Gates (I:"Eucalyputus Fence Gate"=3343 & I:"Sakura Fence Gate"=3344 & I:"Ghostwood Fence Gate"=3345 &
+# I:"Redwood Fence Gate"=3346 & I:"Bloodwood Fence Gate"=3347 & I:"Hopseed Fence Gate"=3348 & I:"Maple Fence Gate"=3349 &
+# I:"Silverbell Fence Gate"=3350 & I:"Amaranth Fence Gate"=3351 & I:"Tigerwood Fence Gate"=3352 & I:"Willow Fence Gate"=3353 &
+# I:"Darkwood Fence Gate"=3354 & I:"Fusewood Fence Gate"=3355)
+@material(blockid=range(3343, 3356), data=range(8), transparent=True, nospawn=True)
+def natura_fencegate(self, blockid, data):
+    names = ["eucalyptus", "sakura", "ghostwood", "redwood", "bloodwood", "hopseed", "maple", "silverbell",
+    "purpleheart", "tiger", "willow", "darkwood", "fusewood"]
+    tex = self.load_image_texture("assets/natura/textures/blocks/%s_planks.png" % names[blockid - 3343])
+    return self.build_fence_gate(tex, data)
+
+# Natura: Blaze Rails (I:"Blaze Rail"=3356 & I:"Powered Blaze Rail"=3357 & I:"Detector Blaze Rail"=3358 & I:"Activator Blaze Rail"=3359)
+@material(blockid=[3356,3357,3358,3359], data=range(2), transparent=True)
+def natura_blaze_rails(self, blockid, data):
+    if blockid == 3356: # Blaze Rail
+        tex = self.load_image_texture("assets/natura/textures/blocks/brail_normal.png")
+        #tex = self.load_image_texture("assets/natura/textures/blocks/brail_normal_turned.png")
+    elif blockid == 3357: # Powered Blaze Rail
+        tex = self.load_image_texture("assets/natura/textures/blocks/brail_golden.png")
+        #tex = self.load_image_texture("assets/natura/textures/blocks/brail_golden_powered.png")
+    elif blockid == 3358: # Detector Blaze Rail
+        tex = self.load_image_texture("assets/natura/textures/blocks/brail_detector.png")
+        #tex = self.load_image_texture("assets/natura/textures/blocks/brail_detector_powered.png")
+    elif blockid == 3359: # Activator Blaze Rail
+        tex = self.load_image_texture("assets/natura/textures/blocks/brail_activator.png")
+        #tex = self.load_image_texture("assets/natura/textures/blocks/brail_activator_powered.png")
+    return self.build_pressure_plate(tex, False) # FIXME Add a proper build_rail() method
+
+# Natura: Nether Furnace (I:"Netherrack Furnace"=3360)
+@material(blockid=3360, nodata=True, solid=True)
+def natura_nether_furnace(self, blockid, data):
+    top = self.load_image_texture("assets/natura/textures/blocks/nfurnace_top.png")
+    side = self.load_image_texture("assets/natura/textures/blocks/nfurnace_off.png")
+    return self.build_block(top, side)
+
+# Natura: Obelisk (I:"Respawn Obelisk"=3361)
+@material(blockid=3361, data=range(2), solid=True)
+def natura_obelisk(self, blockid, data):
+    if data == 0: # Obelisk
+        tex = self.load_image_texture("assets/natura/textures/blocks/obelisk.png")
+    elif data == 1: # Obelisk (active) FIXME this is a complete guess!!
+        tex = self.load_image_texture("assets/natura/textures/blocks/obelisk_active.png")
+    return self.build_block(tex, tex)
+
+# Natura: Obelisk (I:"Nether Glass"=3362)
+@material(blockid=3362, data=range(2), solid=True, transparent=True, nospawn=True)
+def natura_nether_glass(self, blockid, data):
+    if data == 0: # Soul Glass
+        tex = self.load_image_texture("assets/natura/textures/blocks/glass_soul.png")
+    elif data == 1: # Heat Glass
+        tex = self.load_image_texture("assets/natura/textures/blocks/glass_heat.png")
+    return self.build_block(tex, tex)
+
+# Natura: Nether Hopper (I:"Blaze Hopper"=3363)
+@material(blockid=3363, data=range(4), solid=True, transparent=True)
+def natura_nether_hopper(self, blockid, data):
+    top = self.load_image_texture("assets/natura/textures/blocks/nhopper_top.png")
+    side = self.load_image_texture("assets/natura/textures/blocks/nhopper_outside.png")
+    bottom = self.load_image_texture("assets/natura/textures/blocks/nhopper_inside.png")
+    return self.build_hopper(top, side, bottom)
+
+# Natura: Nether Pressure Plate (I:"Netherrack Pressure Plate"=3366)
+@material(blockid=3366, data=range(2), transparent=True)
+def natura_nether_pressure_plate(self, blockid, data):
+    tex = self.load_image_texture("assets/minecraft/textures/blocks/netherrack.png")
+    return self.build_pressure_plate(tex, data == 1)
 
 #################################
 #       Mystcraft               #
