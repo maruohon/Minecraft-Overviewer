@@ -114,6 +114,7 @@ base_draw(void *data, RenderState *state, PyObject *src, PyObject *mask, PyObjec
         || state->block == 1922 /* BoP: Willow */
         || (state->block == 1925 && state->block_data != 0 && state->block_data != 10 && state->block_data != 11) /* BoP: Foliage */
         || state->block == 1943 || state->block == 1944 /* BoP: Ivy & Moss */
+        || state->block == 1970 || state->block == 1971 /* BoP: Colourized Leaves */
         || state->block == 3487 /* IC2: Rubber Tree Leaves */
         || state->block == 3148 /* MFR: Vine Scaffolding */
         || state->block == 3259 /* Natura: Leaves (Redwood, Eucalyptus, Hopseed) */
@@ -139,6 +140,8 @@ base_draw(void *data, RenderState *state, PyObject *src, PyObject *mask, PyObjec
                     flip_xy = 1; /* birch foliage color is flipped XY-ways */
                 }
             case 1925: /* BoP: Foliage */
+            case 1970: /* BoP: Colourized Leaves 1 */
+            case 1971: /* BoP: Colourized Leaves 2 */
             case 3487: /* IC2: Rubber Tree Leaves */
             case 3148: /* MFR: Vine Scaffolding */
             case 2406: /* Thaumcraft: Greatwood Leaves */
