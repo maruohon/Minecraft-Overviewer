@@ -1367,6 +1367,17 @@ class Textures(object):
 
         return img
 
+    def build_crops(self, tex):
+        crop1 = self.transform_image_top(tex)
+        crop2 = self.transform_image_side(tex)
+        crop3 = crop2.transpose(Image.FLIP_LEFT_RIGHT)
+
+        img = Image.new("RGBA", (24,24), self.bgcolor)
+        alpha_over(img, crop1, (0,12), crop1)
+        alpha_over(img, crop2, (6,3), crop2)
+        alpha_over(img, crop3, (6,3), crop3)
+        return img
+
     def build_trapdoor(self, tex, data):
         # Rotation; masked to not clobber opened/closed info
         if self.rotation == 1:
@@ -1845,7 +1856,7 @@ block(blockid=15, top_image="assets/minecraft/textures/blocks/iron_ore.png")
 # coal ore
 block(blockid=16, top_image="assets/minecraft/textures/blocks/coal_ore.png")
 
-@material(blockid=[17,162], data=range(12), solid=True)
+@material(blockid=17, data=range(12), solid=True)
 def wood(self, blockid, data):
     # extract orientation and wood type frorm data bits
     wood_type = data & 3
@@ -1858,29 +1869,18 @@ def wood(self, blockid, data):
         elif wood_orientation == 8: wood_orientation = 4
 
     # choose textures
-    if blockid == 17: # regular wood:
-        if wood_type == 0: # normal
-            top = self.load_image_texture("assets/minecraft/textures/blocks/log_oak_top.png")
-            side = self.load_image_texture("assets/minecraft/textures/blocks/log_oak.png")
-        if wood_type == 1: # spruce
-            top = self.load_image_texture("assets/minecraft/textures/blocks/log_spruce_top.png")
-            side = self.load_image_texture("assets/minecraft/textures/blocks/log_spruce.png")
-        if wood_type == 2: # birch
-            top = self.load_image_texture("assets/minecraft/textures/blocks/log_birch_top.png")
-            side = self.load_image_texture("assets/minecraft/textures/blocks/log_birch.png")
-        if wood_type == 3: # jungle wood
-            top = self.load_image_texture("assets/minecraft/textures/blocks/log_jungle_top.png")
-            side = self.load_image_texture("assets/minecraft/textures/blocks/log_jungle.png")
-    elif blockid == 162: # acacia/dark wood:
-        if wood_type == 0: # acacia
-            top = self.load_image_texture("assets/minecraft/textures/blocks/log_acacia_top.png")
-            side = self.load_image_texture("assets/minecraft/textures/blocks/log_acacia.png")
-        elif wood_type == 1: # dark oak
-            top = self.load_image_texture("assets/minecraft/textures/blocks/log_big_oak_top.png")
-            side = self.load_image_texture("assets/minecraft/textures/blocks/log_big_oak.png")
-        else:
-            top = self.load_image_texture("assets/minecraft/textures/blocks/log_acacia_top.png")
-            side = self.load_image_texture("assets/minecraft/textures/blocks/log_acacia.png")
+    if wood_type == 0: # normal
+        top = self.load_image_texture("assets/minecraft/textures/blocks/log_oak_top.png")
+        side = self.load_image_texture("assets/minecraft/textures/blocks/log_oak.png")
+    if wood_type == 1: # spruce
+        top = self.load_image_texture("assets/minecraft/textures/blocks/log_spruce_top.png")
+        side = self.load_image_texture("assets/minecraft/textures/blocks/log_spruce.png")
+    if wood_type == 2: # birch
+        top = self.load_image_texture("assets/minecraft/textures/blocks/log_birch_top.png")
+        side = self.load_image_texture("assets/minecraft/textures/blocks/log_birch.png")
+    if wood_type == 3: # jungle wood
+        top = self.load_image_texture("assets/minecraft/textures/blocks/log_jungle_top.png")
+        side = self.load_image_texture("assets/minecraft/textures/blocks/log_jungle.png")
 
     # choose orientation and paste textures
     if wood_orientation == 0:
@@ -1890,11 +1890,11 @@ def wood(self, blockid, data):
     elif wood_orientation == 8: # north-south orientation
         return self.build_full_block(side, None, None, side.rotate(270), top)
 
-@material(blockid=[18, 161], data=range(16), transparent=True, solid=True)
+@material(blockid=18, data=range(16), transparent=True, solid=True)
 def leaves(self, blockid, data):
     # mask out the bits 4 and 8
     # they are used for player placed and check-for-decay blocks
-    data = data & 0x7
+    data = data & 0x3
     t = self.load_image_texture("assets/minecraft/textures/blocks/leaves_oak.png")
     if (blockid, data) == (18, 1): # pine!
         t = self.load_image_texture("assets/minecraft/textures/blocks/leaves_spruce.png")
@@ -1902,10 +1902,6 @@ def leaves(self, blockid, data):
         t = self.load_image_texture("assets/minecraft/textures/blocks/leaves_birch.png")
     elif (blockid, data) == (18, 3): # jungle tree
         t = self.load_image_texture("assets/minecraft/textures/blocks/leaves_jungle.png")
-    elif (blockid, data) == (161, 4): # acacia tree
-        t = self.load_image_texture("assets/minecraft/textures/blocks/leaves_acacia.png")
-    elif (blockid, data) == (161, 5): 
-        t = self.load_image_texture("assets/minecraft/textures/blocks/leaves_big_oak.png")
     return self.build_block(t, t)
 
 # sponge
@@ -2379,7 +2375,7 @@ def fire(self, blockid, data):
 block(blockid=52, top_image="assets/minecraft/textures/blocks/mob_spawner.png", transparent=True)
 
 # wooden, cobblestone, red brick, stone brick, netherbrick, sandstone, spruce, birch, jungle and quartz stairs.
-@material(blockid=[53,67,108,109,114,128,134,135,136,156,163,164], data=range(128), transparent=True, solid=True, nospawn=True)
+@material(blockid=[53,67,108,109,114,128,134,135,136,156], data=range(128), transparent=True, solid=True, nospawn=True)
 def stairs(self, blockid, data):
     if blockid == 53: # wooden
         top = side = self.load_image_texture("assets/minecraft/textures/blocks/planks_oak.png")
@@ -2401,10 +2397,6 @@ def stairs(self, blockid, data):
         top = side = self.load_image_texture("assets/minecraft/textures/blocks/planks_jungle.png")
     elif blockid == 156: # quartz block stairs
         side = self.load_image_texture("assets/minecraft/textures/blocks/quartz_block_side.png")
-    elif blockid == 163: # acacia wood stairs
-        top = side = self.load_image_texture("assets/minecraft/textures/blocks/planks_acacia.png")
-    elif blockid == 164: # dark oak stairs
-        top = side = self.load_image_texture("assets/minecraft/textures/blocks/planks_big_oak.png")
 
     # sandstone & quartz stairs have special top texture
     if blockid == 128:
@@ -3902,12 +3894,10 @@ def huge_mushroom(self, blockid, data):
 # iron bars and glass pane
 # TODO glass pane is not a sprite, it has a texture for the side,
 # at the moment is not used
-@material(blockid=[101,102, 160], data=range(256), transparent=True, nospawn=True)
+@material(blockid=[101,102], data=range(256), transparent=True, nospawn=True)
 def panes(self, blockid, data):
     if blockid == 101: # Iron Bars
         tex = self.load_image_texture("assets/minecraft/textures/blocks/iron_bars.png")
-    elif blockid == 160: # Stained Glass Panes
-        tex = self.load_image_texture("assets/minecraft/textures/blocks/glass_%s.png" % color_map[data & 0xf])
     else: # Glass Panes
         tex = self.load_image_texture("assets/minecraft/textures/blocks/glass.png")
     return self.build_glass_panes(tex, data)
@@ -4315,15 +4305,7 @@ def crops(self, blockid, data):
         raw_crop = self.load_image_texture("assets/minecraft/textures/blocks/carrots_stage_3.png")
     else: # potatoes
         raw_crop = self.load_image_texture("assets/minecraft/textures/blocks/potatoes_stage_3.png")
-    crop1 = self.transform_image_top(raw_crop)
-    crop2 = self.transform_image_side(raw_crop)
-    crop3 = crop2.transpose(Image.FLIP_LEFT_RIGHT)
-
-    img = Image.new("RGBA", (24,24), self.bgcolor)
-    alpha_over(img, crop1, (0,12), crop1)
-    alpha_over(img, crop2, (6,3), crop2)
-    alpha_over(img, crop3, (6,3), crop3)
-    return img
+    return self.build_crops(raw_crop)
 
 # anvils
 @material(blockid=145, data=range(12), transparent=True)
@@ -4710,6 +4692,828 @@ def ae_world(self, blockid, data):
         t = self.load_image_texture("assets/minecraft/textures/blocks/web.png")
         return self.build_sprite(t)
     return self.build_block(side, side)
+
+######################
+#  Biomes O' Plenty  #
+######################
+
+# BoP: Mud, Quicksand (I:"Mud ID"=160)
+@material(blockid=160, data=range(2), solid=True)
+def bop_mud(self, blockid, data):
+    if data == 0: # Mud
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/mud.png")
+    elif data == 1: # Quicksand
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/quicksand.png")
+    return self.build_block(tex, tex)
+
+# BoP: Dried Dirt (I:"Dried Dirt ID"=161)
+block(blockid=161, top_image="assets/biomesoplenty/textures/blocks/drieddirt.png")
+
+# BoP: Red Rock (I:"Red Rock ID"=162)
+@material(blockid=162, data=range(3), solid=True)
+def bop_redrock(self, blockid, data):
+    if data == 0: # Red Rock
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/redrock.png")
+    elif data == 1: # Red Rock Cobblestone
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/redcobble.png")
+    elif data == 2: # Red Rock Bricks
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/redbrick.png")
+    return self.build_block(tex, tex)
+
+# BoP: Ash Block (I:"Ash Block ID"=163)
+block(blockid=163, top_image="assets/biomesoplenty/textures/blocks/ashblock.png")
+
+# BoP: Ash Stone (I:"Ash Stone ID"=164)
+block(blockid=164, top_image="assets/biomesoplenty/textures/blocks/ashstone.png")
+
+# BoP: Hard Ice (I:"Hard Ice ID"=165)
+block(blockid=165, top_image="assets/biomesoplenty/textures/blocks/hardice.png")
+
+# BoP: Origin Grass (I:"Origin Grass ID"=166)
+@material(blockid=166, nodata=True, solid=True)
+def bop_origin_grass(self, blockid, data):
+    top = self.load_image_texture("assets/biomesoplenty/textures/blocks/origingrass1.png")
+    side = self.load_image_texture("assets/biomesoplenty/textures/blocks/origingrass2.png")
+    return self.build_block(top, side)
+
+# BoP: Hard Sand (I:"Hard Sand ID"=167)
+block(blockid=167, top_image="assets/biomesoplenty/textures/blocks/hardsand.png")
+
+# BoP: Hard Dirt (I:"Hard Dirt ID"=168)
+block(blockid=168, top_image="assets/biomesoplenty/textures/blocks/harddirt.png")
+
+# BoP: Purified Grass Block & Smoldering Grass Block (I:"Holy Grass ID"=169)
+@material(blockid=169, data=range(2), solid=True)
+def bop_purified_grass(self, blockid, data):
+    if data == 0: # Purified Grass Block
+        top = self.load_image_texture("assets/biomesoplenty/textures/blocks/holygrass_top.png")
+        side = self.load_image_texture("assets/biomesoplenty/textures/blocks/holygrass_side.png")
+    elif data == 1: # Smoldering Grass Block
+        top = self.load_image_texture("assets/biomesoplenty/textures/blocks/smolderinggrass_top.png")
+        side = self.load_image_texture("assets/biomesoplenty/textures/blocks/smolderinggrass_side.png")
+    return self.build_block(top, side)
+
+# BoP: Flesh (I:"Flesh ID"=174)
+block(blockid=174, top_image="assets/biomesoplenty/textures/blocks/flesh.png")
+
+# BoP: Long Grass (I:"Long Grass ID"=252)
+@material(blockid=252, nodata=True, solid=True)
+def bop_long_grass(self, blockid, data):
+    top = self.load_image_texture("assets/biomesoplenty/textures/blocks/longgrass1.png")
+    side = self.load_image_texture("assets/biomesoplenty/textures/blocks/longgrass2.png")
+    return self.build_block(top, side)
+
+# BoP: Crag Rock (I:"Crag Rock ID"=253)
+block(blockid=253, top_image="assets/biomesoplenty/textures/blocks/cragrock.png")
+
+# BoP: Skystone (I:"Skystone ID"=254)
+@material(blockid=254, data=range(4), solid=True)
+def bop_skystone(self, blockid, data):
+    if data == 0: # Skystone
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/holystone.png")
+    elif data == 1: # Skystone Cobblestone
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/holycobble.png")
+    elif data == 2: # Skystone Bricks
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/holybrick.png")
+    elif data == 3: # Mossy Skystone
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/holystonemossy.png")
+    return self.build_block(tex, tex)
+
+# BoP: Purified Dirt (I:"Holy Dirt ID"=255)
+block(blockid=255, top_image="assets/biomesoplenty/textures/blocks/holydirt.png")
+
+# BoP: Overgrown Netherrack (I:"Overgrown Netherrack ID"=1917)
+@material(blockid=1917, nodata=True, solid=True)
+def bop_overgrown_netherrack(self, blockid, data):
+    top = self.load_image_texture("assets/biomesoplenty/textures/blocks/overgrownnetherrack1.png")
+    side = self.load_image_texture("assets/biomesoplenty/textures/blocks/overgrownnetherrack2.png")
+    return self.build_block(top, side)
+
+# BoP: Turnip (I:"Turnip Crop ID"=1918)
+@material(blockid=1918, data=range(4), transparent=True)
+def bop_turnip(self, blockid, data):
+    tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/turnip_stage_%d.png" % data)
+    return self.build_sprite(tex)
+
+# BoP: Plants (I:"Plant ID"=1920)
+@material(blockid=1920, data=range(16), transparent=True)
+def bop_plants(self, blockid, data):
+    if data == 0: # Dead Grass
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/deadgrass.png")
+    elif data == 1: # Desert Grass
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/desertgrass.png")
+    elif data == 2: # Desert Sprouts
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/desertsprouts.png")
+    elif data == 3: # Dune Grass
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/dunegrass.png")
+    elif data == 4: # Purified Tall Grass
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/holytallgrass.png")
+    elif data == 5: # Thorns
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/thorn.png")
+    elif data == 6: # Barley
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/barley.png")
+        return self.build_crops(tex)
+    elif data == 7: # Cattail
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/cattail.png")
+        return self.build_crops(tex)
+    elif data == 8: # River Cane
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/rivercane.png")
+    #elif data == 9: # Cattail (top)
+    #    tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/cattailtop.png")
+    #elif data == 10: # Cattail (bottom)
+    #    tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/cattailbottom.png")
+    #elif data == 11: # Wild Carrot
+    #    tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/wildcarrot.png")
+    elif data == 12: # Tiny Cactus
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/cactus.png")
+    elif data == 13: # Wither Wart
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/witherwart.png")
+    elif data == 14: # Reed
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/reed.png")
+        return self.build_crops(tex)
+    elif data == 15: # Root
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/root.png")
+    else:
+        return None
+
+    if data <= 4:
+        return self.build_billboard(tex)
+    else:
+        return self.build_sprite(tex)
+
+# BoP: Flowers (I:"Flower ID"=1921)
+@material(blockid=1921, data=range(16), transparent=True)
+def bop_flowers1(self, blockid, data):
+    if data == 0: # Clover
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/clover.png")
+        img = Image.new("RGBA", (24,24), self.bgcolor)
+        tmp = self.transform_image_top(tex)
+        alpha_over(img, tmp, (0,12), tmp)
+        return img
+    elif data == 1: # Swampflower
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/swampflower.png")
+    elif data == 2: # Deathbloom
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/deadbloom.png")
+    elif data == 3: # Glowflower
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/glowflower.png")
+    elif data == 4: # Blue Hydrangea
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/hydrangea.png")
+    elif data == 5: # Orange Cosmos
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/cosmos.png")
+    elif data == 6: # Pink Daffodil
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/daffodil.png")
+    elif data == 7: # Wildflower
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/wildflower.png")
+    elif data == 8: # Violet
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/violet.png")
+    elif data == 9: # White Anemone
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/anemone.png")
+    elif data == 10: # Waterlily
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/lilyflower.png")
+    elif data == 11: # Chromaflora
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/item_rainbowflower.png")
+    elif data == 12: # Bromeliad
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/bromeliad.png")
+    elif data == 13: # Sunflower (bottom)
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/sunflowerbottom.png")
+    elif data == 14: # Sunflower (top)
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/sunflowertop.png")
+    elif data == 15: # Dandelion Puff
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/dandelion.png")
+    return self.build_sprite(tex)
+
+# BoP: Willow (I:"Willow ID"=1922)
+@material(blockid=1922, data=range(16), transparent=True)
+def bop_willow(self, blockid, data):
+    tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/willow.png")
+    return self.build_vines(tex, data)
+
+# BoP: Leaves 1 (I:"Leaf Block ID 1"=1923)
+@material(blockid=1923, data=range(16), solid=True, transparent=True)
+def bop_leaves1(self, blockid, data):
+    # Note: No biome coloring
+    data = data & 3
+    if data == 0: # Yellow Autumn Leaves
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/leaves_yellowautumn_fancy.png")
+    elif data == 1: # Bamboo Leaves
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/leaves_bamboo_fancy.png")
+    elif data == 2: # Magic Leaves
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/leaves_magic_fancy.png")
+    elif data == 3: # Dark Leaves
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/leaves_dark_fancy.png")
+    return self.build_block(tex, tex)
+
+# BoP: Leaves 2 (I:"Leaf Block ID 2=1924)
+@material(blockid=1924, data=range(16), solid=True, transparent=True)
+def bop_leaves2(self, blockid, data):
+    # Note: No biome coloring
+    data = data & 3
+    if data == 0: # Dying Leaves
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/leaves_dead_fancy.png")
+    elif data == 1: # Fir Leaves
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/leaves_fir_fancy.png")
+    elif data == 2: # Loftwood Leaves
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/leaves_holy_fancy.png")
+    elif data == 3: # Orange Autumn Leaves
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/leaves_orangeautumn_fancy.png")
+    return self.build_block(tex, tex)
+
+# BoP: Tall grass-like stuff (I:"Foliage ID"=1925)
+@material(blockid=1925, data=range(14), transparent=True)
+def bop_foliage(self, blockid, data):
+    # Note: The following need biome coloring: 1: Short Grass, 2: Medium Grass, 3: High GRass (bottom), 4: Bush, 5: Sprout,
+    # 6: High Grass (top), 7: Poison Ivy, 8: Berry Bush, 9: Shrub, 12: Koru, 13: Clover Patch
+    # So basically biome coloring for everything except: 0, 10, 11
+    if data == 0: # Algae
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/algae.png")
+        img = Image.new("RGBA", (24,24), self.bgcolor)
+        tmp = self.transform_image_top(tex)
+        alpha_over(img, tmp, (0,12), tmp)
+        return img
+    elif data == 1: # Short Grass
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/shortgrass.png")
+    elif data == 2: # Mediumgrass
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/mediumgrass.png")
+    elif data == 3: # High Grass (bottom)
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/highgrassbottom.png")
+    elif data == 4: # Bush
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/bush.png")
+    elif data == 5: # Sprout
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/sprout.png")
+    elif data == 6: # High Grass (top)
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/highgrasstop.png")
+    elif data == 7: # Poison Ivy
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/poisonivy.png")
+    elif data == 8: # Berry Bush
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/berrybush.png")
+    elif data == 9: # Shrub
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/shrub.png")
+    elif data == 10: # Wheat Grass
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/wheatgrass.png")
+    elif data == 11: # Damp Grass
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/dampgrass.png")
+    elif data == 12: # Koru
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/koru.png")
+    elif data == 13: # Clover Patch
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/cloverpatch.png")
+        img = Image.new("RGBA", (24,24), self.bgcolor)
+        tmp = self.transform_image_top(tex)
+        alpha_over(img, tmp, (0,12), tmp)
+        return img
+    return self.build_billboard(tex)
+
+# BoP: Apple Leaves (I:"Fruit Leaf Block ID"=1926)
+@material(blockid=1926, data=range(16), solid=True, transparent=True)
+def bop_apple_leaves(self, blockid, data):
+    # 0: Apple leaves, empty; 1: Apple leaves, flower; 2: Apple leaves, raw fruit; 3: Apple leaves, mature fruit
+    data = data & 0x3
+    tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/leaves_apple%d_fancy.png" % data)
+    return self.build_block(tex, tex)
+
+# BoP: Bamboo (I:"Bamboo ID"=1927)
+sprite(blockid=1927, imagename="assets/biomesoplenty/textures/blocks/bamboo.png")
+
+# Bop: Mud Bricks (I:"Mud Bricks ID"=1928)
+block(blockid=1928, top_image="assets/biomesoplenty/textures/blocks/mudbrick.png")
+
+# BoP: Stairs
+#    I:"Mud Brick Stairs ID"=1929
+#    I:"Red Cobble Stairs ID"=1939
+#    I:"Red Brick Stairs ID"=1940
+#    I:"Acacia Stairs ID"=1952
+#    I:"Cherry Stairs ID"=1953
+#    I:"Dark Stairs ID"=1954
+#    I:"Fir Stairs ID"=1955
+#    I:"Holy Stairs ID"=1956
+#    I:"Magic Stairs ID"=1957
+#    I:"Mangrove Stairs ID"=1958
+#    I:"Palm Stairs ID"=1959
+#    I:"Redwood Stairs ID"=1960
+#    I:"Willow Stairs ID"=1961
+#    I:"Skystone Cobble Stairs ID"=1965
+#    I:"Skystone Brick Stairs ID"=1966
+#    I:"Pine Stairs ID"=1975
+#    I:"Hell Bark Stairs ID"=1976
+#    I:"Jacaranda ID"=1977
+@material(blockid=[1929,1939,1940,1952,1953,1954,1955,1956,1957,1958,1959,1960,1961,1965,1966,1975,1976,1977], data=range(128), transparent=True, solid=True, nospawn=True)
+def bop_stairs(self, blockid, data):
+    if blockid == 1929: # Mud Brick Stairs
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/mudbrick.png")
+    elif blockid == 1939: # Red Rock Cobblestone Stairs
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/redcobble.png")
+    elif blockid == 1940: # Red Rock Bricks Stairs
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/redbrick.png")
+    elif blockid == 1952: # Acacia Wood Stairs
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/plank_acacia.png")
+    elif blockid == 1953: # Cherry Wood Stairs
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/plank_cherry.png")
+    elif blockid == 1954: # Dark Wood Stairs
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/plank_dark.png")
+    elif blockid == 1955: # Fir Wood Stairs
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/plank_fir.png")
+    elif blockid == 1956: # Loftwood Wood Stairs
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/plank_holy.png")
+    elif blockid == 1957: # Magic Wood Stairs
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/plank_magic.png")
+    elif blockid == 1958: # Mangrove Wood Stairs
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/plank_mangrove.png")
+    elif blockid == 1959: # Palm Wood Stairs
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/plank_palm.png")
+    elif blockid == 1960: # Redwood Wood Stairs
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/plank_redwood.png")
+    elif blockid == 1961: # Willow Wood Stairs
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/plank_willow.png")
+    elif blockid == 1965: # Skystone Cobblestone Stairs
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/holycobble.png")
+    elif blockid == 1966: # Skystone Bricks Stairs
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/holybrick.png")
+    elif blockid == 1975: # Pine Wood Stairs
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/plank_pine.png")
+    elif blockid == 1976: # Hellbark Wood Stairs
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/plank_hell_bark.png")
+    elif blockid == 1977: # Jacaranda Wood Stairs
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/plank_jacaranda.png")
+    return self.build_stairs(tex, tex, data)
+
+# BoP: Double Slabs (I:"Stone Double Slab ID"=1930)
+@material(blockid=1930, data=range(5), solid=True)
+def bop_doubleslabs1(self, blockid, data):
+    if data == 0: # Red Rock Cobblestone Slab
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/redcobble.png")
+    elif data == 1: # Red Rock Bricks Slab
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/redbrick.png")
+    elif data == 2: # Mud Bricks Slab
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/mudbrick.png")
+    elif data == 3: # Skystone Cobblestone Slabs
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/holycobble.png")
+    elif data == 4: # Skystone Bricks Slab
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/holybrick.png")
+    return self.build_block(tex, tex)
+
+# Bop: Slabs (I:"Stone Single Slab ID"=1931)
+@material(blockid=1931, data=range(16), solid=True)
+def bop_slabs1(self, blockid, data):
+    blocktype = data & 7 # Top bit indicates upper half slab
+    if blocktype == 0: # Red Rock Cobblestone Slab
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/redcobble.png")
+    elif blocktype == 1: # Red Rock Bricks Slab
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/redbrick.png")
+    elif blocktype == 2: # Mud Bricks Slab
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/mudbrick.png")
+    elif blocktype == 3: # Skystone Cobblestone Slabs
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/holycobble.png")
+    elif blocktype == 4: # Skystone Bricks Slab
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/holybrick.png")
+    else:
+        return None
+    return self.build_slab(tex, tex, data)
+
+# BoP: Tree Moss (I:"Tree Moss ID"=1932)
+@material(blockid=1932, data=range(16), transparent=True)
+def bop_treemoss(self, blockid, data):
+    tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/treemoss.png")
+    return self.build_vines(tex, data)
+
+# BoP: Logs 1 (I:"Log Block ID 1"=1933)
+@material(blockid=1933, data=range(16), solid=True)
+def bop_log1(self, blockid, data):
+    wood_type = data & 3
+    if wood_type == 0: # Acacia Wood
+        top = self.load_image_texture("assets/biomesoplenty/textures/blocks/log_acacia_heart.png")
+        side = self.load_image_texture("assets/biomesoplenty/textures/blocks/log_acacia_side.png")
+    elif wood_type == 1: # Cherry Wood
+        top = self.load_image_texture("assets/biomesoplenty/textures/blocks/log_cherry_heart.png")
+        side = self.load_image_texture("assets/biomesoplenty/textures/blocks/log_cherry_side.png")
+    elif wood_type == 2: # Dark Wood
+        top = self.load_image_texture("assets/biomesoplenty/textures/blocks/log_dark_heart.png")
+        side = self.load_image_texture("assets/biomesoplenty/textures/blocks/log_dark_side.png")
+    elif wood_type == 3: # Fir Wood
+        top = self.load_image_texture("assets/biomesoplenty/textures/blocks/log_fir_heart.png")
+        side = self.load_image_texture("assets/biomesoplenty/textures/blocks/log_fir_side.png")
+    return self.build_wood_log(top, side, data)
+
+# BoP: Logs 2 (I:"Log Block ID 2"=1934)
+@material(blockid=1934, data=range(16), solid=True)
+def bop_log2(self, blockid, data):
+    wood_type = data & 3
+    if wood_type == 0: # Loftwood Wood
+        top = self.load_image_texture("assets/biomesoplenty/textures/blocks/log_holy_heart.png")
+        side = self.load_image_texture("assets/biomesoplenty/textures/blocks/log_holy_side.png")
+    elif wood_type == 1: # Magic Wood
+        top = self.load_image_texture("assets/biomesoplenty/textures/blocks/log_magic_heart.png")
+        side = self.load_image_texture("assets/biomesoplenty/textures/blocks/log_magic_side.png")
+    elif wood_type == 2: # Mangrove Wood
+        top = self.load_image_texture("assets/biomesoplenty/textures/blocks/log_mangrove_heart.png")
+        side = self.load_image_texture("assets/biomesoplenty/textures/blocks/log_mangrove_side.png")
+    elif wood_type == 3: # Palm Wood
+        top = self.load_image_texture("assets/biomesoplenty/textures/blocks/log_palm_heart.png")
+        side = self.load_image_texture("assets/biomesoplenty/textures/blocks/log_palm_side.png")
+    return self.build_wood_log(top, side, data)
+
+# BoP: Logs 3 (I:"Log Block ID 3"=1935)
+@material(blockid=1935, data=range(16), solid=True)
+def bop_log3(self, blockid, data):
+    wood_type = data & 3
+    if wood_type == 0: # Redwood Wood
+        top = self.load_image_texture("assets/biomesoplenty/textures/blocks/log_redwood_heart.png")
+        side = self.load_image_texture("assets/biomesoplenty/textures/blocks/log_redwood_side.png")
+    elif wood_type == 1: # Willow Wood
+        top = self.load_image_texture("assets/biomesoplenty/textures/blocks/log_willow_heart.png")
+        side = self.load_image_texture("assets/biomesoplenty/textures/blocks/log_willow_side.png")
+    elif wood_type == 2: # Dead Wood
+        top = self.load_image_texture("assets/biomesoplenty/textures/blocks/log_dead_heart.png")
+        side = self.load_image_texture("assets/biomesoplenty/textures/blocks/log_dead_side.png")
+    elif wood_type == 3: # Giant Flower Stem
+        top = self.load_image_texture("assets/biomesoplenty/textures/blocks/bigflowerstem_heart.png")
+        side = self.load_image_texture("assets/biomesoplenty/textures/blocks/bigflowerstem_side.png")
+    return self.build_wood_log(top, side, data)
+
+# BoP: Giant Flowers (I:"Petal ID"=1936)
+@material(blockid=1936, data=range(2), solid=True)
+def bop_giantflower(self, blockid, data):
+    if data == 0: # Giant Red Flower
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/bigflowerred.png")
+    elif data == 1: # Giant Yellow Flower
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/bigfloweryellow.png")
+    return self.build_block(tex, tex)
+
+# BoP: Saplings (I:"Sapling ID"=1937)
+@material(blockid=1937, data=range(16), transparent=True)
+def bop_saplings1(self, blockid, data):
+    if data == 0: # Apple Sapling
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/sapling_apple.png")
+    elif data == 1: # Yellow Autumn Sapling
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/sapling_yellowautumn.png")
+    elif data == 2: # Bamboo Sapling
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/sapling_bamboo.png")
+    elif data == 3: # Magic Sapling
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/sapling_magic.png")
+    elif data == 4: # Dark Sapling
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/sapling_dark.png")
+    elif data == 5: # Dying Sapling
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/sapling_dead.png")
+    elif data == 6: # Fir Sapling
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/sapling_fir.png")
+    elif data == 7: # Loftwood Sapling
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/sapling_holy.png")
+    elif data == 8: # Orange Autumn Sapling
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/sapling_orangeautumn.png")
+    elif data == 9: # Origin Sapling
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/sapling_origin.png")
+    elif data == 10: # Pink Cherry Sapling
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/sapling_pinkcherry.png")
+    elif data == 11: # Maple Sapling
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/sapling_maple.png")
+    elif data == 12: # White Cherry Sapling
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/sapling_whitecherry.png")
+    elif data == 13: # Hellbark Sapling
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/sapling_hellbark.png")
+    elif data == 14: # Jacaranda Sapling
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/sapling_jacaranda.png")
+    elif data == 15: # Persimmon Sapling
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/sapling_persimmon.png")
+    return self.build_sprite(tex)
+
+# BoP: Colourized Saplins (I:"Colourized Sapling ID"=1938)
+@material(blockid=1938, data=range(7), transparent=True)
+def bop_saplings2(self, blockid, data):
+    if data == 0: # Acacia Sapling
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/sapling_acacia.png")
+    elif data == 1: # Mangrove Sapling
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/sapling_mangrove.png")
+    elif data == 2: # Palm Sapling
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/sapling_palm.png")
+    elif data == 3: # Redwood Sapling
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/sapling_redwood.png")
+    elif data == 4: # Willow Sapling
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/sapling_willow.png")
+    elif data == 5: # Pine Sapling
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/sapling_pine.png")
+    elif data == 6: # Sacred Oak
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/sapling_sacredoak.png")
+    return self.build_sprite(tex)
+
+# BoP: Promised Land Portal (I:"Promised Land Portal ID"=1941)
+block(blockid=1941, top_image="assets/biomesoplenty/textures/blocks/portal.png", transparent=True)
+
+# BoP: Ores and storage blocks (I:"Amethyst Ore ID"=1942)
+@material(blockid=1942, data=range(14), solid=True)
+def bop_ores(self, blockid, data):
+    if data == 0: # Amethyst Ore
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/amethystore.png")
+    elif data == 1: # Block of Amethyst
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/amethystblock.png")
+    elif data == 2: # Ruby Ore
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/rubyore.png")
+    elif data == 3: # Block of Ruby
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/rubyblock.png")
+    elif data == 4: # Peridot Ore
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/peridotore.png")
+    elif data == 5: # Block of Peridot
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/peridotblock.png")
+    elif data == 6: # Topaz Ore
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/topazore.png")
+    elif data == 7: # Block of Topaz
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/topazblock.png")
+    elif data == 8: # Tanzanite Ore
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/tanzaniteore.png")
+    elif data == 9: # Block of Tanzanite
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/tanzaniteblock.png")
+    elif data == 10: # Malachite Ore
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/malachiteore.png")
+    elif data == 11: # Block of Malachite
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/malachiteblock.png")
+    elif data == 12: # Sapphire Ore
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/sapphireore.png")
+    elif data == 13: # Block of Sapphire
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/sapphireblock.png")
+    return self.build_block(tex, tex)
+
+# BoP: Ivy & Moss (I:"Ivy ID"=1943 & I:"Moss ID"=1944)
+@material(blockid=[1943,1944], data=range(16), transparent=True)
+def bop_ivy(self, blockid, data):
+    if blockid == 1943: # Ivy
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/ivy.png")
+    elif blockid == 1944: # Moss
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/moss.png")
+    return self.build_vines(tex, data)
+
+# BoP: Leaves 3 (I:"Leaf Block ID 3"=1945)
+@material(blockid=1945, data=range(16), transparent=True)
+def bop_leaves3(self, blockid, data):
+    # Note: No biome coloring
+    data = data & 3
+    if data == 0: # Origin Leaves
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/leaves_origin_fancy.png")
+    elif data == 1: # Pink Cherry Leaves
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/leaves_pinkcherry_fancy.png")
+    elif data == 2: # Maple Leaves
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/leaves_maple_fancy.png")
+    elif data == 3: # White Cherry Leaves
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/leaves_whitecherry_fancy.png")
+    return self.build_block(tex, tex)
+
+# BoP: Leaves 4 (I:"Leaf Block ID 4"=1946)
+@material(blockid=1946, data=range(16), transparent=True)
+def bop_leaves4(self, blockid, data):
+    # Note: No biome coloring
+    data = data & 3
+    if data == 0: # Hellbark Leaves
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/leaves_origin_fancy.png")
+    elif data == 1: # Jacaranda Leaves
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/leaves_pinkcherry_fancy.png")
+    else:
+        return None
+    return self.build_block(tex, tex)
+
+# BoP: Wood Planks (I:"Planks ID"=1947)
+@material(blockid=1947, data=range(14), solid=True)
+def bop_planks1(self, blockid, data):
+    if data == 0: # Acacia Wood Planks/Slab
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/plank_acacia.png")
+    elif data == 1: # Cherry Wood Planks/Slab
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/plank_cherry.png")
+    elif data == 2: # Dark Wood Planks/Slab
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/plank_dark.png")
+    elif data == 3: # Fir Wood Planks/Slab
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/plank_fir.png")
+    elif data == 4: # Loftwood Wood Planks/Slab
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/plank_holy.png")
+    elif data == 5: # Magic Wood Planks/Slab
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/plank_magic.png")
+    elif data == 6: # Mangrove Wood Planks/Slab
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/plank_mangrove.png")
+    elif data == 7: # Palm Wood Planks/Slab
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/plank_palm.png")
+    elif data == 8: # Redwood Wood Planks
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/plank_redwood.png")
+    elif data == 9: # Willow Wood Planks
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/plank_willow.png")
+    elif data == 10: # Bamboo Thatching
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/bamboothatching.png")
+    elif data == 11: # Pine Wood Planks
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/plank_pine.png")
+    elif data == 12: # Hellbark Wood Planks
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/plank_hell_bark.png")
+    elif data == 13: # Jacaranda Wood Planks
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/plank_jacaranda.png")
+    return self.build_block(tex, tex)
+
+# BoP: Wooden Double Slabs (I:"Wooden Double Slab 1 ID"=1948)
+# BoP: Wooden Slabs 2 (I:"Wooden Single Slab 1 ID"=1949)
+@material(blockid=[1948,1949], data=range(16), solid=True)
+def bop_doubleslabs2(self, blockid, data):
+    wood_type = data & 0x7
+    if wood_type == 0: # Acacia Wood Planks/Slab
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/plank_acacia.png")
+    elif wood_type == 1: # Cherry Wood Planks/Slab
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/plank_cherry.png")
+    elif wood_type == 2: # Dark Wood Planks/Slab
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/plank_dark.png")
+    elif wood_type == 3: # Fir Wood Planks/Slab
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/plank_fir.png")
+    elif wood_type == 4: # Loftwood Wood Planks/Slab
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/plank_holy.png")
+    elif wood_type == 5: # Magic Wood Planks/Slab
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/plank_magic.png")
+    elif wood_type == 6: # Mangrove Wood Planks/Slab
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/plank_mangrove.png")
+    elif wood_type == 7: # Palm Wood Planks/Slab
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/plank_palm.png")
+
+    if blockid == 1948: # Double Slabs
+        return self.build_block(tex, tex)
+    elif blockid == 1949: # Slabs
+        return self.build_slab(tex, tex, data)
+
+# BoP: Wooden Double Slabs 2 (I:"Wooden Double Slab 2 ID"=1950)
+# BoP: Wooden Slabs 2 (I:"Wooden Single Slab 2 ID"=1951)
+@material(blockid=[1950,1951], data=range(16), solid=True)
+def bop_doubleslabs3(self, blockid, data):
+    wood_type = data & 0x7
+    if wood_type == 0: # Redwood Wood Slab
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/plank_redwood.png")
+    elif wood_type == 1: # Willow Wood Slab
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/plank_willow.png")
+    elif wood_type == 2: # Pine Wood Slab
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/plank_pine.png")
+    elif wood_type == 3: # Hellbark Wood Slab
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/plank_hell_bark.png")
+    elif wood_type == 4: # Jacaranda Wood Slab
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/plank_jacaranda.png")
+    else:
+        return None
+
+    if blockid == 1950: # Double Slabs
+        return self.build_block(tex, tex)
+    elif blockid == 1951: # Slabs
+        return self.build_slab(tex, tex, data)
+
+# BoP: Celestial Crystal (I:"Crystal ID"=1963)
+block(blockid=1963, top_image="assets/biomesoplenty/textures/blocks/crystal.png")
+
+# BoP: Cloud (I:"Cloud ID"=1964)
+block(blockid=1964, top_image="assets/biomesoplenty/textures/blocks/cloud.png", transparent=True)
+
+# BoP: Mushrooms (I:"Mushroom ID"=1967)
+@material(blockid=1967, data=range(5), transparent=True)
+def bop_mushrooms(self, blockid, data):
+    if data == 0: # Toadstool
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/toadstool.png")
+    elif data == 1: # Portobello
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/portobello.png")
+    elif data == 2: # Blue Milk Cap
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/bluemilk.png")
+    elif data == 3: # Glowshroom
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/glowshroom.png")
+    elif data == 4: # Flat Mushroom
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/flatmushroom.png")
+    return self.build_billboard(tex)
+
+# BoP: Bone Segments (I:"Bones ID"=1968) TODO: proper sizes and orientations
+block(blockid=1968, top_image="assets/biomesoplenty/textures/blocks/bones_large.png")
+
+# BoP: Corals (I:"Coral ID"=1969)
+@material(blockid=1969, data=range(3, 8), transparent=True, fluid=True)
+def bop_coral(self, blockid, data):
+    if data == 3: # Kelp
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/kelptop.png")
+    elif data == 4: # Pink Coral
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/pinkcoral.png")
+    elif data == 5: # Orange Coral
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/orangecoral.png")
+    elif data == 6: # Blue Coral
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/bluecoral.png")
+    elif data == 7: # Glowing Coral
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/glowcoral.png")
+    return self.build_sprite(tex)
+
+# BoP: Leaves 5 (I:"Colourized Leaves 1 ID"=1970)
+@material(blockid=1970, data=range(16), transparent=True, solid=True)
+def bop_leaves5(self, blockid, data):
+    leaf_type = data & 0x3
+    if leaf_type == 0: # Acacia Leaves
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/leaves_acacia_fancy.png")
+    elif leaf_type == 1: # Mangrove Leaves
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/leaves_mangrove_fancy.png")
+    elif leaf_type == 2: # Palm Leaves
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/leaves_palm_fancy.png")
+    elif leaf_type == 3: # Redwood Leaves
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/leaves_redwood_fancy.png")
+    return self.build_block(tex, tex)
+
+# BoP: Leaves 6 (I:"Colourized Leaves 2 ID"=1971)
+@material(blockid=1971, data=range(16), transparent=True, solid=True)
+def bop_leaves6(self, blockid, data):
+    leaf_type = data & 0x3
+    if leaf_type == 0: # Willow Leaves
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/leaves_willow_fancy.png")
+    elif leaf_type == 1: # Pine Leaves
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/leaves_pine_fancy.png")
+    else:
+        return None
+    return self.build_block(tex, tex)
+
+# BoP: Logs 4 (I:"Log Block ID 4"=1974)
+@material(blockid=1974, data=range(16), solid=True)
+def bop_log4(self, blockid, data):
+    wood_type = data & 0x3
+    if wood_type == 0: # Pine Wood
+        top = self.load_image_texture("assets/biomesoplenty/textures/blocks/log_pine_heart.png")
+        side = self.load_image_texture("assets/biomesoplenty/textures/blocks/log_pine_side.png")
+    elif wood_type == 1: # Hellbark Wood
+        top = self.load_image_texture("assets/biomesoplenty/textures/blocks/log_hellbark_heart.png")
+        side = self.load_image_texture("assets/biomesoplenty/textures/blocks/log_hellbark_side.png")
+    elif wood_type == 2: # Jacaranda Wood
+        top = self.load_image_texture("assets/biomesoplenty/textures/blocks/log_jacaranda_heart.png")
+        side = self.load_image_texture("assets/biomesoplenty/textures/blocks/log_jacaranda_side.png")
+    else:
+        return None
+
+    return self.build_wood_log(top, side, data)
+
+# BoP: Puddle (I:"Puddle ID"=1980)
+@material(blockid=1980, nodata=True, fluid=True)
+def bop_puddle(self, blockid, data):
+    water = self.load_water()
+    dirt = self.load_image_texture("assets/minecraft/textures/blocks/dirt.png")
+    return self.build_full_block((water, 2), dirt, dirt, dirt, dirt, None)
+
+# BoP: Gravestone (I:"Grave ID"=1981)
+
+# BoP: Leaves 8 (I:"Fruit Leaf Block 2 ID"=1982)
+@material(blockid=1982, data=range(16), transparent=True, solid=True)
+def bop_leaves5(self, blockid, data):
+    # 0: Persimmon Leaves (empty)
+    # 1: Persimmon Leaves (flower)
+    # 2: Persimmon Leaves (raw fruit)
+    # 3: Persimmon Leaves (mature fruit)
+    tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/leaves_persimmon%d_fancy.png" % (data & 0x3))
+    return self.build_block(tex, tex)
+
+# BoP: Flowers 2 (I:"Flower 2 ID"=1983)
+@material(blockid=1983, data=range(8), transparent=True)
+def bop_flowers2(self, blockid, data):
+    if data == 0: # Pink Hibiscus
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/hibiscus.png")
+    elif data == 1: # Lily of the Valley
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/lilyofthevalley.png")
+    elif data == 2: # Burning Blossom
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/burningblossom.png")
+    elif data == 3: # Lavender
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/lavender.png")
+    elif data == 4: # Goldenrod
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/goldenrod.png")
+    elif data == 5: # Bluebells
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/bluebells.png")
+    elif data == 6: # Miner's Delight
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/minersdelight.png")
+    elif data == 7: # Icy Iris
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/icyiris.png")
+    return self.build_sprite(tex)
+
+# BoP: Hive Blocks (I:"Hive ID"=1984)
+@material(blockid=1984, data=range(4), solid=True)
+def bop_hive(self, blockid, data):
+    if data == 0: # Honeycomb Block
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/honeycomb.png")
+    elif data == 1: # Hive Block
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/hive.png")
+    elif data == 2: # Empty Honeycomb Block
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/honeycombempty.png")
+    elif data == 3: # Filled Honeycomb Block
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/honeycombfilled.png")
+    return self.build_block(tex, tex)
+
+# BoP: Spring Water (I:"Spring Water Still ID (ID before this must be free!)"=1985)
+@material(blockid=1985, data=range(16), fluid=True, transparent=True, nospawn=True)
+def bop_springwater(self, blockid, data):
+    tex = self.load_image("assets/biomesoplenty/textures/blocks/spring_water_still.png").crop((0,0,16,16))
+    return self.build_block(tex, tex)
+
+# BoP: Liquid Poison (I:"Liquid Poison Still ID (ID before this must be free!)"=1987)
+@material(blockid=1987, data=range(16), fluid=True, transparent=True, nospawn=True)
+def bop_liquidpoison(self, blockid, data):
+    tex = self.load_image("assets/biomesoplenty/textures/blocks/liquid_poison_still.png").crop((0,0,16,16))
+    return self.build_block(tex, tex)
+
+# BoP: Liquid Honey (I:"Honey Still ID (ID before this must be free!)"=1989)
+@material(blockid=1989, data=range(16), fluid=True, transparent=True, nospawn=True)
+def bop_liquidhoney(self, blockid, data):
+    tex = self.load_image("assets/biomesoplenty/textures/blocks/honey_still.png").crop((0,0,16,16))
+    return self.build_block(tex, tex)
+
+# BoP: Honey Block (I:"Honey Block ID"=1991)
+block(blockid=1991, top_image="assets/biomesoplenty/textures/blocks/honeyblock.png", transparent=True)
+
+# BoP: Stalagmite & Stalactite (I:"Stone Formations ID"=1992)
+@material(blockid=1992, data=range(2), transparent=True, nospawn=True)
+def bop_stoneformations(self, blockid, data):
+    if data == 0: # Stalagmite
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/stalagmite.png")
+    elif data == 1: # Stalactite
+        tex = self.load_image_texture("assets/biomesoplenty/textures/blocks/stalactite.png")
+    return self.build_sprite(tex)
 
 
 #################################
@@ -5966,6 +6770,7 @@ def mfr_rubber_wood(self, blockid, data):
 # MFR: Rubber Leaves (I:ID.RubberLeaves=3123)
 @material(blockid=3123, data=range(2), solid=True, transparent=True)
 def mfr_rubber_leaves(self, blockid, data):
+    data = data & 0x3
     if data == 0:
         tex = self.load_image_texture("assets/minefactoryreloaded/textures/blocks/tile.mfr.rubberwood.leaves.transparent.png")
     else:
@@ -6329,29 +7134,27 @@ def natura_berrybushes(self, blockid, data):
 # Natura: Leaves (I:"Sakura Leaves"=3258)
 @material(blockid=3258, data=range(16), transparent=True, solid=True)
 def natura_leaves1(self, blockid, data):
-    data = data & 7 # The highest bit indicates non-decaying leaves(?)
-    if data == 4: # Sakura Leaves
+    data = data & 3
+    if data == 0: # Sakura Leaves
         tex = self.load_image_texture("assets/natura/textures/blocks/sakura_leaves_fancy.png")
-    elif data == 5: # Ghostwood Leaves
+    elif data == 1: # Ghostwood Leaves
         tex = self.load_image_texture("assets/natura/textures/blocks/ghostwood_leaves_fancy.png")
-    elif data == 6: # Bloodleaves
+    elif data == 2: # Bloodleaves
         tex = self.load_image_texture("assets/natura/textures/blocks/bloodwood_leaves_fancy.png")
-    elif data == 7: # Willow leaves
+    elif data == 3: # Willow leaves
         tex = self.load_image_texture("assets/natura/textures/blocks/willow_leaves_fancy.png")
-    else:
-        return None
     return self.build_block(tex, tex)
 
 # Natura: Leaves (I:"Flora Leaves"=3259)
 @material(blockid=3259, data=range(16), solid=False, transparent=False)
 def natura_leaves2(self, blockid, data):
     # NOTE: Can't be marked as transparent, because the Redwood leaves will turn black, since they block light
-    data = data & 7 # The highest bit indicates non-decaying leaves(?)
-    if data == 4: # Redwood Leaves NOTE: needs biome coloring
+    data = data & 3
+    if data == 0: # Redwood Leaves NOTE: needs biome coloring
         tex = self.load_image_texture("assets/natura/textures/blocks/redwood_leaves_fancy.png")
-    elif data == 5: # Eucalyptus Leaves NOTE: needs biome coloring
+    elif data == 1: # Eucalyptus Leaves NOTE: needs biome coloring
         tex = self.load_image_texture("assets/natura/textures/blocks/eucalyptus_leaves_fancy.png")
-    elif data == 6: # Hopseed Leaves TODO does this need biome coloring?
+    elif data == 2: # Hopseed Leaves TODO does this need biome coloring?
         tex = self.load_image_texture("assets/natura/textures/blocks/hopseed_leaves_fancy.png")
     else:
         return None
@@ -6425,14 +7228,14 @@ def natura_wood4(self, blockid, data):
 # Natura: Darkwood & Fusewood Leaves (I:"Darkwood Leaves"=3272)
 @material(blockid=3272, data=range(16), transparent=True, solid=True)
 def natura_leaves3(self, blockid, data):
-    data = data & 7 # The highest bit indicates non-decaying leaves
-    if data == 4: # Darkwood Leaves, empty
+    data = data & 3
+    if data == 0: # Darkwood Leaves, empty
         tex = self.load_image_texture("assets/natura/textures/blocks/darkwood_leaves_fancy.png")
-    elif data == 5: # Darkwood Leaves, flowering
+    elif data == 1: # Darkwood Leaves, flowering
         tex = self.load_image_texture("assets/natura/textures/blocks/darkwood_flowering_leaves_fancy.png")
-    elif data == 6: # Darkwood Leaves, fruit
+    elif data == 2: # Darkwood Leaves, fruit
         tex = self.load_image_texture("assets/natura/textures/blocks/darkwood_fruit_leaves_fancy.png")
-    elif data == 7: # Fusewood Leaves
+    elif data == 3: # Fusewood Leaves
         tex = self.load_image_texture("assets/natura/textures/blocks/fusewood_leaves_fancy.png")
     else:
         return None
@@ -6459,7 +7262,7 @@ def natura_wood5(self, blockid, data):
 # Natura: Leaves (I:"Rare Leaves"=3278)
 @material(blockid=3278, data=range(16), transparent=True)
 def natura_leaves4(self, blockid, data):
-    data = data & 7 # The highest bit indicates non-decaying leaves
+    data = data & 3
     if data == 0: # Maple Leaves NOTE: needs biome coloring
         tex = self.load_image_texture("assets/natura/textures/blocks/maple_leaves_fancy.png")
     elif data == 1: # Silverbell Leaves NO biome coloring!
@@ -6468,8 +7271,6 @@ def natura_leaves4(self, blockid, data):
         tex = self.load_image_texture("assets/natura/textures/blocks/purpleheart_leaves_fancy.png")
     elif data == 3: # Tigerwood Leaves NOTE: Needs biome coloring
         tex = self.load_image_texture("assets/natura/textures/blocks/tiger_leaves_fancy.png")
-    else:
-        return None
     return self.build_block(tex, tex)
 
 # Natura: Saplings (I:"Rare Sapling"=3279)
@@ -7042,12 +7843,15 @@ def thaumcraft_wood(self, blockid, data):
     return self.build_wood_log(top, side, data)
 
 # Thaumcraft: Leaves (I:BlockMagicalLeaves=2406)
-@material(blockid=2406, data=range(2), transparent=True)
+@material(blockid=2406, data=range(16), transparent=True)
 def thaumcraft_leaves(self, blockid, data):
+    data = data & 0x3
     if data == 0: # Greatwood Leaves
         tex = self.load_image_texture("assets/thaumcraft/textures/blocks/greatwoodleaves.png")
     elif data == 1: # Silverwood Leaves
         tex = self.load_image_texture("assets/thaumcraft/textures/blocks/silverwoodleaves.png")
+    else:
+        return None
     return self.build_block(tex, tex)
 
 # Thaumcraft: Devices (I:BlockMetalDevice=2408)

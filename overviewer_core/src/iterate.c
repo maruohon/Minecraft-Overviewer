@@ -249,6 +249,11 @@ is_stairs(int block) {
     /*
      * Determines if a block is stairs of any material
      */
+
+    if (block >= 1952 && block <= 1961) { /* BoP: Various wooden stairs */
+        return 1;
+    }
+
     switch (block) {
         case 53: /* oak wood stairs */
         case 67: /* cobblestone stairs */
@@ -260,8 +265,14 @@ is_stairs(int block) {
         case 135: /* birch wood stairs */
         case 136: /* jungle wood stairs */
         case 156: /* quartz stairs */
-        case 163: /* acacia wood stairs */
-        case 164: /* dark wood stairs */
+        case 1929: /* BoP: Mud Brick Stairs */
+        case 1939: /* BoP: Red Rock Cobblestone Stairs */
+        case 1940: /* BoP: Red Rock Bricks Stairs */
+        case 1965: /* BoP: Skystone Cobblestone Stairs */
+        case 1966: /* BoP: Skystone Bricks Stairs */
+        case 1975: /* BoP: Pine Wood Stairs */
+        case 1976: /* BoP: Hellbark Wood Stairs */
+        case 1977: /* BoP: Jacaranda Wood Stairs */
         case 1396: /* Forestry: Stairs */
         case 1222: /* Natura: Stairs (start) */
         case 3291:
@@ -423,7 +434,7 @@ generate_pseudo_data(RenderState *state, unsigned short ancilData) {
         }
         return final_data;
 
-    } else if ((state->block == 101) || (state->block == 102) || (state->block == 160)
+    } else if ((state->block == 101) || (state->block == 102)
             || (state->block == 3130) /* MFR Glass Panes */
             || (state->block == 3228) || (state->block == 3229) /* Tinkers' Construct: Clear Glass Panes & Stained Glass Panes */
             ) {
@@ -744,7 +755,7 @@ chunk_render(PyObject *self, PyObject *args) {
                         (state.block == 101) || (state.block == 102) ||
                         (state.block == 111) || (state.block == 113) ||
                         (state.block == 139) || (state.block == 175) || 
-                        (state.block == 160) || (state.block == 95) ||
+                        (state.block == 95) ||
                         (state.block == 146) ||
                         (state.block == 1394) || (state.block == 1418) || /* Forestry Fences */
                         (state.block == 459) || (state.block == 460) || /* Railcraft: Posts (= Fences) */

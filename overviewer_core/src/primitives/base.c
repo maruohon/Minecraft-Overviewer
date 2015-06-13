@@ -97,7 +97,7 @@ base_draw(void *data, RenderState *state, PyObject *src, PyObject *mask, PyObjec
         /* water */
         state->block == 8 || state->block == 9 ||
         /* leaves */
-        state->block == 18 || state->block == 161 ||
+        state->block == 18 ||
         /* tallgrass, but not dead shrubs */
         (state->block == 31 && state->block_data != 0) ||
         /* pumpkin/melon stem, not fully grown. Fully grown stems
@@ -111,6 +111,9 @@ base_draw(void *data, RenderState *state, PyObject *src, PyObject *mask, PyObjec
         (state->block == 175 && (state->block_data == 2 || state->block_data == 3)) ||
         /* doublePlant grass & ferns tops */
         (state->block == 175 && below_block == 175 && (below_data == 2 || below_data == 3))
+        || state->block == 1922 /* BoP: Willow */
+        || (state->block == 1925 && state->block_data != 0 && state->block_data != 10 && state->block_data != 11) /* BoP: Foliage */
+        || state->block == 1943 || state->block == 1944 /* BoP: Ivy & Moss */
         || state->block == 3487 /* IC2: Rubber Tree Leaves */
         || state->block == 3148 /* MFR: Vine Scaffolding */
         || state->block == 3259 /* Natura: Leaves (Redwood, Eucalyptus, Hopseed) */
@@ -135,7 +138,7 @@ base_draw(void *data, RenderState *state, PyObject *src, PyObject *mask, PyObjec
                 {
                     flip_xy = 1; /* birch foliage color is flipped XY-ways */
                 }
-            case 161:
+            case 1925: /* BoP: Foliage */
             case 3487: /* IC2: Rubber Tree Leaves */
             case 3148: /* MFR: Vine Scaffolding */
             case 2406: /* Thaumcraft: Greatwood Leaves */
@@ -152,6 +155,9 @@ base_draw(void *data, RenderState *state, PyObject *src, PyObject *mask, PyObjec
             case 106: /* vines */
             case 111: /* lily pads */
             case 175: /* doublePlant grass & ferns */
+            case 1922: /* BoP: Willow */
+            case 1943: /* BoP: Ivy */
+            case 1944: /* BoP: Moss */
                 color_table = self->grasscolor;
                 break;
             default:
