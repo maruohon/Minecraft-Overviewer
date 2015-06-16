@@ -70,6 +70,56 @@ base_occluded(void *data, RenderState *state, int x, int y, int z) {
     return 0;
 }
 
+int get_custom_color_multiplier(PrimitiveBase *self, PyObject *color_table, Biome *biome_table) {
+    int color_multiplier = 0xFFFFFF;
+
+    if (color_table == self->watercolor) {
+        color_multiplier = biome_table->watercolor;
+    }
+    else if (color_table == self->grasscolor) {
+        color_multiplier = biome_table->grasscolor;
+    }
+    else if (color_table == self->foliagecolor) {
+        color_multiplier = biome_table->foliagecolor;
+    }
+
+    return color_multiplier;
+}
+
+unsigned int get_color_multiplier_from_temp_rain(PyObject *color_table, Biome *biome_table, unsigned char flip_xy) {
+    float temp = biome_table->temperature;
+    float rain = biome_table->rainfall;
+    unsigned char tablex, tabley;
+    PyObject *color = NULL;
+    unsigned int r, g, b;
+
+    /* second coordinate is actually scaled to fit inside the triangle, so store it in rain */
+    rain *= temp;
+
+    /* make sure they're sane */
+    temp = CLAMP(temp, 0.0, 1.0);
+    rain = CLAMP(rain, 0.0, 1.0);
+
+    /* convert to x/y coordinates in color table */
+    tablex = 255 - (255 * temp);
+    tabley = 255 - (255 * rain);
+
+    if (flip_xy) {
+        unsigned char tmp = 255 - tablex;
+        tablex = 255 - tabley;
+        tabley = tmp;
+    }
+
+    /* look up color! */
+    color = PySequence_GetItem(color_table, tabley * 256 + tablex);
+    r = PyInt_AsLong(PyTuple_GET_ITEM(color, 0));
+    g = PyInt_AsLong(PyTuple_GET_ITEM(color, 1));
+    b = PyInt_AsLong(PyTuple_GET_ITEM(color, 2));
+    Py_DECREF(color);
+
+    return (r << 16) | (g << 8) | b;
+}
+
 static void
 base_draw(void *data, RenderState *state, PyObject *src, PyObject *mask, PyObject *mask_light) {
     PrimitiveBase *self = (PrimitiveBase *)data;
@@ -112,7 +162,7 @@ base_draw(void *data, RenderState *state, PyObject *src, PyObject *mask, PyObjec
         /* doublePlant grass & ferns tops */
         (state->block == 175 && below_block == 175 && (below_data == 2 || below_data == 3))
         || state->block == 1922 /* BoP: Willow */
-        || (state->block == 1925 /*&& state->block_data != 0 && state->block_data != 10 && state->block_data != 11*/) /* BoP: Foliage */
+        || (state->block == 1925) /* BoP: Foliage */
         || state->block == 1943 || state->block == 1944 /* BoP: Ivy & Moss */
         || state->block == 1970 || state->block == 1971 /* BoP: Colourized Leaves */
         || state->block == 3487 /* IC2: Rubber Tree Leaves */
@@ -125,8 +175,8 @@ base_draw(void *data, RenderState *state, PyObject *src, PyObject *mask, PyObjec
     {
         /* do the biome stuff! */
         PyObject *facemask = mask;
-        unsigned char r = 255, g = 255, b = 255;
         PyObject *color_table = NULL;
+        unsigned int r = 0, g = 0, b = 0;
         unsigned char flip_xy = 0;
         
         switch (state->block) {
@@ -134,12 +184,12 @@ base_draw(void *data, RenderState *state, PyObject *src, PyObject *mask, PyObjec
             case 9:
                 color_table = self->watercolor;
                 break;
+
             case 18: /* leaves */
                 if (state->block_data == 2) /* Birch Leaves */
                 {
                     flip_xy = 1; /* birch foliage color is flipped XY-ways */
                 }
-            case 1925: /* BoP: Foliage */
             case 1970: /* BoP: Colourized Leaves 1 */
             case 1971: /* BoP: Colourized Leaves 2 */
             case 3487: /* IC2: Rubber Tree Leaves */
@@ -150,6 +200,7 @@ base_draw(void *data, RenderState *state, PyObject *src, PyObject *mask, PyObjec
             case 3278: /* Natura: Leaves (Maple, Amaranth, Tiger; NO Silverbell!!) */
                 color_table = self->foliagecolor;
                 break;
+
             case 2: /* grass */
                 facemask = self->grass_texture;
             case 31: /* tall grass */
@@ -159,6 +210,7 @@ base_draw(void *data, RenderState *state, PyObject *src, PyObject *mask, PyObjec
             case 111: /* lily pads */
             case 175: /* doublePlant grass & ferns */
             case 1922: /* BoP: Willow */
+            case 1925: /* BoP: Foliage */
             case 1943: /* BoP: Ivy */
             case 1944: /* BoP: Moss */
                 color_table = self->grasscolor;
@@ -166,110 +218,47 @@ base_draw(void *data, RenderState *state, PyObject *src, PyObject *mask, PyObjec
             default:
                 break;
         };
-            
+
         if (color_table) {
             unsigned char biome;
             int dx, dz;
-            unsigned char tablex, tabley;
-            float temp = 0.0, rain = 0.0;
-            unsigned int multr = 0, multg = 0, multb = 0;
-            unsigned int color_multiplier = 0;
             int tmp;
-            PyObject *color = NULL;
 
             if (self->use_biomes) {
                 /* average over all neighbors */
                 for (dx = -1; dx <= 1; dx++) {
                     for (dz = -1; dz <= 1; dz++) {
                         biome = get_data(state, BIOMES, state->x + dx, state->y, state->z + dz);
+
                         if (biome >= NUM_BIOMES) {
-                            /* note -- biome 255 shows up on map borders.
-                               who knows what it is? certainly not I.
-                            */
                             biome = DEFAULT_BIOME; /* forest -- reasonable default */
                         }
-                    
-                        temp += biome_table[biome].temperature;
-                        rain += biome_table[biome].rainfall;
 
-                        if (color_table == self->watercolor) {
-                            color_multiplier = biome_table[biome].watercolor;
-                        }
-                        else if (color_table == self->grasscolor) {
-                            color_multiplier = biome_table[biome].grasscolor;
-                        }
-                        else if (color_table == self->foliagecolor) {
-                            color_multiplier = biome_table[biome].foliagecolor;
+                        /* First get the custom color multiplier for the block type. */
+                        tmp = get_custom_color_multiplier(self, color_table, &biome_table[biome]);
+
+                        /* If there is no custom color multiplier, then we get the tint color based
+                           on the temperature and rainfall, from the color table. */
+                        if (tmp == 0xFFFFFF) {
+                            tmp = get_color_multiplier_from_temp_rain(color_table, &biome_table[biome], flip_xy);
                         }
 
-                        multr += (color_multiplier >> 16) & 0xFF;
-                        multg += (color_multiplier >> 8) & 0xFF;
-                        multb += color_multiplier & 0xFF;
+                        r += (tmp >> 16) & 0xFF;
+                        g += (tmp >> 8) & 0xFF;
+                        b += tmp & 0xFF;
                     }
                 }
-                
-                temp /= 9.0;
-                rain /= 9.0;
-                multr /= 9;
-                multg /= 9;
-                multb /= 9;
+
+                r /= 9;
+                g /= 9;
+                b /= 9;
             } else {
                 /* don't use biomes, just use the default */
-                temp = biome_table[DEFAULT_BIOME].temperature;
-                rain = biome_table[DEFAULT_BIOME].rainfall;
+                tmp = get_color_multiplier_from_temp_rain(color_table, &biome_table[DEFAULT_BIOME], flip_xy);
 
-                if (color_table == self->watercolor) {
-                    color_multiplier = biome_table[DEFAULT_BIOME].watercolor;
-                }
-                else if (color_table == self->grasscolor) {
-                    color_multiplier = biome_table[DEFAULT_BIOME].grasscolor;
-                }
-                else if (color_table == self->foliagecolor) {
-                    color_multiplier = biome_table[DEFAULT_BIOME].foliagecolor;
-                }
-
-                multr += (color_multiplier >> 16) & 0xFF;
-                multg += (color_multiplier >> 8) & 0xFF;
-                multb += color_multiplier & 0xFF;
-            }
-
-            /* No custom color multiplier, calculate the color from the temperature and rainfall and look up from the color table. */
-            if (color_multiplier == 0xFFFFFF) {
-                /* second coordinate is actually scaled to fit inside the triangle, so store it in rain */
-                rain *= temp;
-
-                /* make sure they're sane */
-                temp = CLAMP(temp, 0.0, 1.0);
-                rain = CLAMP(rain, 0.0, 1.0);
-
-                /* convert to x/y coordinates in color table */
-                tablex = 255 - (255 * temp);
-                tabley = 255 - (255 * rain);
-
-                if (flip_xy) {
-                    unsigned char tmp = 255 - tablex;
-                    tablex = 255 - tabley;
-                    tabley = tmp;
-                }
-
-                /* look up color! */
-                color = PySequence_GetItem(color_table, tabley * 256 + tablex);
-                r = PyInt_AsLong(PyTuple_GET_ITEM(color, 0));
-                g = PyInt_AsLong(PyTuple_GET_ITEM(color, 1));
-                b = PyInt_AsLong(PyTuple_GET_ITEM(color, 2));
-                Py_DECREF(color);
-
-                /* do the after-coloration */
-                r = MULDIV255(r, multr, tmp);
-                g = MULDIV255(g, multg, tmp);
-                b = MULDIV255(b, multb, tmp);
-            }
-            /* Custom color multiplier defined, it takes precedence over the temperature/rainfall and color table method.
-               Note: This isn't correct on the border of biomes where one has the custom multiplier and the other doesn't. */
-            else {
-                r = multr;
-                g = multg;
-                b = multb;
+                r = (tmp >> 16) & 0xFF;
+                g = (tmp >> 8) & 0xFF;
+                b = tmp & 0xFF;
             }
         }
         
