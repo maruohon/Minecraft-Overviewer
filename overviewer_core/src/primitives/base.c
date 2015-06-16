@@ -112,7 +112,7 @@ base_draw(void *data, RenderState *state, PyObject *src, PyObject *mask, PyObjec
         /* doublePlant grass & ferns tops */
         (state->block == 175 && below_block == 175 && (below_data == 2 || below_data == 3))
         || state->block == 1922 /* BoP: Willow */
-        || (state->block == 1925 && state->block_data != 0 && state->block_data != 10 && state->block_data != 11) /* BoP: Foliage */
+        || (state->block == 1925 /*&& state->block_data != 0 && state->block_data != 10 && state->block_data != 11*/) /* BoP: Foliage */
         || state->block == 1943 || state->block == 1944 /* BoP: Ivy & Moss */
         || state->block == 1970 || state->block == 1971 /* BoP: Colourized Leaves */
         || state->block == 3487 /* IC2: Rubber Tree Leaves */
@@ -173,9 +173,10 @@ base_draw(void *data, RenderState *state, PyObject *src, PyObject *mask, PyObjec
             unsigned char tablex, tabley;
             float temp = 0.0, rain = 0.0;
             unsigned int multr = 0, multg = 0, multb = 0;
+            unsigned int color_multiplier = 0;
             int tmp;
             PyObject *color = NULL;
-            
+
             if (self->use_biomes) {
                 /* average over all neighbors */
                 for (dx = -1; dx <= 1; dx++) {
@@ -190,9 +191,20 @@ base_draw(void *data, RenderState *state, PyObject *src, PyObject *mask, PyObjec
                     
                         temp += biome_table[biome].temperature;
                         rain += biome_table[biome].rainfall;
-                        multr += biome_table[biome].r;
-                        multg += biome_table[biome].g;
-                        multb += biome_table[biome].b;
+
+                        if (color_table == self->watercolor) {
+                            color_multiplier = biome_table[biome].watercolor;
+                        }
+                        else if (color_table == self->grasscolor) {
+                            color_multiplier = biome_table[biome].grasscolor;
+                        }
+                        else if (color_table == self->foliagecolor) {
+                            color_multiplier = biome_table[biome].foliagecolor;
+                        }
+
+                        multr += (color_multiplier >> 16) & 0xFF;
+                        multg += (color_multiplier >> 8) & 0xFF;
+                        multb += color_multiplier & 0xFF;
                     }
                 }
                 
@@ -205,39 +217,60 @@ base_draw(void *data, RenderState *state, PyObject *src, PyObject *mask, PyObjec
                 /* don't use biomes, just use the default */
                 temp = biome_table[DEFAULT_BIOME].temperature;
                 rain = biome_table[DEFAULT_BIOME].rainfall;
-                multr = biome_table[DEFAULT_BIOME].r;
-                multg = biome_table[DEFAULT_BIOME].g;
-                multb = biome_table[DEFAULT_BIOME].b;
+
+                if (color_table == self->watercolor) {
+                    color_multiplier = biome_table[DEFAULT_BIOME].watercolor;
+                }
+                else if (color_table == self->grasscolor) {
+                    color_multiplier = biome_table[DEFAULT_BIOME].grasscolor;
+                }
+                else if (color_table == self->foliagecolor) {
+                    color_multiplier = biome_table[DEFAULT_BIOME].foliagecolor;
+                }
+
+                multr += (color_multiplier >> 16) & 0xFF;
+                multg += (color_multiplier >> 8) & 0xFF;
+                multb += color_multiplier & 0xFF;
             }
-            
-            /* second coordinate is actually scaled to fit inside the triangle
-               so store it in rain */
-            rain *= temp;
-            
-            /* make sure they're sane */
-            temp = CLAMP(temp, 0.0, 1.0);
-            rain = CLAMP(rain, 0.0, 1.0);
-            
-            /* convert to x/y coordinates in color table */
-            tablex = 255 - (255 * temp);
-            tabley = 255 - (255 * rain);
-            if (flip_xy) {
-                unsigned char tmp = 255 - tablex;
-                tablex = 255 - tabley;
-                tabley = tmp;
+
+            /* No custom color multiplier, calculate the color from the temperature and rainfall and look up from the color table. */
+            if (color_multiplier == 0xFFFFFF) {
+                /* second coordinate is actually scaled to fit inside the triangle, so store it in rain */
+                rain *= temp;
+
+                /* make sure they're sane */
+                temp = CLAMP(temp, 0.0, 1.0);
+                rain = CLAMP(rain, 0.0, 1.0);
+
+                /* convert to x/y coordinates in color table */
+                tablex = 255 - (255 * temp);
+                tabley = 255 - (255 * rain);
+
+                if (flip_xy) {
+                    unsigned char tmp = 255 - tablex;
+                    tablex = 255 - tabley;
+                    tabley = tmp;
+                }
+
+                /* look up color! */
+                color = PySequence_GetItem(color_table, tabley * 256 + tablex);
+                r = PyInt_AsLong(PyTuple_GET_ITEM(color, 0));
+                g = PyInt_AsLong(PyTuple_GET_ITEM(color, 1));
+                b = PyInt_AsLong(PyTuple_GET_ITEM(color, 2));
+                Py_DECREF(color);
+
+                /* do the after-coloration */
+                r = MULDIV255(r, multr, tmp);
+                g = MULDIV255(g, multg, tmp);
+                b = MULDIV255(b, multb, tmp);
             }
-            
-            /* look up color! */
-            color = PySequence_GetItem(color_table, tabley * 256 + tablex);
-            r = PyInt_AsLong(PyTuple_GET_ITEM(color, 0));
-            g = PyInt_AsLong(PyTuple_GET_ITEM(color, 1));
-            b = PyInt_AsLong(PyTuple_GET_ITEM(color, 2));
-            Py_DECREF(color);
-            
-            /* do the after-coloration */
-            r = MULDIV255(r, multr, tmp);
-            g = MULDIV255(g, multg, tmp);
-            b = MULDIV255(b, multb, tmp);
+            /* Custom color multiplier defined, it takes precedence over the temperature/rainfall and color table method.
+               Note: This isn't correct on the border of biomes where one has the custom multiplier and the other doesn't. */
+            else {
+                r = multr;
+                g = multg;
+                b = multb;
+            }
         }
         
         /* final coloration */
