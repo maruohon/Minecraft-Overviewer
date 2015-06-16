@@ -208,11 +208,11 @@ static Biome biome_table[] = {
     {"", 0.0, 0.0, 0xFFFFFF, 0xFFFFFF, 0xFFFFFF},
     {"", 0.0, 0.0, 0xFFFFFF, 0xFFFFFF, 0xFFFFFF},
     {"", 0.0, 0.0, 0xFFFFFF, 0xFFFFFF, 0xFFFFFF},
-    {"", 0.0, 0.0, 0xFFFFFF, 0xFFFFFF, 0xFFFFFF},   /* 160 */
-    {"", 0.0, 0.0, 0xFFFFFF, 0xFFFFFF, 0xFFFFFF},
-    {"", 0.0, 0.0, 0xFFFFFF, 0xFFFFFF, 0xFFFFFF},
-    {"", 0.0, 0.0, 0xFFFFFF, 0xFFFFFF, 0xFFFFFF},
-    {"", 0.0, 0.0, 0xFFFFFF, 0xFFFFFF, 0xFFFFFF},
+    {"Ocean Oil Field", 0.5, 0.5, 0xFFFFFF, 0xFFFFFF, 0xFFFFFF},                    /* 160 */   /* Buildcraft: I:oilOcean=160 ; BiomeGenOilOcean */
+    {"Desert Oil Field", 2.0, 0.0, 0xFFFFFF, 0xFFFFFF, 0xFFFFFF},                               /* Buildcraft: I:oilDesert=161 ; BiomeGenOilDesert */
+    {"Tainted Land", 0.5, 0.5, 7160201, 8154503, 13373832},                                     /* Thaumcraft: I:biome_taint=162 ; BiomeGenTaint */
+    {"Magical Forest", 0.7, 0.6, 5635969, 6750149, 30702},                                      /* Thaumcraft: I:biome_magical_forest=163 ; BiomeGenMagicalForest */
+    {"Eerie", 0.5, 0.5, 4212800, 4215616, 3035999},                                             /* Thaumcraft: I:biome_eerie=164 ; BiomeGenEerie */
     {"", 0.0, 0.0, 0xFFFFFF, 0xFFFFFF, 0xFFFFFF},   /* 165 */
     {"", 0.0, 0.0, 0xFFFFFF, 0xFFFFFF, 0xFFFFFF},
     {"", 0.0, 0.0, 0xFFFFFF, 0xFFFFFF, 0xFFFFFF},
