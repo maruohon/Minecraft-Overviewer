@@ -3279,101 +3279,14 @@ def jukebox(self, blockid, data):
     return self.build_block(self.load_image_texture("assets/minecraft/textures/blocks/jukebox_top.png"), self.load_image_texture("assets/minecraft/textures/blocks/noteblock.png"))
 
 # nether and normal fences
-# uses pseudo-ancildata found in iterate.c
-@material(blockid=[85, 113], data=range(16), transparent=True, nospawn=True)
+@material(blockid=[85, 113], data=range(0,256,16), transparent=True, nospawn=True)
 def fence(self, blockid, data):
-    # no need for rotations, it uses pseudo data.
-    # create needed images for Big stick fence
-    if blockid == 85: # normal fence
-        fence_top = self.load_image_texture("assets/minecraft/textures/blocks/planks_oak.png").copy()
-        fence_side = self.load_image_texture("assets/minecraft/textures/blocks/planks_oak.png").copy()
-        fence_small_side = self.load_image_texture("assets/minecraft/textures/blocks/planks_oak.png").copy()
-    else: # netherbrick fence
-        fence_top = self.load_image_texture("assets/minecraft/textures/blocks/nether_brick.png").copy()
-        fence_side = self.load_image_texture("assets/minecraft/textures/blocks/nether_brick.png").copy()
-        fence_small_side = self.load_image_texture("assets/minecraft/textures/blocks/nether_brick.png").copy()
-
-    # generate the textures of the fence
-    ImageDraw.Draw(fence_top).rectangle((0,0,5,15),outline=(0,0,0,0),fill=(0,0,0,0))
-    ImageDraw.Draw(fence_top).rectangle((10,0,15,15),outline=(0,0,0,0),fill=(0,0,0,0))
-    ImageDraw.Draw(fence_top).rectangle((0,0,15,5),outline=(0,0,0,0),fill=(0,0,0,0))
-    ImageDraw.Draw(fence_top).rectangle((0,10,15,15),outline=(0,0,0,0),fill=(0,0,0,0))
-
-    ImageDraw.Draw(fence_side).rectangle((0,0,5,15),outline=(0,0,0,0),fill=(0,0,0,0))
-    ImageDraw.Draw(fence_side).rectangle((10,0,15,15),outline=(0,0,0,0),fill=(0,0,0,0))
-
-    # Create the sides and the top of the big stick
-    fence_side = self.transform_image_side(fence_side)
-    fence_other_side = fence_side.transpose(Image.FLIP_LEFT_RIGHT)
-    fence_top = self.transform_image_top(fence_top)
-
-    # Darken the sides slightly. These methods also affect the alpha layer,
-    # so save them first (we don't want to "darken" the alpha layer making
-    # the block transparent)
-    sidealpha = fence_side.split()[3]
-    fence_side = ImageEnhance.Brightness(fence_side).enhance(0.9)
-    fence_side.putalpha(sidealpha)
-    othersidealpha = fence_other_side.split()[3]
-    fence_other_side = ImageEnhance.Brightness(fence_other_side).enhance(0.8)
-    fence_other_side.putalpha(othersidealpha)
-
-    # Compose the fence big stick
-    fence_big = Image.new("RGBA", (24,24), self.bgcolor)
-    alpha_over(fence_big,fence_side, (5,4),fence_side)
-    alpha_over(fence_big,fence_other_side, (7,4),fence_other_side)
-    alpha_over(fence_big,fence_top, (0,0),fence_top)
+    if blockid == 85: # oak fence
+        tex = self.load_image_texture("assets/minecraft/textures/blocks/planks_oak.png")
+    else: # nether brick fence
+        tex = self.load_image_texture("assets/minecraft/textures/blocks/nether_brick.png")
     
-    # Now render the small sticks.
-    # Create needed images
-    ImageDraw.Draw(fence_small_side).rectangle((0,0,15,0),outline=(0,0,0,0),fill=(0,0,0,0))
-    ImageDraw.Draw(fence_small_side).rectangle((0,4,15,6),outline=(0,0,0,0),fill=(0,0,0,0))
-    ImageDraw.Draw(fence_small_side).rectangle((0,10,15,16),outline=(0,0,0,0),fill=(0,0,0,0))
-    ImageDraw.Draw(fence_small_side).rectangle((0,0,4,15),outline=(0,0,0,0),fill=(0,0,0,0))
-    ImageDraw.Draw(fence_small_side).rectangle((11,0,15,15),outline=(0,0,0,0),fill=(0,0,0,0))
-
-    # Create the sides and the top of the small sticks
-    fence_small_side = self.transform_image_side(fence_small_side)
-    fence_small_other_side = fence_small_side.transpose(Image.FLIP_LEFT_RIGHT)
-    
-    # Darken the sides slightly. These methods also affect the alpha layer,
-    # so save them first (we don't want to "darken" the alpha layer making
-    # the block transparent)
-    sidealpha = fence_small_other_side.split()[3]
-    fence_small_other_side = ImageEnhance.Brightness(fence_small_other_side).enhance(0.9)
-    fence_small_other_side.putalpha(sidealpha)
-    sidealpha = fence_small_side.split()[3]
-    fence_small_side = ImageEnhance.Brightness(fence_small_side).enhance(0.9)
-    fence_small_side.putalpha(sidealpha)
-
-    # Create img to compose the fence
-    img = Image.new("RGBA", (24,24), self.bgcolor)
-
-    # Position of fence small sticks in img.
-    # These postitions are strange because the small sticks of the 
-    # fence are at the very left and at the very right of the 16x16 images
-    pos_top_left = (2,3)
-    pos_top_right = (10,3)
-    pos_bottom_right = (10,7)
-    pos_bottom_left = (2,7)
-    
-    # +x axis points top right direction
-    # +y axis points bottom right direction
-    # First compose small sticks in the back of the image, 
-    # then big stick and thecn small sticks in the front.
-
-    if (data & 0b0001) == 1:
-        alpha_over(img,fence_small_side, pos_top_left,fence_small_side)                # top left
-    if (data & 0b1000) == 8:
-        alpha_over(img,fence_small_other_side, pos_top_right,fence_small_other_side)    # top right
-        
-    alpha_over(img,fence_big,(0,0),fence_big)
-        
-    if (data & 0b0010) == 2:
-        alpha_over(img,fence_small_other_side, pos_bottom_left,fence_small_other_side)      # bottom left    
-    if (data & 0b0100) == 4:
-        alpha_over(img,fence_small_side, pos_bottom_right,fence_small_side)                  # bottom right
-    
-    return img
+    return self.build_fence(tex, data >> 4) # The pseudo data for the adjacent blocks is in the upper 4 bits, see iterate.c
 
 # pumpkin
 @material(blockid=[86, 91], data=range(4), solid=True)
@@ -4283,7 +4196,7 @@ def beacon(self, blockid, data):
 
 # cobblestone and mossy cobblestone walls
 # one additional bit of data value added for mossy and cobblestone
-@material(blockid=139, data=range(256), transparent=True, nospawn=True)
+@material(blockid=139, data=range(0,256,16) + range(1,256,16), transparent=True, nospawn=True)
 def cobblestone_wall(self, blockid, data):
     # no rotation, uses pseudo data
     if (data & 0x1) == 0: # Cobblestone
@@ -7538,6 +7451,88 @@ def mystcraft_inkmixer(self, blockid, data):
 # Mystcraft: Bookbinder (I:block.bookbinder.id=1285)
 block(blockid=1285, top_image="assets/mystcraft/textures/blocks/bookbinder_side.png")
 
+
+####################
+#   Project: Red   #
+####################
+
+# Project: Red: Ores (I:block_oresID=2130)
+@material(blockid=2130, data=range(3), solid=True)
+def projred_ores(self, blockid, data):
+    if data == 0: # Ruby
+        tex = self.load_image_texture("assets/projectred/textures/blocks/ore/oreruby.png")
+    elif data == 1: # Sapphire
+        tex = self.load_image_texture("assets/projectred/textures/blocks/ore/oresapphire.png")
+    elif data == 2: # Peridot
+        tex = self.load_image_texture("assets/projectred/textures/blocks/ore/oreperidot.png")
+    return self.build_block(tex, tex)
+
+# Project: Red: Blocks (I:block_stonesID=2131)
+@material(blockid=2131, data=range(8), solid=True)
+def projred_blocks(self, blockid, data):
+    if data == 0: # Marble
+        tex = self.load_image_texture("assets/projectred/textures/blocks/ore/stonemarble.png")
+    elif data == 1: # Marble Brick
+        tex = self.load_image_texture("assets/projectred/textures/blocks/ore/brickmarble.png")
+    elif data == 2: # Basalt Cobblestone
+        tex = self.load_image_texture("assets/projectred/textures/blocks/ore/cobblebasalt.png")
+    elif data == 3: # Basalt
+        tex = self.load_image_texture("assets/projectred/textures/blocks/ore/stonebasalt.png")
+    elif data == 4: # Basalt Brick
+        tex = self.load_image_texture("assets/projectred/textures/blocks/ore/brickbasalt.png")
+    elif data == 5: # Block of Ruby
+        tex = self.load_image_texture("assets/projectred/textures/blocks/ore/storageruby.png")
+    elif data == 6: # Block of Sapphire
+        tex = self.load_image_texture("assets/projectred/textures/blocks/ore/storagesapphire.png")
+    elif data == 7: # Block of Peridot
+        tex = self.load_image_texture("assets/projectred/textures/blocks/ore/storageperidot.png")
+    return self.build_block(tex, tex)
+
+# Project: Red: Lamps (I:block_lampID=2132)
+@material(blockid=2132, data=range(16), solid=True)
+def projred_lamps(self, blockid, data):
+    # FIXME is this correct?
+    tex = self.load_image_texture("assets/projectred/textures/blocks/lights/lampon/%d.png" % data)
+    return self.build_block(tex, tex)
+
+# Project: Red: Walls (I:block_stoneWallsID=2135)
+@material(blockid=2135, data=range(256), solid=True, transparent=True)
+def projred_walls(self, blockid, data):
+    meta = data & 0x7
+    if meta == 0: # Marble
+        tex = self.load_image_texture("assets/projectred/textures/blocks/ore/stonemarble.png")
+    elif meta == 1: # Marble Brick
+        tex = self.load_image_texture("assets/projectred/textures/blocks/ore/brickmarble.png")
+    elif meta == 2: # Basalt Cobblestone
+        tex = self.load_image_texture("assets/projectred/textures/blocks/ore/cobblebasalt.png")
+    elif meta == 3: # Basalt
+        tex = self.load_image_texture("assets/projectred/textures/blocks/ore/stonebasalt.png")
+    elif meta == 4: # Basalt Brick
+        tex = self.load_image_texture("assets/projectred/textures/blocks/ore/brickbasalt.png")
+    elif meta == 5: # Block of Ruby
+        tex = self.load_image_texture("assets/projectred/textures/blocks/ore/storageruby.png")
+    elif meta == 6: # Block of Sapphire
+        tex = self.load_image_texture("assets/projectred/textures/blocks/ore/storagesapphire.png")
+    elif meta == 7: # Block of Peridot
+        tex = self.load_image_texture("assets/projectred/textures/blocks/ore/storageperidot.png")
+    return self.build_wall(tex, tex, data)
+
+# Project: Red: Stained Leaves (I:block_dyeLeafID=2136)
+@material(blockid=2136, data=range(16), solid=True, transparent=True)
+def projred_leaves(self, blockid, data):
+    tex = self.load_image_texture("assets/projectred/textures/blocks/ore/leaves1.png")
+    colors = ['#ffffff', '#c88435', '#cc57dd', '#6ea5d1', '#dddd3a', '#8ad11c', '#dd92be', '#575757', '#9e9e9e', '#5792af', '#8442b9', '#3a57cc', '#6a4f35', '#75923a', '#9e3535', '#181818']
+    tex = self.tint_texture2(tex, colors[data])
+    return self.build_block(tex, tex)
+
+# Project: Red: Stained Saplings (I:block_dyeSaplingID=2137)
+@material(blockid=2137, data=range(16), solid=False, transparent=True)
+def projred_saplings(self, blockid, data):
+    tex = self.load_image_texture("assets/projectred/textures/blocks/ore/sapling.png")
+    colors = ['#ffffff', '#c88435', '#cc57dd', '#6ea5d1', '#dddd3a', '#8ad11c', '#dd92be', '#575757', '#9e9e9e', '#5792af', '#8442b9', '#3a57cc', '#6a4f35', '#75923a', '#9e3535', '#181818']
+    tex = self.tint_texture2(tex, colors[data])
+    return self.build_sprite(tex)
+
 #################
 #   Railcraft   #
 #################
@@ -8649,7 +8644,7 @@ def tic_slimy_leaves(self, blockid, data):
     return self.build_block(tex, tex)
 
 # Tinkers' Construct: Slimy Sapling (I:"Slime Tree Sapling"=3241)
-billboard(blockid=3241, imagename="assets/tinker/textures/blocks/slimesapling_blue.png")
+sprite(blockid=3241, imagename="assets/tinker/textures/blocks/slimesapling_blue.png")
 
 # Tinkers' Construct: Hambone (I:"Meat Block"=3242)
 @material(blockid=3242, data=[0,4,8], solid=True)

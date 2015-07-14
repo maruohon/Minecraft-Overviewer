@@ -338,30 +338,32 @@ generate_pseudo_data(RenderState *state, unsigned short ancilData) {
     /* NOTE: The pseudodata handling for the vanilla walls has been changed in this port for modded
     Minecraft, because a lot of the mod blocks use block metadata for the material type.
     That's why it makes more sense to put the pseudo data in the upper 4 bits,
-    which are not used by Minecraft. It also makes this the same as the Fences. */
-    else if (state->block == 85 /* fences */
+    which are not used by Minecraft. This also makes it the same as the Fences. */
+    else if (state->block == 85 /* (Oak) Fence */
             || state->block == 139 /* Cobblestone Wall and Mossy Cobblestone Wall */
             || state->block == 459 || state->block == 460 /* Railcraft: Posts (= Fences) */
             || state->block == 461 || state->block == 463 /* Railcraft: Walls */
             || state->block == 1394 || state->block == 1418 /* Forestry Fences */
+            || state->block == 2135 /* Project: Red: Walls */
             || state->block == 3465 /* IC2: Iron Fence */
             || state->block == 3285 /* Natura: Fences */
             ) {
 
         /* check for adjacent connectable blocks */
-        data = check_adjacent_blocks(state, x, y, z, state->block) | check_adjacent_blocks(state, x, y, z, 107)
+        data = check_adjacent_blocks(state, x, y, z, state->block)
+                | check_adjacent_blocks(state, x, y, z, 85) /* (Oak) Fence */
+                | check_adjacent_blocks(state, x, y, z, 107) /* Fence Gate */
                 | check_adjacent_blocks(state, x, y, z, 139) /* Cobblestone Wall and Mossy Cobblestone Wall */
                 | check_adjacent_blocks(state, x, y, z, 459) | check_adjacent_blocks(state, x, y, z, 460) /* Railcraft: Posts (= Fences) */
                 | check_adjacent_blocks(state, x, y, z, 461) | check_adjacent_blocks(state, x, y, z, 463) /* Railcraft: Walls */
                 | check_adjacent_blocks(state, x, y, z, 1394) | check_adjacent_blocks(state, x, y, z, 1418) /* Forestry Fences */
+                | check_adjacent_blocks(state, x, y, z, 2135) /* Project: Red: Walls */
                 | check_adjacent_blocks(state, x, y, z, 3465) /* IC2: Iron Fence */
                 | check_adjacent_blocks(state, x, y, z, 3285) /* Natura: Fences */
             ;
 
-        /* Blocks that have metadata need to have the pseudo data shifted by 4 bits */
-        if (state->block != 85) { /* Fence */
-            data = (data << 4) | (ancilData & 0xf);
-        }
+        /* Shift the pseudo data by 4 bits to not clobber the metadata bits*/
+        data = (data << 4) | (ancilData & 0xf);
         return data;
     } else if (state->block == 55) { /* redstone */
         /* three addiotional bit are added, one for on/off state, and
@@ -434,7 +436,7 @@ generate_pseudo_data(RenderState *state, unsigned short ancilData) {
         }
         return final_data;
 
-    } else if ((state->block == 101) || (state->block == 102)
+    } else if ((state->block == 101) || (state->block == 102) /* Iron Bars and Glass Panes */
             || (state->block == 3130) /* MFR Glass Panes */
             || (state->block == 3228) || (state->block == 3229) /* Tinkers' Construct: Clear Glass Panes & Stained Glass Panes */
             ) {
@@ -747,19 +749,20 @@ chunk_render(PyObject *self, PyObject *args) {
                      * grass, water, glass, chest, restone wire,
                      * ice, fence, portal, iron bars, glass panes,
                      * trapped chests, stairs */
-                    if ((state.block ==  2) || (state.block ==  9) ||
-                        (state.block == 20) || (state.block == 54) ||
-                        (state.block == 55) || (state.block == 64) ||
-                        (state.block == 71) || (state.block == 79) ||
-                        (state.block == 85) || (state.block == 90) ||
-                        (state.block == 101) || (state.block == 102) ||
-                        (state.block == 111) || (state.block == 113) ||
+                    if ((state.block ==  2) || (state.block ==  9) || /* Grass Block and Water */
+                        (state.block == 20) || (state.block == 54) || /* Glass and Chest */
+                        (state.block == 55) || (state.block == 64) || /* Redstone wire and Doors */
+                        (state.block == 71) || (state.block == 79) || /* Iron Doors and Ice */
+                        (state.block == 85) || (state.block == 90) || /* Fence and (Nether) Portal */
+                        (state.block == 101) || (state.block == 102) || /* Iron Bars and Glass Panes */
+                        (state.block == 111) || (state.block == 113) || /* Lily Pad and Nether Brick Fence */
                         (state.block == 139) || (state.block == 175) || 
                         (state.block == 95) ||
                         (state.block == 146) ||
                         (state.block == 1394) || (state.block == 1418) || /* Forestry Fences */
                         (state.block == 459) || (state.block == 460) || /* Railcraft: Posts (= Fences) */
                         (state.block == 461) || (state.block == 463) || /* Railcraft: Walls */
+                        (state.block == 2135) || /* Project: Red: Walls */
                         (state.block == 3130) || /* MFR Glass Panes */
                         (state.block == 3228) || (state.block == 3229) || /* Tinkers' Construct: Clear Glass Panes & Stained Glass Panes */
                         (state.block == 3285) || /* Natura: Fences */

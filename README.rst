@@ -29,13 +29,15 @@ To be more specific, this version aims to add support for rendering most of the
  - Minefactory Reloaded
  - Mystcraft
  - Natura
+ - Project: Red (World)
  - Railcraft
  - Thaumcraft
  - Thermal Expansion
  - Tinker's Construct
 
 Do note that everything that would need tile entity data to be correctly rendered,
-is either missing or has some placeholder approximation. Also no connected textures.
+is either missing or has some placeholder approximation.
+There are also no connected textures for the most part (except vanilla-like stuff like walls).
 
 The block ids are according to the FTB Direwolf20 1.6.4 mod pack (v1.0.20) (FTB
 universal configs). If your mod pack uses a different set of ids, then they must
@@ -97,6 +99,7 @@ Clone this repository, change to the ftb-164 branch, and then build overviewer:
  - assets/minefactoryreloaded/textures/blocks
  - assets/mystcraft/textures/blocks
  - assets/natura/textures/blocks
+ - assets/projectred/textures/blocks
  - assets/railcraft/textures/blocks
  - assets/thaumcraft/textures/blocks
  - assets/thermalexpansion/textures/blocks
