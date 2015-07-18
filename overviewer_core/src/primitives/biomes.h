@@ -118,24 +118,24 @@ static Biome biome_table[] = {
     {"Corrupted Sands (Nether)", 2.0, 0.0, 0xFFFFFF, 0xFFFFFF, 0xFFFFFF},                       /* BoP: I:"Corrupted Sands (Nether) ID"=67 ; BiomeGenNetherDesert */
     {"Phantasmagoric Inferno (Nether)", 2.0, 0.0, 0xFFFFFF, 0xFFFFFF, 0xFFFFFF},                /* BoP: I:"Phantasmagoric Inferno (Nether) ID"=68 ; BiomeGenNetherLava */
     {"Boneyard (Nether)", 2.0, 0.0, 0xFFFFFF, 0xFFFFFF, 0xFFFFFF},                              /* BoP: I:"Boneyard (Nether) ID"=69 ; BiomeGenNetherBone */
-    {"", 0.0, 0.0, 0xFFFFFF, 0xFFFFFF, 0xFFFFFF},   /* 70 */
-    {"", 0.0, 0.0, 0xFFFFFF, 0xFFFFFF, 0xFFFFFF},
-    {"", 0.0, 0.0, 0xFFFFFF, 0xFFFFFF, 0xFFFFFF},
-    {"", 0.0, 0.0, 0xFFFFFF, 0xFFFFFF, 0xFFFFFF},
-    {"", 0.0, 0.0, 0xFFFFFF, 0xFFFFFF, 0xFFFFFF},
-    {"", 0.0, 0.0, 0xFFFFFF, 0xFFFFFF, 0xFFFFFF},   /* 75 */
-    {"", 0.0, 0.0, 0xFFFFFF, 0xFFFFFF, 0xFFFFFF},
-    {"", 0.0, 0.0, 0xFFFFFF, 0xFFFFFF, 0xFFFFFF},
-    {"", 0.0, 0.0, 0xFFFFFF, 0xFFFFFF, 0xFFFFFF},
-    {"", 0.0, 0.0, 0xFFFFFF, 0xFFFFFF, 0xFFFFFF},
-    {"", 0.0, 0.0, 0xFFFFFF, 0xFFFFFF, 0xFFFFFF},   /* 80 */
-    {"", 0.0, 0.0, 0xFFFFFF, 0xFFFFFF, 0xFFFFFF},
-    {"", 0.0, 0.0, 0xFFFFFF, 0xFFFFFF, 0xFFFFFF},
-    {"", 0.0, 0.0, 0xFFFFFF, 0xFFFFFF, 0xFFFFFF},
-    {"", 0.0, 0.0, 0xFFFFFF, 0xFFFFFF, 0xFFFFFF},
-    {"", 0.0, 0.0, 0xFFFFFF, 0xFFFFFF, 0xFFFFFF},   /* 85 */
-    {"", 0.0, 0.0, 0xFFFFFF, 0xFFFFFF, 0xFFFFFF},
-    {"", 0.0, 0.0, 0xFFFFFF, 0xFFFFFF, 0xFFFFFF},
+    {"Twilight Lake", 0.66, 1.0, 0xFFFFFF, 0xFFFFFF, 0xFFFFFF},                     /* 70 */    /* Twilight Forest: I:biome.id.Lake=70 ; TFBiomeTwilightLake */
+    {"Twilight Forest", 0.5, 0.5, 0xFFFFFF, 0xFFFFFF, 0xFFFFFF},                                /* Twilight Forest: I:biome.id.TwilightForest=71 ; TFBiomeTwilightForest */
+    {"Dense Twilight Forest", 0.7, 0.8, 0xFFFFFF, 0xFFFFFF, 0xFFFFFF},                          /* Twilight Forest: I:biome.id.TwilightForestVariant=72 ; TFBiomeTwilightForestVariant */
+    {"Highlands", 0.5, 0.3, 0xFFFFFF, 0xFFFFFF, 0xFFFFFF},                                      /* Twilight Forest: I:biome.id.Highlands=73 ; TFBiomeHighlands */
+    {"Mushrooms", 0.5, 0.5, 0xFFFFFF, 0xFFFFFF, 0xFFFFFF},                                      /* Twilight Forest: I:biome.id.Mushrooms=74 ; TFBiomeMushrooms */
+    {"Twilight Swamp", 0.8, 0.9, 6975545, 6975545, 0xFFFFFF},                       /* 75 */    /* Twilight Forest: I:biome.id.Swamp=75 ; TFBiomeSwamp FIXME grass & foliage */
+    {"Twilight Stream", 0.5, 1.0, 0xFFFFFF, 0xFFFFFF, 0xFFFFFF},                                /* Twilight Forest: I:biome.id.Stream=76 ; TFBiomeStream */
+    {"Snowy Forest", 0.125, 0.9, 0xFFFFFF, 0xFFFFFF, 0xFFFFFF},                                 /* Twilight Forest: I:biome.id.Snowfield=77 ; TFBiomeSnow */
+    {"Glacier", 0.0, 0.1, 0xFFFFFF, 0xFFFFFF, 0xFFFFFF},                                        /* Twilight Forest: I:biome.id.Glacier=78 ; TFBiomeGlacier */
+    {"Twilight Clearing", 0.8, 0.4, 0xFFFFFF, 0xFFFFFF, 0xFFFFFF},                              /* Twilight Forest: I:biome.id.Clearing=79 ; TFBiomeClearing */
+    {"Oak Savanna", 0.9, 0.0, 0xFFFFFF, 0xFFFFFF, 0xFFFFFF},                        /* 80 */    /* Twilight Forest: I:biome.id.ClearingBorder=80 ; TFBiomeOakSavanna */
+    {"Lighted Forest", 0.5, 1.0, 0xFFFFFF, 0xFFFFFF, 0xFFFFFF},                                 /* Twilight Forest: I:biome.id.LakeBorder=81 ; TFBiomeLightedForest */
+    {"Lots of Mushrooms", 0.8, 1.0, 0xFFFFFF, 0xFFFFFF, 0xFFFFFF},                              /* Twilight Forest: I:biome.id.DeepMushrooms=82 ; TFBiomeDeepMushrooms */
+    {"Dark Forest Center", 0.0, 0.0, 0xFFFFFF, 0xFFFFFF, 0xFFFFFF},                             /* Twilight Forest: I:biome.id.MajorFeature=83 ; TFBiomeDarkForest */
+    {"Highlands Center", 0.0, 0.0, 0xFFFFFF, 0xFFFFFF, 0xFFFFFF},                               /* Twilight Forest: I:biome.id.MinorFeature=84 ; TFBiomeHighlands */
+    {"Dark Forest", 0.7, 0.8, 5587220, 0xFFFFFF, 0xFFFFFF},                         /* 85 */    /* Twilight Forest: I:biome.id.DarkForest=85 ; TFBiomeDarkForest FIXME foliage */
+    {"Enchanted Forest", 0.5, 0.5, 0xFFFFFF, 0xFFFFFF, 0xFFFFFF},                               /* Twilight Forest: I:biome.id.EnchantedForest=86 ; TFBiomeEnchantedForest FIXME the colors are randomized, what color should we use for it? */
+    {"Fire Swamp", 1.0, 0.4, 5713443, 6563343, 0xFFFFFF},                                       /* Twilight Forest: I:biome.id.FireSwamp=87 ; TFBiomeFireSwamp */
     {"", 0.0, 0.0, 0xFFFFFF, 0xFFFFFF, 0xFFFFFF},
     {"", 0.0, 0.0, 0xFFFFFF, 0xFFFFFF, 0xFFFFFF},
     {"", 0.0, 0.0, 0xFFFFFF, 0xFFFFFF, 0xFFFFFF},   /* 90 */
@@ -306,4 +306,4 @@ static Biome biome_table[] = {
     {"", 0.0, 0.0, 0xFFFFFF, 0xFFFFFF, 0xFFFFFF}    /* 255 */
 };
 
-#define NUM_BIOMES 255 /* (sizeof(biome_table) / sizeof(Biome)) */
+#define NUM_BIOMES 256 /* (sizeof(biome_table) / sizeof(Biome)) */

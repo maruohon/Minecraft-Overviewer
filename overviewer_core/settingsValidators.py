@@ -186,6 +186,7 @@ def validateDimension(d):
         "nether": "DIM-1",
         "overworld": None,
         "end": "DIM1",
+        "Twilight Forest": "DIM7",
         "default": 0,
     }
     
