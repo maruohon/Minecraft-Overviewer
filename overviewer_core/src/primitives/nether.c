@@ -37,6 +37,7 @@ walk_chunk(RenderState *state, RenderPrimitiveNether *data) {
                 id = get_data(state, BLOCKS, x, y - (state->chunky * 16), z);
 
                 if (id == 7 || id == 87 || id == 153 || id == 11 /* Bedrock, Netherrack, Nether Quartz Ore, Lava */
+                || id == 88 /* Soul Sand  - It seems that in FTB DW20 1.6.4 there is lots of Soul Sand near the bedrock ceiling?? */
                 || id == 163 || id == 174 /* BoP: Ash Block, Flesh (I:"Ash Block ID"=163 & I:"Flesh ID"=174) */
                 || id == 189 || id == 190 /* Natura: Heat Sand, Tainted Soil (I:"Heat Sand"=189 & I:"Tainted Soil"=190) */
                 || id == 1475 /* Tinker's Construct: Ores (I:"Ores Slag"=1475) */
