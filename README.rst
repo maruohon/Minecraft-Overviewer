@@ -34,6 +34,7 @@ To be more specific, this version aims to add support for rendering most of the
  - Thaumcraft
  - Thermal Expansion
  - Tinker's Construct
+ - Twilight Forest
 
 Do note that everything that would need tile entity data to be correctly rendered,
 is either missing or has some placeholder approximation.
@@ -104,6 +105,7 @@ Clone this repository, change to the ftb-164 branch, and then build overviewer:
  - assets/thaumcraft/textures/blocks
  - assets/thermalexpansion/textures/blocks
  - assets/tinker/textures/blocks
+ - assets/twilightforest/textures/blocks
 
 * Special cases:
   - From binniemods*.jar copy the following textures from assets/forestry/textures/tile/ into assets/extratrees/textures/blocks/

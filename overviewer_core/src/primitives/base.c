@@ -162,7 +162,7 @@ base_draw(void *data, RenderState *state, PyObject *src, PyObject *mask, PyObjec
         /* doublePlant grass & ferns tops */
         (state->block == 175 && below_block == 175 && (below_data == 2 || below_data == 3))
         || state->block == 1922 /* BoP: Willow */
-        || (state->block == 1925) /* BoP: Foliage */
+        || state->block == 1925 /* BoP: Foliage */
         || state->block == 1943 || state->block == 1944 /* BoP: Ivy & Moss */
         || state->block == 1970 || state->block == 1971 /* BoP: Colourized Leaves */
         || state->block == 3487 /* IC2: Rubber Tree Leaves */
@@ -171,6 +171,10 @@ base_draw(void *data, RenderState *state, PyObject *src, PyObject *mask, PyObjec
         || (state->block == 3278 && (state->block_data & 0x3) != 1) /* Natura: Leaves (Maple, Amaranth, Tiger; NO Silverbell!!) */
         || (state->block == 2406 && (state->block_data & 0x3) == 0) /* Thaumcraft: Greatwood Leaves */
         || (state->block == 2421 && (state->block_data & 0x3) == 1) /* Thaumcraft: Tainted Soil */
+        || state->block == 2164 /* Twilight Forest: Leaves */
+        || (state->block == 2169 && state->block_data == 8) /* Twilight Forest: Plants: Fiddlehead */
+        || state->block == 2177 /* Twilight Forest: Magic Leaves */
+        || (state->block == 3504 && (state->block_data == 0 || state->block_data == 8)) /* Twilight Forest: Smoking Block and Fire Jet */
     )
     {
         /* do the biome stuff! */
@@ -194,10 +198,12 @@ base_draw(void *data, RenderState *state, PyObject *src, PyObject *mask, PyObjec
             case 1971: /* BoP: Colourized Leaves 2 */
             case 3487: /* IC2: Rubber Tree Leaves */
             case 3148: /* MFR: Vine Scaffolding */
-            case 2406: /* Thaumcraft: Greatwood Leaves */
-            case 2421: /* Thaumcraft: Tainted Soil */
             case 3259: /* Natura: Leaves (Redwood, Eucalyptus, Hopseed) */
             case 3278: /* Natura: Leaves (Maple, Amaranth, Tiger; NO Silverbell!!) */
+            case 2406: /* Thaumcraft: Greatwood Leaves */
+            case 2421: /* Thaumcraft: Tainted Soil */
+            case 2164: /* Twilight Forest: Leaves */
+            case 2177: /* Twilight Forest: Magic Leaves */
                 color_table = self->foliagecolor;
                 break;
 
@@ -213,6 +219,8 @@ base_draw(void *data, RenderState *state, PyObject *src, PyObject *mask, PyObjec
             case 1925: /* BoP: Foliage */
             case 1943: /* BoP: Ivy */
             case 1944: /* BoP: Moss */
+            case 2169: /* Twilight Forest: Plants: Fiddlehead */
+            case 3504: /* Twilight Forest: Smoking Block and Fire Jet */
                 color_table = self->grasscolor;
                 break;
             default:

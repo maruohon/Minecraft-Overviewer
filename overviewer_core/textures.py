@@ -8692,3 +8692,315 @@ def tic_sdx(self, blockid, data):
     top = self.load_image_texture("assets/tinker/textures/blocks/sdx_top_green.png")
     side = self.load_image_texture("assets/tinker/textures/blocks/sdx_side_green.png")
     return self.build_block(top, side)
+
+
+#######################
+#   Twilight Forest   #
+#######################
+
+# Twilight Forest: Portal (I:Portal=2162)
+@material(blockid=2162, nodata=True, solid=True, transparent=True)
+def tf_portal(self, blockid, data):
+    tex = self.load_image_texture("assets/minecraft/textures/blocks/portal.png")
+    return self.build_full_block((tex, 4), tex, tex, tex, tex, None)
+
+# Twilight Forest: Wood Logs 1 (I:Log=2163)
+@material(blockid=2163, data=range(16), solid=True)
+def tf_wood_log1(self, blockid, data):
+    wood_type = data & 0x3
+    if wood_type == 0: # Twilight Oak
+        top = self.load_image_texture("assets/twilightforest/textures/blocks/oak_top.png")
+        side = self.load_image_texture("assets/twilightforest/textures/blocks/oak_side.png")
+    elif wood_type == 1: # Canopy Tree
+        top = self.load_image_texture("assets/twilightforest/textures/blocks/canopy_top.png")
+        side = self.load_image_texture("assets/twilightforest/textures/blocks/canopy_side.png")
+    elif wood_type == 2: # Mangrove
+        top = self.load_image_texture("assets/twilightforest/textures/blocks/mangrove_top.png")
+        side = self.load_image_texture("assets/twilightforest/textures/blocks/mangrove_side.png")
+    elif wood_type == 3: # Darkwood
+        top = self.load_image_texture("assets/twilightforest/textures/blocks/darkwood_top.png")
+        side = self.load_image_texture("assets/twilightforest/textures/blocks/darkwood_side.png")
+    return self.build_wood_log(top, side, data)
+
+# Twilight Forest: Leaves (I:Leaves=2164)
+@material(blockid=2164, data=range(16), solid=True, transparent=True)
+def tf_leaves1(self, blockid, data):
+    leaf_type = data & 0x3
+    if leaf_type == 0: # Twilight Oak; Oak Leaves texture, custom coloring
+        tex = self.load_image_texture("assets/minecraft/textures/blocks/leaves_oak.png")
+    elif leaf_type == 1: # Canopy Tree; Spruve Leaves texture, custom coloring
+        tex = self.load_image_texture("assets/minecraft/textures/blocks/leaves_spruce.png")
+    elif leaf_type == 2: # Mangrove; Oak Leaves texture, custom coloring
+        tex = self.load_image_texture("assets/minecraft/textures/blocks/leaves_oak.png")
+    elif leaf_type == 3: # Rainbow Oak; Oak Leaves texture, custom coloring
+        tex = self.load_image_texture("assets/minecraft/textures/blocks/leaves_oak.png")
+    return self.build_block(tex, tex)
+
+# Twilight Forest: Mazestone (I:Mazestone=2165)
+@material(blockid=2165, data=range(8), solid=True)
+def tf_mazestone(self, blockid, data):
+    if data == 0: # Mazestone
+        tex = self.load_image_texture("assets/twilightforest/textures/blocks/mazestone_plain.png")
+    elif data == 1: # Mazestone Brick
+        tex = self.load_image_texture("assets/twilightforest/textures/blocks/mazestone_brick.png")
+    elif data == 2: # Chiseled Mazestone
+        tex = self.load_image_texture("assets/twilightforest/textures/blocks/mazestone_pillar.png")
+    elif data == 3: # Decorative Mazestone Brick
+        tex = self.load_image_texture("assets/twilightforest/textures/blocks/mazestone_decorative.png")
+    elif data == 4: # Cracked Mazestone Brick
+        tex = self.load_image_texture("assets/twilightforest/textures/blocks/mazestone_cracked.png")
+    elif data == 5: # Mossy Mazestone Brick
+        tex = self.load_image_texture("assets/twilightforest/textures/blocks/mazestone_mossy.png")
+    elif data == 6: # Mazestone Mosaic
+        tex = self.load_image_texture("assets/twilightforest/textures/blocks/mazestone_mosaic.png")
+    elif data == 7: # Mazestone Border
+        tex = self.load_image_texture("assets/twilightforest/textures/blocks/mazestone_border.png")
+    return self.build_block(tex, tex)
+
+# Twilight Forest: Hedge & Darkwood Leaves (I:Hedge=2166)
+@material(blockid=2166, data=range(2), solid=True)
+def tf_leaves2(self, blockid, data):
+    if data == 0: # Hedge
+        tex = self.load_image_texture("assets/twilightforest/textures/blocks/hedge.png")
+    elif data == 1: # Darkwood Leaves
+        tex = self.load_image_texture("assets/twilightforest/textures/blocks/darkwood_leaves.png")
+    return self.build_block(tex, tex)
+
+
+# Twilight Forest: Spawner (I:BossSpawner=2167)
+block(blockid=2167, top_image="assets/minecraft/textures/blocks/mob_spawner.png", transparent=True)
+
+# Twilight Forest: Plants (I:Plant=2169)
+@material(blockid=2169, data=[3,4,8,9,10,11,13,14], solid=False, transparent=True)
+def tf_plants(self, blockid, data):
+    if data == 3: # Moss Patch
+        tex = self.load_image_texture("assets/twilightforest/textures/blocks/mosspatch.png")
+        img = Image.new("RGBA", (24,24), self.bgcolor)
+        tmp = self.transform_image_top(tex)
+        alpha_over(img, tmp, (0,12), tmp)
+        return img
+    elif data == 4: # Mayapple
+        # Would need special rendering, but meh, close enough...
+        tex = self.load_image_texture("assets/twilightforest/textures/blocks/mayapple.png")
+    elif data == 8: # Fiddlehead
+        tex = self.load_image_texture("assets/twilightforest/textures/blocks/fiddlehead.png")
+    elif data == 9: # Mushgloom
+        tex = self.load_image_texture("assets/twilightforest/textures/blocks/mushgloom.png")
+    elif data == 10: # Forest Grass
+        tex = self.load_image_texture("assets/minecraft/textures/blocks/tallgrass.png")
+    elif data == 11: # Dried Bush
+        tex = self.load_image_texture("assets/minecraft/textures/blocks/deadbush.png")
+    elif data == 13: # Torchberry Plant
+        tex = self.load_image_texture("assets/twilightforest/textures/blocks/torchberry.png")
+    elif data == 14: # Root Strands
+        tex = self.load_image_texture("assets/twilightforest/textures/blocks/rootstrand.png")
+        return self.build_crops(tex)
+    return self.build_sprite(tex)
+
+# Twilight Forest: Roots (I:Roots=2170)
+@material(blockid=2170, data=range(2), solid=True)
+def tf_roots(self, blockid, data):
+    if data == 0: # Roots
+        tex = self.load_image_texture("assets/twilightforest/textures/blocks/rootblock.png")
+    elif data == 1: # Liveroots
+        tex = self.load_image_texture("assets/twilightforest/textures/blocks/oreroots.png")
+    return self.build_block(tex, tex)
+
+# Twilight Forest: Wood Logs 2 (I:MagicLog=2176)
+@material(blockid=2176, data=range(16), solid=True)
+def tf_wood_log2(self, blockid, data):
+    wood_type = data & 0x3
+    if wood_type == 0: # Timewood
+        top = self.load_image_texture("assets/twilightforest/textures/blocks/time_section.png")
+        side = self.load_image_texture("assets/twilightforest/textures/blocks/time_side.png")
+    elif wood_type == 1: # Transwood
+        top = self.load_image_texture("assets/twilightforest/textures/blocks/trans_section.png")
+        side = self.load_image_texture("assets/twilightforest/textures/blocks/trans_side.png")
+    elif wood_type == 2: # Minewood
+        top = self.load_image_texture("assets/twilightforest/textures/blocks/mine_section.png")
+        side = self.load_image_texture("assets/twilightforest/textures/blocks/mine_side.png")
+    elif wood_type == 3: # Sortingwood
+        top = self.load_image_texture("assets/twilightforest/textures/blocks/sort_section.png")
+        side = self.load_image_texture("assets/twilightforest/textures/blocks/sort_side.png")
+    return self.build_wood_log(top, side, data)
+
+# Twilight Forest: Magic Leaves (I:MagicLeaves=2177)
+@material(blockid=2177, data=range(16), solid=True, transparent=True)
+def tf_leaves_magic(self, blockid, data):
+    # FIXME These look really weird and "solid-block-ish"
+    leaf_type = data & 0x3
+    if leaf_type == 0: # Timewood Leaves
+        tex = self.load_image("assets/twilightforest/textures/blocks/oak_top.png").crop((0,0,16,16))
+    elif leaf_type == 1: # Leaves of Transformation
+        tex = self.load_image("assets/twilightforest/textures/blocks/canopy_top.png").crop((0,0,16,16))
+    elif leaf_type == 2: # Miner's Leaves
+        tex = self.load_image("assets/twilightforest/textures/blocks/mangrove_top.png").crop((0,0,16,16))
+    elif leaf_type == 3: # Sorting Leaves
+        tex = self.load_image("assets/twilightforest/textures/blocks/darkwood_top.png").crop((0,0,16,16))
+    return self.build_block(tex, tex)
+
+# Twilight Forest: Moonworm (I:Moonworm=2178)
+@material(blockid=2178, nodata=True, solid=False, transparent=True)
+def tf_moonworm(self, blockid, data):
+    tex = self.load_image_texture("assets/twilightforest/textures/blocks/TFMoonworm.png")
+    img = Image.new("RGBA", (24,24), self.bgcolor)
+    tmp = self.transform_image_top(tex)
+    alpha_over(img, tmp, (0,12), tmp)
+    return img
+
+# Twilight Forest: Magic Wood Cores (I:MagicLogSpecial=2179)
+@material(blockid=2179, data=range(16), solid=True)
+def tf_wood_log_magic(self, blockid, data):
+    wood_type = data & 0x3
+    if wood_type == 0: # Timewood
+        top = self.load_image_texture("assets/twilightforest/textures/blocks/time_section.png")
+        side = self.load_image_texture("assets/twilightforest/textures/blocks/time_clock.png")
+    elif wood_type == 1: # Transwood
+        top = self.load_image_texture("assets/twilightforest/textures/blocks/trans_section.png")
+        side = self.load_image_texture("assets/twilightforest/textures/blocks/trans_heart.png")
+    elif wood_type == 2: # Minewood
+        top = self.load_image_texture("assets/twilightforest/textures/blocks/mine_section.png")
+        side = self.load_image_texture("assets/twilightforest/textures/blocks/mine_gem.png")
+    elif wood_type == 3: # Sortingwood
+        top = self.load_image_texture("assets/twilightforest/textures/blocks/sort_section.png")
+        side = self.load_image_texture("assets/twilightforest/textures/blocks/sort_eye.png")
+    return self.build_wood_log(top, side, data)
+
+# Twilight Forest: Towerwood (I:TowerWood=2180)
+@material(blockid=2180, data=range(5), solid=True)
+def tf_towerwood(self, blockid, data):
+    if data == 0: # Towerwood Planks
+        tex = self.load_image_texture("assets/twilightforest/textures/blocks/towerwood_planks.png")
+    elif data == 1: # Encased Towerwood
+        tex = self.load_image_texture("assets/twilightforest/textures/blocks/towerwood_encased.png")
+    elif data == 2: # Cracked Towerwood
+        tex = self.load_image_texture("assets/twilightforest/textures/blocks/towerwood_cracked.png")
+    elif data == 3: # Mossy Towerwood
+        tex = self.load_image_texture("assets/twilightforest/textures/blocks/towerwood_mossy.png")
+    elif data == 4: # Infested Towerwood
+        tex = self.load_image_texture("assets/twilightforest/textures/blocks/towerwood_infested.png")
+    return self.build_block(tex, tex)
+
+# Twilight Forest: Towerwood Devces (I:TowerDevice=2181)
+@material(blockid=2181, data=[0,2,4,5,6,9,10,12], solid=True)
+def tf_towerwooddevices(self, blockid, data):
+    if data == 0: # Reappearing Block
+        tex = self.load_image_texture("assets/twilightforest/textures/blocks/towerdev_reappearing_off.png")
+    elif data == 2: # Vanishing Block
+        tex = self.load_image_texture("assets/twilightforest/textures/blocks/towerdev_vanish_off.png")
+    elif data == 4: # Locked Vanishing Block
+        tex = self.load_image_texture("assets/twilightforest/textures/blocks/towerdev_lock_on.png")
+    elif data == 5: # Unlocked Vanishing Block
+        tex = self.load_image_texture("assets/twilightforest/textures/blocks/towerdev_lock_off.png")
+    elif data == 6: # Carmite Builder
+        tex = self.load_image_texture("assets/twilightforest/textures/blocks/towerdev_builder_off.png")
+    elif data == 9: # Anti-builder
+        tex = self.load_image_texture("assets/twilightforest/textures/blocks/towerdev_antibuilder.png")
+    elif data == 10: # Ghast Trap
+        top = self.load_image_texture("assets/twilightforest/textures/blocks/towerdev_ghasttraplid_off.png")
+        side = self.load_image_texture("assets/twilightforest/textures/blocks/towerdev_ghasttrap_off.png")
+        return self.build_block(top, side)
+    elif data == 12: # Carmite Reactor
+        tex = self.load_image_texture("assets/twilightforest/textures/blocks/towerdev_reactor_off.png")
+    return self.build_block(tex, tex)
+
+# Twilight Forest: Tower Blocks (I:TowerTranslucent=2183)
+@material(blockid=2183, data=[6,7], solid=True)
+def tf_tower_blocks(self, blockid, data):
+    if data == 6: # False Gold
+        tex = self.load_image_texture("assets/minecraft/textures/blocks/gold_block.png")
+    elif data == 7: # False Diamond
+        tex = self.load_image_texture("assets/minecraft/textures/blocks/diamond_block.png")
+    return self.build_block(tex, tex)
+
+# Twilight Forest: Trophy Pedestal (I:TrophyPedestal=2185)
+@material(blockid=2185, data=[0,15], solid=False, transparent=True)
+def tf_trophypedestal(self, blockid, data):
+    # Approximation only
+    if data == 0: # Trophy Pedestal
+        top = self.load_image_texture("assets/twilightforest/textures/blocks/pedestal_top.png")
+        side = self.load_image_texture("assets/twilightforest/textures/blocks/pedestal_hydra.png")
+    elif data == 15: # Latent Trophy Pedestal
+        top = self.load_image_texture("assets/twilightforest/textures/blocks/pedestal_top_active.png")
+        side = self.load_image_texture("assets/twilightforest/textures/blocks/pedestal_hydra_active.png")
+    return self.build_block(top, side)
+
+# Twilight Forest: Aurora Block (I:AuroraBrick=2186)
+@material(blockid=2186, nodata=True, solid=True)
+def tf_aurorablock(self, blockid, data):
+    # Dummy approximation; we would need to do location based coloring on some base block
+    tex = self.load_image_texture("assets/minecraft/textures/blocks/snow.png")
+    return self.build_block(tex, tex)
+
+# Twilight Forest: Underbricks (I:UnderBrick=2187)
+@material(blockid=2187, data=range(3), solid=True)
+def tf_underbricks(self, blockid, data):
+    if data == 0: # Underbrick
+        tex = self.load_image_texture("assets/twilightforest/textures/blocks/knightbrick.png")
+    elif data == 1: # Cracked Underbrick
+        tex = self.load_image_texture("assets/twilightforest/textures/blocks/knightbrick_cracked.png")
+    elif data == 2: # Mossy Underbrick
+        tex = self.load_image_texture("assets/twilightforest/textures/blocks/knightbrick_mossy.png")
+    return self.build_block(tex, tex)
+
+# Twilight Forest: Saplings (I:Sapling=3501)
+@material(blockid=3501, data=range(10), solid=True, transparent=True)
+def tf_saplings(self, blockid, data):
+    if data == 0: # Sickly Twilight Oak Sapling
+        tex = self.load_image_texture("assets/twilightforest/textures/blocks/sapling_oak.png")
+    elif data == 1: # Canopy Tree Sapling
+        tex = self.load_image_texture("assets/twilightforest/textures/blocks/sapling_canopy.png")
+    elif data == 2: # Twilight Mangrove Sapling
+        tex = self.load_image_texture("assets/twilightforest/textures/blocks/sapling_mangrove.png")
+    elif data == 3: # Darkwood Sapling
+        tex = self.load_image_texture("assets/twilightforest/textures/blocks/sapling_darkwood.png")
+    elif data == 4: # Robust Twilight Oak Sapling
+        tex = self.load_image_texture("assets/twilightforest/textures/blocks/sapling_hollow_oak.png")
+    elif data == 5: # Tree of Time Sapling
+        tex = self.load_image_texture("assets/twilightforest/textures/blocks/sapling_time.png")
+    elif data == 6: # Tree of Transformation Sapling
+        tex = self.load_image_texture("assets/twilightforest/textures/blocks/sapling_transformation.png")
+    elif data == 7: # Miner's Tree Sapling
+        tex = self.load_image_texture("assets/twilightforest/textures/blocks/sapling_mining.png")
+    elif data == 8: # Sorting Tree Sapling
+        tex = self.load_image_texture("assets/twilightforest/textures/blocks/sapling_sorting.png")
+    elif data == 9: # Rainbow Oak Sapling
+        tex = self.load_image_texture("assets/twilightforest/textures/blocks/sapling_rainboak.png")
+    return self.build_sprite(tex)
+
+# Twilight Forest: Nagastone (I:Nagastone=3502)
+@material(blockid=3502, data=range(16), solid=True)
+def tf_nagastone(self, blockid, data):
+    # FIXME How do these actually go?
+    top = self.load_image_texture("assets/twilightforest/textures/blocks/nagastone_top_tip.png")
+    if data == 1: # Nagastone Head
+        side= self.load_image_texture("assets/twilightforest/textures/blocks/nagastone_face_front.png")
+    elif data == 13: # Nagastone
+        side = self.load_image_texture("assets/twilightforest/textures/blocks/nagastone_cross_section.png")
+    else:
+        side = self.load_image_texture("assets/twilightforest/textures/blocks/nagastone_cross_section.png")
+    return self.build_block(top, side)
+
+# Twilight Forest: Smoking blocks (I:FireJet=3504)
+@material(blockid=3504, data=[0,1,8,11], solid=True)
+def tf_smokers(self, blockid, data):
+    if data == 0: # Smoking Block, NOTE: needs biome coloring!
+        top = self.load_image_texture("assets/twilightforest/textures/blocks/firejet_top.png")
+        side = self.load_image_texture("assets/twilightforest/textures/blocks/firejet_side.png")
+    elif data == 1: # Encased Smoker
+        top = self.load_image_texture("assets/twilightforest/textures/blocks/towerdev_ghasttraplid_off.png")
+        side = self.load_image_texture("assets/twilightforest/textures/blocks/towerdev_smoker_off.png")
+    elif data == 8: # Fire Jet, NOTE: needs biome coloring!
+        top = self.load_image_texture("assets/twilightforest/textures/blocks/firejet_top.png")
+        side = self.load_image_texture("assets/twilightforest/textures/blocks/firejet_side.png")
+    elif data == 11: # Encased Fire Jet
+        top = self.load_image_texture("assets/twilightforest/textures/blocks/towerdev_ghasttraplid_off.png")
+        side = self.load_image_texture("assets/twilightforest/textures/blocks/towerdev_firejet_off.png")
+    return self.build_block(top, side)
+
+# Twilight Forest: Uncrafting Table (I:UncraftingTable=4080)
+@material(blockid=4080, nodata=True, solid=True)
+def tf_uncraftingtable(self, blockid, data):
+    top = self.load_image_texture("assets/twilightforest/textures/blocks/uncrafting_top.png")
+    side = self.load_image_texture("assets/twilightforest/textures/blocks/uncrafting_side.png")
+    return self.build_block(top, side)
