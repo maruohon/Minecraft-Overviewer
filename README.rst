@@ -18,7 +18,6 @@ To be more specific, this version aims to add support for rendering most of the
  - Applied Energistics
  - Biomes O' Plenty
  - Buildcraft
- - Dartcraft (although not in the DW20 pack)
  - Extra Bees
  - Extra Trees (only partial support due to lots of the stuff using tile entity data)
  - Extra Utilities
@@ -38,17 +37,19 @@ To be more specific, this version aims to add support for rendering most of the
 
 Do note that everything that would need tile entity data to be correctly rendered,
 is either missing or has some placeholder approximation.
-There are also no connected textures for the most part (except vanilla-like stuff like walls).
+There are also no connected textures for the most part (except vanilla-like stuff like walls and fences).
 
-The block ids are according to the FTB Direwolf20 1.6.4 mod pack (v1.0.20) (FTB
-universal configs). If your mod pack uses a different set of ids, then they must
+The block IDs are according to the FTB Direwolf20 1.6.4 mod pack (v1.0.20) (FTB
+universal configs). If your mod pack uses a different set of block IDs, then they must
 be manually adjusted.
 
 The files with modifications from vanilla to modded are:
- - overviewer_core/src/iterate.c
- - overviewer_core/src/primitives/base.c
- - overviewer_core/src/primitives/nether.c
- - overviewer_core/textures.py
+  - overviewer_core/settingsValidators.py (pretty name for Twilight Forest dimension)
+  - overviewer_core/src/iterate.c (adjacent blocks info for connected textures for walls, fences, glass panes)
+  - overviewer_core/src/primitives/base.c (biome based coloring for leaves, grass etc. and modded biome coloring support)
+  - overviewer_core/src/primitives/biomes.h (modded biome color definitions)
+  - overviewer_core/src/primitives/nether.c (add some modded blocks for nether ceiling removal algorithm)
+  - overviewer_core/textures.py (add mod block textures)
 
 You can view the changes and find out the parts that have changed by comparing
 the master branch to which this patch is based on and the result with the
@@ -58,18 +59,12 @@ following git diff command:
 Some blocks might not be rendered quite correctly, either because the correct
 rendering would require the use of tile entity data, which overviewer does not
 currently support(?), or because of my laziness.
-I'm also using cobwebs as a placeholder for unimplemented/missing texture
-definitions, so if your renderings have cobwebs in places that shouldn't have
-them, then it is most likely because that block has not been added yet.
-This is mostly just with blocks that differentiate the type with the additional
-4-bit metadata. This means that if there are supported block IDs, but with
-unrecognized metadata values in the world data, then those will be
-rendered as cobwebs. Blocks with unknown block IDs will be missing completely.
+Blocks with unknown block IDs will be missing completely.
 
 Installation
 ------------
 Clone this repository, change to the ftb-164 branch, and then build overviewer:
- - git clone git@github.com:maruohon/Minecraft-Overviewer.git Minecraft-Overviewer.git
+ - git clone https://github.com/maruohon/Minecraft-Overviewer.git Minecraft-Overviewer.git
  - cd Minecraft-Overviewer.git
  - git checkout origin/ftb-164
  - python setup.py build
@@ -77,18 +72,17 @@ Clone this repository, change to the ftb-164 branch, and then build overviewer:
 * You will also need to create the resource pack that contains all the textures.
 * To create the resource pack, you need to create a zip file or a directory structure, that contains the following:
  - the assets directory from the 1.6.4 version of minecraft jar
-   (this can be found inside the minecraft installation directory, in
-   location versions/1.6.4/1.6.4.jar)
+   (this can be found inside the minecraft installation directory, like: .minecraft/versions/1.6.4/1.6.4.jar)
  - next, you need to copy the assets/<modname> directory from
-   each of the mods' jars or zips supported by this version of overviewer
-   into the assets/ directory that you copied from the vanilla jar.
+   each of the supported mods' jars or zips into the assets/ directory that you copied from the vanilla jar.
+* Note that in my testing, using a zipped version results in the initial texture generation taking about 2 minutes,
+  versus about 20 seconds if the textures are simply in a directory structure on disk (ie. not zipped).
 
 * You should now have a directory structure like this inside your resource pack directory or zip file:
  - assets/minecraft/textures/blocks (vanilla stuff)
  - assets/appeng/textures/blocks
  - assets/biomesoplenty/textures/blocks
  - assets/buildcraft/textures/blocks
- - assets/dartcraft/textures/blocks
  - assets/extrabees/textures/blocks (from binniemods*.jar)
  - assets/extrabees/textures/tile   NOTE: this is an exception, other mods only need the blocks directory!
  - assets/extratrees/textures/blocks (from binniemods*.jar)
@@ -96,6 +90,7 @@ Clone this repository, change to the ftb-164 branch, and then build overviewer:
  - assets/factorization/textures/blocks
  - assets/forestry/textures/blocks
  - assets/ic2/textures/blocks
+ - assets/jabba/textures/blocks
  - assets/magicbees/textures/blocks
  - assets/minefactoryreloaded/textures/blocks
  - assets/mystcraft/textures/blocks
@@ -109,9 +104,9 @@ Clone this repository, change to the ftb-164 branch, and then build overviewer:
 
 * Special cases:
   - From binniemods*.jar copy the following textures from assets/forestry/textures/tile/ into assets/extratrees/textures/blocks/
-    - carpenter_base.png & carpenter_tank_resource_empty.png
-    - paneler_base.png & paneler_tank_resource_empty.png
-    - sawmill_base.png & sawmill_tank_resource_empty.png
+    - carpenter_base.png, carpenter_tank_resource_empty.png
+    - paneler_base.png, paneler_tank_resource_empty.png
+    - sawmill_base.png, sawmill_tank_resource_empty.png
   - For JABBA, you only need the following textures:
     - textures/blocks/barrel_label_0.png
     - textures/blocks/barrel_top_0.png
@@ -119,11 +114,12 @@ Clone this repository, change to the ftb-164 branch, and then build overviewer:
 * Optionally, you can delete all the other directories from
   assets/<modname>/ leaving just the textures directory, and also
   from assets/<modname>/textures/ leaving just the blocks directory (except BinnieMods - ExtraBees also needs the textures/tile/ directory!).
-  In other words, you just need the blocks directories as listed above.
+  In other words, you usually just need the blocks directories as listed above.
 
 * Finally, you will need to create and modify the overviewer render config file as
   usual. Set the texturepath to point to your resource pack directory or zip
   file you just put together as explained above.
+  An example config is available from: https://gist.github.com/maruohon/4fb888eafadd87d4a17c
 
 After this, you should be able to render the world as per usual:
  - python overviewer.py --config=yourconfigfile.py
